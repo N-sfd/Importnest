@@ -1,0 +1,255 @@
+// Schema mirrors the Business Data Dictionary in Importnest BRD Section 13.4.
+// Local dev uses SQLite for zero-setup; point DATABASE_URL at Postgres for staging/prod.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id        String  @id @default(cuid())
+  name      String
+  slug      String  @unique
+  websiteUrl String?
+  isAuthorized Boolean @default(false)
+
+  products CanonicalProduct[]
+}
+
+model Category {
+  id              String     @id @default(cuid())
+  parentId        String?
+  name            String
+  slug            String     @unique
+  attributeSchema String? // JSON string describing expected attributes per category
+
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+  products CanonicalProduct[]
+}
+
+model CanonicalProduct {
+  id            String   @id @default(cuid())
+  brandId       String
+  categoryId    String
+  modelName     String
+  modelNumber   String?
+  configuration String?
+
+  brand      Brand              @relation(fields: [brandId], references: [id])
+  category   Category           @relation(fields: [categoryId], references: [id])
+  identifiers ProductIdentifier[]
+  attributes  ProductAttribute[]
+  matches     ProductMatch[]
+  savedBy     SavedProduct[]
+  alerts      Alert[]
+}
+
+model ProductIdentifier {
+  id                 String @id @default(cuid())
+  canonicalProductId String
+  type               String // UPC | GTIN | MPN
+  value              String @unique
+
+  canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
+}
+
+model ProductAttribute {
+  id                 String  @id @default(cuid())
+  canonicalProductId String
+  key                String
+  value              String
+  unit               String?
+
+  canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
+}
+
+model Source {
+  id             String   @id @default(cuid())
+  name           String
+  sourceType     String // official-api | affiliate-feed | manufacturer-feed | partner-feed | licensed-provider | web-extraction
+  licensingNotes String?
+  refreshCadenceMinutes Int?
+  isActive       Boolean  @default(true)
+
+  listings Listing[]
+}
+
+model Listing {
+  id                 String   @id @default(cuid())
+  sourceId           String
+  canonicalProductId String?
+  condition          String // new | open-box | used | refurbished | certified-refurbished
+  price              Float
+  shipping           Float    @default(0)
+  fees               Float    @default(0)
+  deliveryLabel      String?
+  freshnessCapturedAt DateTime @default(now())
+
+  source           Source            @relation(fields: [sourceId], references: [id])
+  priceHistory     PriceHistory[]
+  matches          ProductMatch[]
+  savedBy          SavedProduct[]
+  alerts           Alert[]
+  recommendations Recommendation[]
+  sponsoredPlacements SponsoredPlacement[]
+}
+
+model PriceHistory {
+  id         String   @id @default(cuid())
+  listingId  String
+  price      Float
+  shipping   Float    @default(0)
+  capturedAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id])
+}
+
+model ProductMatch {
+  id                 String @id @default(cuid())
+  canonicalProductId String
+  listingId          String
+  type               String // exact | comparable | rejected
+  confidence         Float
+  status             String @default("pending") // pending | approved | rejected
+
+  canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
+  listing          Listing         @relation(fields: [listingId], references: [id])
+  reviews          MatchReview[]
+}
+
+model MatchReview {
+  id             String   @id @default(cuid())
+  productMatchId String
+  reviewerId     String
+  decision       String // approve-exact | mark-comparable | reject
+  conflicts      String? // JSON string of conflicting attributes
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  productMatch ProductMatch @relation(fields: [productMatchId], references: [id])
+  reviewer     AppUser      @relation(fields: [reviewerId], references: [id])
+}
+
+model AppUser {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  authProvider String?
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  searchSessions SearchSession[]
+  savedProducts  SavedProduct[]
+  alerts         Alert[]
+  matchReviews   MatchReview[]
+}
+
+model SearchSession {
+  id         String   @id @default(cuid())
+  userId     String?
+  categoryId String?
+  query      String
+  inputType  String // keyword | url | model-number | natural-language | image
+  status     String @default("open")
+  createdAt  DateTime @default(now())
+
+  user            AppUser?         @relation(fields: [userId], references: [id])
+  recommendations Recommendation[]
+  outboundReferrals OutboundReferral[]
+}
+
+model Recommendation {
+  id                 String @id @default(cuid())
+  searchSessionId    String
+  listingId          String
+  canonicalProductId String
+  rank               Int
+  label              String
+  rationale          String
+
+  searchSession SearchSession @relation(fields: [searchSessionId], references: [id])
+  listing       Listing       @relation(fields: [listingId], references: [id])
+  factors       RecommendationFactor[]
+}
+
+model RecommendationFactor {
+  id               String @id @default(cuid())
+  recommendationId String
+  label            String
+  detail           String
+  positive         Boolean
+
+  recommendation Recommendation @relation(fields: [recommendationId], references: [id])
+}
+
+model SavedProduct {
+  id                 String @id @default(cuid())
+  userId             String
+  canonicalProductId String
+  listingId          String?
+
+  user             AppUser          @relation(fields: [userId], references: [id])
+  canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
+  listing          Listing?         @relation(fields: [listingId], references: [id])
+}
+
+model Alert {
+  id                 String  @id @default(cuid())
+  userId             String
+  canonicalProductId String
+  listingId          String?
+  type               String // price-drop | back-in-stock | any-change
+  threshold          String?
+  isActive           Boolean @default(true)
+
+  user             AppUser          @relation(fields: [userId], references: [id])
+  canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
+  listing          Listing?         @relation(fields: [listingId], references: [id])
+}
+
+model OutboundReferral {
+  id              String   @id @default(cuid())
+  searchSessionId String?
+  listingId       String
+  referralToken   String   @unique
+  convertedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  searchSession SearchSession? @relation(fields: [searchSessionId], references: [id])
+}
+
+model SponsoredCampaign {
+  id        String   @id @default(cuid())
+  advertiser String
+  sourceId  String?
+  budget    Float?
+  startsAt  DateTime?
+  endsAt    DateTime?
+  status    String   @default("active")
+
+  placements SponsoredPlacement[]
+}
+
+model SponsoredPlacement {
+  id         String  @id @default(cuid())
+  campaignId String
+  listingId  String?
+  slot       String
+  label      String  @default("Sponsored")
+
+  campaign SponsoredCampaign @relation(fields: [campaignId], references: [id])
+  listing  Listing?          @relation(fields: [listingId], references: [id])
+}
+
+model RankingConfig {
+  id                 String  @id @default(cuid())
+  categoryId         String?
+  version            Int
+  weights            String // JSON string of ranking weights
+  freshnessThresholdMinutes Int
+  matchThreshold     Float
+}
