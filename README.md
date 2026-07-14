@@ -1,75 +1,107 @@
 # Importnest
 
-AI-powered shopping comparison platform — see `Importnest_BRD.pdf` for the full business
-requirements. This repo is the clickable UI prototype milestone: the core customer and
-operations screens from BRD §11, wired to mock data shaped like the BRD's data model (§13),
-plus a Prisma schema for the real database work that comes next.
+AI-powered shopping comparison platform. Originally scaffolded as a clickable UI prototype
+against mock data (BRD §11/§13); it now runs on a real Postgres database, real authentication,
+two working product-data connectors, and a real search flow.
 
 ## Stack
 
 - **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
-- **Prisma 6** + SQLite for local dev (swap to Postgres later — see below)
+- **Prisma 6** + **Postgres** (hosted on Supabase)
+- **Supabase Auth** (`@supabase/ssr`) for login/logout
+- **Vitest** for regression tests that run against the real dev database
 
-## Getting started (manual, step by step)
+## Getting started
 
 1. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Set up the local database** (SQLite file, zero setup — already committed as a migration,
-   not as data)
+2. **Configure environment variables** in `.env` (not committed):
+   - `DATABASE_URL` — pooled Postgres connection string (Supabase, port 6543)
+   - `DIRECT_URL` — direct Postgres connection string (Supabase, port 5432; used for migrations)
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or
+     `NEXT_PUBLIC_SUPABASE_ANON_KEY`) — from your Supabase project settings
+
+3. **Apply the schema and seed demo data**
    ```bash
    npm run db:migrate
+   npm run db:seed
    ```
-   This creates `prisma/dev.db` from `prisma/migrations/`. If you ever change
-   `prisma/schema.prisma`, re-run this command to generate a new migration.
 
-3. **Run the dev server**
+4. **Run the dev server**
    ```bash
    npm run dev
    ```
    Open http://localhost:3000.
 
-4. **Walk the prototype.** Every screen currently reads from `src/lib/mock-data.ts`, not the
-   database — that's intentional for this milestone (fast iteration on UI/flow before wiring
-   real sources). Screens:
-   - `/` — Home & guided search (BRD §11.2)
-   - `/search/clarify` — Search clarification questions (§11.3)
-   - `/compare/[productId]` — Cross-retailer comparison, with live priority re-ranking (§11.5)
-   - `/compare/[productId]/why/[listingId]` — Recommendation explanation (§11.6)
-   - `/saved` — Saved products and alerts (§11.7)
-   - `/admin/match-review` — Product match review queue (§11.8)
-
-5. **Explore the data model.**
+5. **Run tests**
    ```bash
-   npm run db:studio
+   npm run test
    ```
-   Opens Prisma Studio against the (currently empty) SQLite database so you can see the schema
-   from `prisma/schema.prisma` — modeled directly on the BRD's Business Data Dictionary (§13.4).
 
-## Next steps toward a real backend
+## Screens
 
-1. Write a seed script (`prisma/seed.ts`) that inserts the same records currently hardcoded in
-   `src/lib/mock-data.ts`, so the UI can read from Postgres/SQLite instead of the mock file.
-2. Swap `provider = "sqlite"` for `provider = "postgresql"` in `prisma/schema.prisma` and point
-   `DATABASE_URL` in `.env` at a real Postgres instance (e.g. a free tier on Supabase/Neon/Railway).
-3. Replace the direct imports of `mock-data.ts` in each page with Prisma queries
-   (`@/lib/prisma` client + `prisma.canonicalProduct.findMany(...)`, etc).
-4. Add the source-connector layer (BRD §9) once you've picked real approved data sources
-   (BRD §23 "Open Decisions Before Build" — this is still an open decision).
-5. Add authentication for `/admin/*` routes before this goes anywhere near production.
+- `/` — Home, with a real search box
+- `/search/clarify?q=...` — Matches the query to a `CanonicalProduct` (exact UPC/GTIN lookup for
+  numeric queries, fuzzy name/model/brand match otherwise) and redirects straight to its compare
+  page, or shows a "no match" state. Every search is recorded as a `SearchSession`.
+- `/compare/[productId]` — Cross-retailer comparison. Listings, recommendation ranking, and
+  fallback copy (warranty/returns/delivery) are all computed live from real `Listing` rows —
+  nothing is hand-authored per product or per listing.
+- `/compare/[productId]/why/[listingId]` — Recommendation explanation, cost breakdown, and a
+  "Continue to retailer" link that routes through `/go/[listingId]` (validates the retailer URL,
+  records an `OutboundReferral`, then redirects)
+- `/saved` — Saved products and alerts
+- `/admin/match-review` — Product match review queue
+- `/login` — Supabase email/password auth
+
+## Data sources
+
+- `src/lib/connectors/upcitemdb.ts` (source `src-official`) — real connector against the
+  UPCItemDB trial API (`api.upcitemdb.com/prod/trial/lookup`, no key required, capped at 100
+  requests/day). Looks up listings by UPC only; the trial tier has no keyword/model-number
+  search. Matches to a `CanonicalProduct` via its `ProductIdentifier` UPC value.
+- `src/lib/connectors/retailer-direct.ts` (source `src-retailer-direct`) — real connector against
+  the free, keyless Fake Store API (`fakestoreapi.com`). It's a fixed 20-item test catalog with no
+  barcode data and no real product pages, so matching uses a synthetic `FSA-<id>` MPN identifier
+  (the same pattern a real affiliate feed without UPCs would need) and listings are synced without
+  a `url` rather than a fabricated one.
+- Run a sync manually: `npm run sync:official -- <upc>` or `npm run sync:retailer-direct` (or
+  generically, `npm run sync -- <sourceId> [query]` for any connector in the registry).
+- `src/lib/connectors/registry.ts` maps a `Source.id` to its connector. `src-official` and
+  `src-retailer-direct` have real connectors; the other seeded sources (`src-local-electronics`,
+  `src-authorized-outlet`, `src-discount-home`) don't yet.
+
+## Known gaps
+
+- Three of five seeded sources have no real connector yet (see above).
+- No scheduled/cron sync — both connectors are synced manually. The UPCItemDB trial tier also
+  caps at 100 requests/day.
+- No warranty/return-policy data source exists for any listing, so the UI always shows fallback
+  copy ("Warranty information not provided", etc.) rather than a real value.
+- `/search/clarify` does a direct match-or-nothing; it doesn't yet ask clarifying questions
+  (budget, condition, delivery window) the way the original BRD flow describes.
+- Most pages still use a hardcoded demo user (`userId: "user-demo"`) instead of resolving the
+  real logged-in Supabase user.
 
 ## Project structure
 
 ```
 src/
-  app/                    Route segments (one folder per URL path)
-  components/             Shared UI (Header, PriorityTabs)
+  app/                       Route segments (one folder per URL path)
+  components/                Shared UI (Header, PriorityTabs, BackendSourcesPanel, ...)
   lib/
-    types.ts               TypeScript types mirroring BRD §13.4
-    mock-data.ts            Mock records used until a real DB is wired up
+    prisma.ts                 Prisma client singleton
+    compare-data.ts            Compare-page data layer (live queries + computed recommendations)
+    search-data.ts             Query -> CanonicalProduct matching + SearchSession recording
+    connectors/                Source connectors (real + registry)
+    supabase/                  Supabase client/server/middleware helpers
 prisma/
-  schema.prisma            Data model mirroring BRD §13.4
-  migrations/               Generated SQL migrations
+  schema.prisma                Data model
+  migrations/                  Generated SQL migrations
+  seed.ts                      Demo data (brand, category, product, sources, listings)
+scripts/
+  sync.ts                       Manual connector sync CLI (any registered source)
 ```

@@ -11,7 +11,9 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "sync:official": "npx tsx scripts/sync-official.ts",
+    "sync": "npx tsx scripts/sync.ts",
+    "sync:official": "npx tsx scripts/sync.ts src-official",
+    "sync:retailer-direct": "npx tsx scripts/sync.ts src-retailer-direct",
     "test": "vitest run"
   },
   "dependencies": {
