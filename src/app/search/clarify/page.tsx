@@ -1,68 +1,119 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Header } from "@/components/Header";
+import { ClarifyQuestions } from "@/components/ClarifyQuestions";
+import { SearchNoMatch } from "@/components/SearchNoMatch";
+import { extractIntentWithAI } from "@/lib/ai-search-intent";
 import { prisma } from "@/lib/prisma";
-import { matchProduct, recordSearchSession } from "@/lib/search-data";
+import { finalizeSearch, matchProduct, startSearchSession } from "@/lib/search-data";
+import {
+  answeredQuestionIds,
+  buildIntent,
+  getClarifyingQuestions,
+  isExplicitIdentifierQuery,
+  paramsToRecord,
+  parseQueryHeuristics,
+  type ClarifyingQuestionId,
+  type SearchFlowParams,
+} from "@/lib/search-intent";
+
+const AI_INTENT_TO_PARAM: Record<string, (value: unknown) => [string, string] | null> = {
+  budgetMax: (v) => (typeof v === "number" ? ["budgetMax", String(v)] : null),
+  condition: (v) => (typeof v === "string" ? ["condition", v] : null),
+  allowComparableAlternatives: (v) =>
+    typeof v === "boolean" ? ["alt", v ? "comparable" : "exact"] : null,
+  deliveryBy: (v) => (typeof v === "string" ? ["deliveryBy", v] : null),
+  sortPriority: (v) => (typeof v === "string" ? ["priority", v] : null),
+};
 
 export default async function ClarifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<SearchFlowParams>;
 }) {
-  const { q, category } = await searchParams;
-  const query = q?.trim() ?? "";
+  const params = await searchParams;
+  const query = params.q?.trim() ?? "";
 
   if (!query) {
-    return (
-      <main className="min-h-screen bg-white">
-        <Header />
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <h1 className="text-2xl font-bold text-navy-900">What are you shopping for?</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Enter a product name, model number, or UPC to compare offers.
-          </p>
-          <Link
-            href="/"
-            className="mt-6 inline-block rounded-md bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-          >
-            Back to search
-          </Link>
-        </section>
-      </main>
-    );
+    redirect("/search");
   }
 
-  const categoryRecord = category
-    ? await prisma.category.findUnique({ where: { slug: category } })
+  // Defensive re-check: an exact/explicit query landing here directly (e.g.
+  // a stale bookmark, browser back) should still skip straight to a result
+  // rather than asking unnecessary questions.
+  const directMatch = await matchProduct(query);
+  if (isExplicitIdentifierQuery(query) || directMatch !== null) {
+    const categoryRecord = params.category
+      ? await prisma.category.findUnique({ where: { slug: params.category } })
+      : null;
+    const result = await finalizeSearch(query, buildIntent(query, params), {
+      directMatch,
+      categoryId: categoryRecord?.id,
+    });
+    if (result.kind === "redirect") {
+      const qs = result.searchParams.toString();
+      redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
+    }
+    return <SearchNoMatch query={query} comparableCandidates={result.comparableCandidates} />;
+  }
+
+  const heuristics = parseQueryHeuristics(query);
+  const answered = answeredQuestionIds(params);
+  if (heuristics.budgetMax !== undefined) answered.add("budgetMax");
+  if (heuristics.condition !== undefined) answered.add("condition");
+  if (heuristics.allowComparableAlternatives !== undefined) answered.add("allowComparableAlternatives");
+  if (heuristics.deliveryBy !== undefined) answered.add("deliveryBy");
+
+  let questionWording: Partial<Record<ClarifyingQuestionId, string>> = {};
+
+  // Only attempt AI extraction once per session, on the very first render
+  // for this query (no sid yet). If it yields nothing new — including
+  // whenever no API key is configured — this falls through to the exact
+  // same deterministic path as before, with no extra redirect.
+  if (!params.sid) {
+    const ai = await extractIntentWithAI(query);
+    if (ai) {
+      questionWording = ai.questionWording;
+
+      const aiParams: Record<string, string> = {};
+      for (const [key, value] of Object.entries(ai.intent)) {
+        if (answered.has(key as ClarifyingQuestionId)) continue;
+        const mapped = AI_INTENT_TO_PARAM[key]?.(value);
+        if (mapped) aiParams[mapped[0]] = mapped[1];
+      }
+
+      if (Object.keys(aiParams).length > 0) {
+        const categoryRecord = params.category
+          ? await prisma.category.findUnique({ where: { slug: params.category } })
+          : null;
+        const sessionId = (await startSearchSession(query, categoryRecord?.id)).id;
+        const qs = new URLSearchParams({ ...paramsToRecord(params), ...aiParams, sid: sessionId });
+        redirect(`/search/clarify?${qs.toString()}`);
+      }
+    }
+  }
+
+  const availableBrands = (await prisma.brand.findMany({ select: { name: true } })).map((b) => b.name);
+  const questions = getClarifyingQuestions(answered, { availableBrands }).map((q) =>
+    questionWording[q.id] ? { ...q, prompt: questionWording[q.id]! } : q,
+  );
+  const readyForConfirmation = questions.length === 0 || params.continue === "1";
+
+  const categoryRecord = params.category
+    ? await prisma.category.findUnique({ where: { slug: params.category } })
     : null;
+  const sessionId = params.sid ?? (await startSearchSession(query, categoryRecord?.id)).id;
+  const currentParams = { sid: sessionId, ...paramsToRecord(params) };
 
-  const matchedProductId = await matchProduct(query);
-  await recordSearchSession({
-    query,
-    categoryId: categoryRecord?.id,
-    matchedProductId,
-  });
-
-  if (matchedProductId) {
-    redirect(`/compare/${matchedProductId}`);
+  if (readyForConfirmation) {
+    const qs = new URLSearchParams(currentParams);
+    redirect(`/search/confirm?${qs.toString()}`);
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-bold text-navy-900">No matching product yet</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          We couldn&apos;t match &ldquo;{query}&rdquo; to a product we track. Try a different
-          name, the exact model number, or a UPC.
-        </p>
-        <Link
-          href="/"
-          className="mt-6 inline-block rounded-md bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-        >
-          Try another search
-        </Link>
-      </section>
-    </main>
+    <ClarifyQuestions
+      originalQuery={query}
+      currentParams={currentParams}
+      questions={questions}
+      sessionId={sessionId}
+    />
   );
 }
