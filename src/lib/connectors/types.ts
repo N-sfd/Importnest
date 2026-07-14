@@ -1,5 +1,7 @@
 export type ConnectorListing = {
     externalId: string;
+    sellerName?: string;
+    url?: string;
     condition: string;
     price: number;
     shipping?: number;

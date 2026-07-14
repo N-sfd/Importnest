@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { getListingExplanation, totalKnownCost } from "@/lib/compare-data";
+import { sourceImageFor } from "@/lib/images";
 
 export default async function WhyPage({
   params,
@@ -28,8 +30,25 @@ export default async function WhyPage({
             <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
               {recommendation.label}
             </p>
-            <h2 className="mt-1 text-lg font-bold text-navy-900">{listing.sourceName}</h2>
-            <p className="text-sm text-gray-600">
+            <div className="mt-1 flex items-center gap-2.5">
+              <Image
+                src={listing.hasDistinctSeller ? "/brand/logo-mark.png" : sourceImageFor(listing.sourceId)}
+                alt=""
+                width={32}
+                height={32}
+                className="rounded-md"
+              />
+              <div>
+                <h2 className="text-lg font-bold text-navy-900">{listing.sourceName}</h2>
+                <p className="text-xs text-gray-500">
+                  {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
+                  {listing.freshnessMinutesAgo === 0
+                    ? "synced just now"
+                    : `synced ${listing.freshnessMinutesAgo}m ago`}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
               ${totalKnownCost(listing).toFixed(2)} total known cost
             </p>
 
@@ -84,11 +103,23 @@ export default async function WhyPage({
               </div>
             </dl>
 
-            <button className="mt-6 w-full rounded-md bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800">
-              Continue to retailer
-            </button>
+            {listing.url ? (
+              <a
+                href={`/go/${listingId}`}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="mt-6 block w-full rounded-md bg-navy-900 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                Continue to retailer
+              </a>
+            ) : (
+              <p className="mt-6 rounded-md bg-gray-50 px-4 py-2 text-center text-sm text-gray-500">
+                Retailer link not available for this offer.
+              </p>
+            )}
             <p className="mt-2 text-center text-xs text-gray-400">
-              Importnest may earn a referral fee. This does not affect the ranking.
+              Checkout happens on the retailer&apos;s site. Importnest may earn a referral fee;
+              this does not affect the ranking.
             </p>
             <Link
               href={`/compare/${productId}`}

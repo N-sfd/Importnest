@@ -14,7 +14,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Importnest — AI-Powered Shopping Platform",
-  description: "Compare purchasing options across approved online sources with transparent, explainable recommendations.",
+  description:
+    "Compare purchasing options across approved online sources with transparent, explainable recommendations.",
+  icons: {
+    icon: "/brand/logo.svg",
+    apple: "/brand/logo-mark.png",
+  },
 };
 
 export default function RootLayout({

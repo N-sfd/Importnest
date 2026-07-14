@@ -1,6 +1,14 @@
+import Image from "next/image";
 import { Header } from "@/components/Header";
+import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { PriorityTabs } from "@/components/PriorityTabs";
-import { getCompareProduct, getCompareRows, minutesSince } from "@/lib/compare-data";
+import {
+  getCompareProduct,
+  getCompareRows,
+  getProductSourceSummaries,
+  minutesSince,
+} from "@/lib/compare-data";
+import { productImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
@@ -14,6 +22,7 @@ export default async function ComparePage({
   if (!product) notFound();
 
   const rows = await getCompareRows(productId);
+  const sources = await getProductSourceSummaries(productId);
   const bestMatch = product.matches[0];
   const freshest = await prisma.listing.findFirst({
     where: { canonicalProductId: productId },
@@ -27,7 +36,16 @@ export default async function ComparePage({
       <Header />
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-md bg-navy-100" />
+          <div className="relative h-14 w-14 overflow-hidden rounded-md bg-navy-100">
+            <Image
+              src={productImageFor(productId)}
+              alt={product.modelName}
+              fill
+              className="object-cover"
+              sizes="56px"
+              priority
+            />
+          </div>
           <div>
             <h1 className="text-xl font-bold text-navy-900">{product.modelName}</h1>
             <p className="text-sm text-gray-500">
@@ -42,6 +60,8 @@ export default async function ComparePage({
         <div className="mt-6">
           <PriorityTabs productId={productId} rows={rows} />
         </div>
+
+        <BackendSourcesPanel sources={sources} />
       </section>
     </main>
   );

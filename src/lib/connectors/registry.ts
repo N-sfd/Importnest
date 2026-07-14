@@ -1,8 +1,8 @@
-import { fakeOfficialConnector } from "./fake-official";
+import { upcItemDbConnector } from "./upcitemdb";
 import type { SourceConnector } from "./types";
 
 const connectors: Record<string, SourceConnector> = {
-  [fakeOfficialConnector.sourceId]: fakeOfficialConnector,
+  [upcItemDbConnector.sourceId]: upcItemDbConnector,
 };
 
 export function getConnector(sourceId: string): SourceConnector {

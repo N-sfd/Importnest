@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { productImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 
 const statusStyle: Record<string, string> = {
@@ -54,7 +56,15 @@ export default async function SavedPage() {
               className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 shrink-0 rounded-md bg-navy-100" />
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-navy-100">
+                  <Image
+                    src={productImageFor(item.productId)}
+                    alt={item.productName}
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                  />
+                </div>
                 <div>
                   <p className="font-semibold text-navy-900">{item.productName}</p>
                   <p className="text-sm text-gray-600">{item.currentValue}</p>

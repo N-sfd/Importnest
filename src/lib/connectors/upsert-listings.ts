@@ -21,35 +21,35 @@ export async function upsertConnectorListings(result: ConnectorResult) {
 
     const canonicalProductId = identifier?.canonicalProductId ?? null;
 
-    // Keep stable ids for the stub so re-sync updates the same row
-    const listingId =
-      result.sourceId === "src-official" && item.externalId === "official-ah-4200"
-        ? "listing-official"
-        : undefined;
-
-    const listing = await prisma.listing.upsert({
-      where: { id: listingId ?? `listing-${result.sourceId}-${item.externalId}` },
-      create: {
-        id: listingId ?? `listing-${result.sourceId}-${item.externalId}`,
+    // Dedup on real offer identity, not a derived id, so re-syncs update the
+    // same row instead of creating duplicates when a merchant name has
+    // ambiguous slugified characters.
+    const existing = await prisma.listing.findFirst({
+      where: {
         sourceId: result.sourceId,
-        canonicalProductId,
+        externalId: item.externalId,
+        sellerName: item.sellerName ?? null,
         condition: item.condition,
-        price: item.price,
-        shipping: item.shipping ?? 0,
-        fees: item.fees ?? 0,
-        deliveryLabel: item.deliveryLabel,
-        freshnessCapturedAt: result.fetchedAt,
-      },
-      update: {
-        canonicalProductId,
-        condition: item.condition,
-        price: item.price,
-        shipping: item.shipping ?? 0,
-        fees: item.fees ?? 0,
-        deliveryLabel: item.deliveryLabel,
-        freshnessCapturedAt: result.fetchedAt,
       },
     });
+
+    const data = {
+      sourceId: result.sourceId,
+      externalId: item.externalId,
+      sellerName: item.sellerName,
+      url: item.url,
+      canonicalProductId,
+      condition: item.condition,
+      price: item.price,
+      shipping: item.shipping ?? 0,
+      fees: item.fees ?? 0,
+      deliveryLabel: item.deliveryLabel,
+      freshnessCapturedAt: result.fetchedAt,
+    };
+
+    const listing = existing
+      ? await prisma.listing.update({ where: { id: existing.id }, data })
+      : await prisma.listing.create({ data });
 
     await prisma.priceHistory.create({
       data: {

@@ -2,7 +2,21 @@ import type { Priority } from "@/lib/types";
 
 export type CompareListingView = {
   id: string;
+  sourceId: string;
   sourceName: string;
+  sourceType: string;
+  sourceTypeLabel: string;
+  /** True when this listing's real merchant (sellerName) differs from the
+   *  connector/feed it was synced through — e.g. a UPC-lookup connector
+   *  surfacing a Newegg or Best Buy offer. The connector's own sourceType
+   *  ("manufacturer-feed", icon, etc.) describes the feed, not that merchant,
+   *  so callers should avoid presenting feed-level metadata as if it were
+   *  retailer-level metadata when this is true. */
+  hasDistinctSeller: boolean;
+  freshnessMinutesAgo: number;
+  dataCompletenessPct: number;
+  url?: string;
+  isAuthorizedSource: boolean;
   condition: string;
   price: number;
   verifiedDiscount: number;
@@ -11,7 +25,15 @@ export type CompareListingView = {
   deliveryLabel: string;
   pickupAvailable: boolean;
   warrantyLabel: string;
-  returnWindowDays: number;
+  returnPolicyLabel: string;
+};
+
+export type CompareSourceSummary = {
+  sourceId: string;
+  sourceName: string;
+  sourceTypeLabel: string;
+  listingCount: number;
+  freshnessMinutesAgo: number | null;
 };
 
 export type CompareRecommendationView = {
@@ -52,7 +74,10 @@ export function sortCompareRows(rows: CompareRow[], priority: Priority): Compare
             : 1,
       );
     case "best-returns":
-      return copy.sort((a, b) => b.listing.returnWindowDays - a.listing.returnWindowDays);
+      // No structured return-policy data is available yet (see returnPolicyLabel
+      // fallback in compare-data.ts), so this falls back to overall rank rather
+      // than fabricating a ranking signal that doesn't exist.
+      return copy.sort((a, b) => a.recommendation.rank - b.recommendation.rank);
     case "best-overall":
     default:
       return copy.sort((a, b) => a.recommendation.rank - b.recommendation.rank);

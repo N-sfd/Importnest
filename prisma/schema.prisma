@@ -84,6 +84,9 @@ model Listing {
   id                 String   @id @default(cuid())
   sourceId           String
   canonicalProductId String?
+  externalId         String? // connector's raw offer id, for dedup on re-sync
+  sellerName         String? // actual merchant (e.g. "Best Buy"); falls back to Source.name when absent
+  url                String? // retailer product/offer page
   condition          String // new | open-box | used | refurbished | certified-refurbished
   price              Float
   shipping           Float    @default(0)
