@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { getListingsWithRecommendations, totalKnownCost } from "@/lib/mock-data";
+import { sortCompareRows, totalKnownCost, type CompareRow } from "@/lib/compare-view";
 import type { Priority } from "@/lib/types";
 
 const priorities: { key: Priority; label: string }[] = [
@@ -12,15 +12,6 @@ const priorities: { key: Priority; label: string }[] = [
   { key: "best-returns", label: "Best returns" },
 ];
 
-const sortKey: Record<Priority, (a: (typeof rows)[number], b: (typeof rows)[number]) => number> = {
-  "best-overall": (a, b) => a.recommendation.rank - b.recommendation.rank,
-  "lowest-cost": (a, b) => totalKnownCost(a.listing) - totalKnownCost(b.listing),
-  "fastest-delivery": (a, b) => (a.listing.pickupAvailable === b.listing.pickupAvailable ? 0 : a.listing.pickupAvailable ? -1 : 1),
-  "best-returns": (a, b) => b.listing.returnWindowDays - a.listing.returnWindowDays,
-};
-
-const rows = getListingsWithRecommendations();
-
 const badgeForPriority: Record<Priority, string> = {
   "best-overall": "Best overall",
   "lowest-cost": "Lowest cost",
@@ -28,9 +19,15 @@ const badgeForPriority: Record<Priority, string> = {
   "best-returns": "Best returns",
 };
 
-export function PriorityTabs({ productId }: { productId: string }) {
+export function PriorityTabs({
+  productId,
+  rows,
+}: {
+  productId: string;
+  rows: CompareRow[];
+}) {
   const [priority, setPriority] = useState<Priority>("best-overall");
-  const sorted = [...rows].sort(sortKey[priority]);
+  const sorted = sortCompareRows(rows, priority);
   const topId = sorted[0]?.listing.id;
 
   return (
@@ -72,8 +69,12 @@ export function PriorityTabs({ productId }: { productId: string }) {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 capitalize text-gray-600">{listing.condition.replace("-", " ")}</td>
-                <td className="px-4 py-3 font-semibold text-navy-900">${totalKnownCost(listing).toFixed(2)}</td>
+                <td className="px-4 py-3 capitalize text-gray-600">
+                  {listing.condition.replace("-", " ")}
+                </td>
+                <td className="px-4 py-3 font-semibold text-navy-900">
+                  ${totalKnownCost(listing).toFixed(2)}
+                </td>
                 <td className="px-4 py-3 text-gray-600">{listing.deliveryLabel}</td>
                 <td className="px-4 py-3 text-gray-600">
                   {listing.warrantyLabel} · {listing.returnWindowDays}-day returns

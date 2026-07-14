@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { Header } from "@/components/Header";
-import { savedProducts } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
 
 const statusStyle: Record<string, string> = {
   watching: "bg-navy-100 text-navy-900",
@@ -7,16 +8,47 @@ const statusStyle: Record<string, string> = {
   paused: "bg-gray-100 text-gray-500",
 };
 
-export default function SavedPage() {
+export default async function SavedPage() {
+  const alerts = await prisma.alert.findMany({
+    where: { userId: "user-demo" },
+    include: { canonicalProduct: true },
+    orderBy: { id: "asc" },
+  });
+
+  const items = await Promise.all(
+    alerts.map(async (alert) => {
+      const sourceCoverage = await prisma.listing.count({
+        where: { canonicalProductId: alert.canonicalProductId },
+      });
+      const status = alert.isActive
+        ? alert.type === "back-in-stock"
+          ? "triggered"
+          : "watching"
+        : "paused";
+
+      return {
+        id: alert.id,
+        productId: alert.canonicalProductId,
+        productName: alert.canonicalProduct.modelName,
+        currentValue: "—",
+        target: alert.threshold ?? "—",
+        status,
+        sourceCoverage,
+      };
+    }),
+  );
+
   return (
     <main className="min-h-screen bg-white">
       <Header />
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <h1 className="text-2xl font-bold text-navy-900">Saved products and alerts</h1>
-        <p className="mt-1 text-sm text-gray-600">Track price, stock and delivery changes across approved sources.</p>
+        <p className="mt-1 text-sm text-gray-600">
+          Track price, stock and delivery changes across approved sources.
+        </p>
 
         <div className="mt-6 space-y-4">
-          {savedProducts.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -30,18 +62,22 @@ export default function SavedPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[item.status]}`}>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[item.status]}`}
+                >
                   {item.status === "watching"
                     ? `Watching · ${item.sourceCoverage} sources`
                     : item.status === "triggered"
-                    ? `Triggered · ${item.sourceCoverage} sources`
-                    : "Paused"}
+                      ? `Triggered · ${item.sourceCoverage} sources`
+                      : "Paused"}
                 </span>
-                <button className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-navy-900 hover:border-navy-800">
+                <Link
+                  href={`/compare/${item.productId}`}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-navy-900 hover:border-navy-800"
+                >
                   View comparison
-                </button>
+                </Link>
               </div>
-              <p className="text-xs text-gray-400 sm:ml-auto">Last checked {item.lastCheckedMinutesAgo} minutes ago</p>
             </div>
           ))}
         </div>

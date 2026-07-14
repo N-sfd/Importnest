@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
-import { listings, recommendations, totalKnownCost } from "@/lib/mock-data";
+import { getListingExplanation, totalKnownCost } from "@/lib/compare-data";
 
 export default async function WhyPage({
   params,
@@ -9,22 +9,29 @@ export default async function WhyPage({
   params: Promise<{ productId: string; listingId: string }>;
 }) {
   const { productId, listingId } = await params;
-  const listing = listings.find((l) => l.id === listingId);
-  const recommendation = recommendations[listingId];
-  if (!listing || !recommendation) notFound();
+  const data = await getListingExplanation(listingId);
+  if (!data) notFound();
+
+  const { listing, recommendation } = data;
 
   return (
     <main className="min-h-screen bg-white">
       <Header />
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <h1 className="text-2xl font-bold text-navy-900">Why this offer is recommended</h1>
-        <p className="mt-1 text-sm text-gray-600">A transparent explanation of the recommendation and trade-offs.</p>
+        <p className="mt-1 text-sm text-gray-600">
+          A transparent explanation of the recommendation and trade-offs.
+        </p>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="rounded-lg border border-gray-200 p-5 lg:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">{recommendation.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
+              {recommendation.label}
+            </p>
             <h2 className="mt-1 text-lg font-bold text-navy-900">{listing.sourceName}</h2>
-            <p className="text-sm text-gray-600">${totalKnownCost(listing).toFixed(2)} total known cost</p>
+            <p className="text-sm text-gray-600">
+              ${totalKnownCost(listing).toFixed(2)} total known cost
+            </p>
 
             <p className="mt-4 text-sm font-semibold text-gray-700">Why it fits your priorities</p>
             <ul className="mt-2 space-y-1.5 text-sm text-gray-700">

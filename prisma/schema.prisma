@@ -1,13 +1,14 @@
 // Schema mirrors the Business Data Dictionary in Importnest BRD Section 13.4.
-// Local dev uses SQLite for zero-setup; point DATABASE_URL at Postgres for staging/prod.
+// Postgres via Supabase: DATABASE_URL (pooled) + DIRECT_URL (migrations).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Brand {
