@@ -22,10 +22,16 @@ export default async function ComparePage({
   searchParams,
 }: {
   params: Promise<{ productId: string }>;
-  searchParams: Promise<{ maxBudget?: string; condition?: string; priority?: string; comparable?: string }>;
+  searchParams: Promise<{
+    maxBudget?: string;
+    condition?: string;
+    priority?: string;
+    comparable?: string;
+    fastDelivery?: string;
+  }>;
 }) {
   const { productId } = await params;
-  const { maxBudget, condition, priority, comparable } = await searchParams;
+  const { maxBudget, condition, priority, comparable, fastDelivery } = await searchParams;
   const product = await getCompareProduct(productId);
   if (!product) notFound();
 
@@ -35,10 +41,11 @@ export default async function ComparePage({
   if (condition && VALID_CONDITIONS.includes(condition as never)) {
     filters.condition = condition as CompareFilters["condition"];
   }
-  const hasFilters = filters.maxBudget != null || filters.condition != null;
+  if (fastDelivery === "1") filters.requireFastDelivery = true;
+  const hasFilters = filters.maxBudget != null || filters.condition != null || filters.requireFastDelivery === true;
   const initialPriority = priority && VALID_PRIORITIES.includes(priority as Priority) ? (priority as Priority) : undefined;
 
-  const rows = await getCompareRows(productId, hasFilters ? filters : undefined);
+  const rows = await getCompareRows(productId, hasFilters ? filters : undefined, initialPriority);
   const sources = await getProductSourceSummaries(productId);
   const bestMatch = product.matches[0];
   const freshest = await prisma.listing.findFirst({
@@ -82,7 +89,7 @@ export default async function ComparePage({
 
         {hasFilters && rows.length === 0 ? (
           <p className="mt-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
-            No listings match your budget/condition preferences for this product.{" "}
+            No listings match your budget, condition, or delivery preferences for this product.{" "}
             <a href={`/compare/${productId}`} className="font-medium text-navy-900 underline">
               Clear filters
             </a>{" "}

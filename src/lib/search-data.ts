@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sortPriorityToComparePriority, type SearchIntent } from "@/lib/search-intent";
+import { isUrgentDeliveryPhrase, sortPriorityToComparePriority, type SearchIntent } from "@/lib/search-intent";
 
 export type SearchInputType = "keyword" | "model-number";
 
@@ -103,9 +103,27 @@ function significantWords(query: string): string[] {
 }
 
 /**
+ * Sorts candidates so preferred-brand matches surface first, otherwise
+ * preserving relative order. Pure so it's testable without a DB fixture for
+ * every brand-preference scenario.
+ */
+export function sortByPreferredBrand<T extends { brandName: string }>(
+  candidates: T[],
+  preferredBrands: string[] | undefined,
+): T[] {
+  if (!preferredBrands?.length) return candidates;
+  const preferred = new Set(preferredBrands);
+  return [...candidates].sort(
+    (a, b) => Number(preferred.has(b.brandName)) - Number(preferred.has(a.brandName)),
+  );
+}
+
+/**
  * Broader, category/brand-based fallback used only when an exact match
  * fails. Deliberately looser than matchProduct — callers must label these as
- * "comparable alternative", not an exact match.
+ * "comparable alternative", not an exact match. When multiple candidates
+ * match, preferredBrands (a soft preference, unlike the hard-filtering
+ * excludedBrands) determines which surfaces first.
  */
 export async function findComparableProducts(
   query: string,
@@ -128,10 +146,15 @@ export async function findComparableProducts(
           : {},
       ],
     },
-    select: { id: true },
+    include: { brand: true },
   });
 
-  return Array.from(new Set(candidates.map((c) => c.id)));
+  const deduped = Array.from(new Map(candidates.map((c) => [c.id, c])).values()).map((c) => ({
+    id: c.id,
+    brandName: c.brand.name,
+  }));
+
+  return sortByPreferredBrand(deduped, intent.preferredBrands).map((c) => c.id);
 }
 
 export type FinalizeSearchResult =
@@ -185,6 +208,7 @@ export async function finalizeSearch(
       const mapped = sortPriorityToComparePriority(intent.sortPriority);
       if (mapped) searchParams.set("priority", mapped);
     }
+    if (isUrgentDeliveryPhrase(intent.deliveryBy)) searchParams.set("fastDelivery", "1");
     if (isComparable) searchParams.set("comparable", "1");
     return { kind: "redirect", productId: finalMatch, searchParams };
   }
