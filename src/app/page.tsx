@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BackendLinks } from "@/components/BackendLinks";
-import { BrandMark } from "@/components/BrandMark";
 import { PageShell } from "@/components/PageShell";
 import { categoryImages } from "@/lib/images";
 
@@ -51,17 +50,14 @@ export default function HomePage() {
           className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/15 blur-3xl"
         />
 
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <BrandMark size="lg" showWordmark onDark />
-            <h1 className="mt-5 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Compare trusted offers in one clear view
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
-              Search once. See total known cost, delivery, and protection—sourced only from
-              approved retailers.
-            </p>
-          </div>
+        <div className="relative max-w-2xl">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Compare trusted offers in one clear view
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
+            Search once. See total known cost, delivery, and protection—sourced only from
+            approved retailers.
+          </p>
         </div>
 
         <form

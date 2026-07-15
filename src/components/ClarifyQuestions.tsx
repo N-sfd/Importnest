@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PageShell } from "@/components/PageShell";
 import { recordAnswerAction } from "@/lib/search-actions";
 import type { ClarifyingQuestion } from "@/lib/search-intent";
 
@@ -95,7 +94,7 @@ export function ClarifyQuestions({
   }
 
   return (
-    <PageShell width="narrow">
+    <>
       <h1
         ref={headingRef}
         tabIndex={-1}
@@ -203,6 +202,6 @@ export function ClarifyQuestions({
           Continue to comparison
         </button>
       </div>
-    </PageShell>
+    </>
   );
 }

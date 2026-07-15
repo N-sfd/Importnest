@@ -6,18 +6,18 @@
   --surface: #f3f5f7;
   --panel: #ffffff;
   --border: #e2e6ea;
-  --navy-950: #071018;
-  --navy-900: #0b2a62;
-  --navy-800: #14356f;
-  --navy-100: #e8eef8;
-  --accent: #3b82c4;
+  --navy-950: #021022;
+  --navy-900: #041935;
+  --navy-800: #0a2a4d;
+  --navy-100: #e6eef8;
+  --accent: #2ec8e6;
   --cta: #9fea3a;
   --cta-hover: #8ad82e;
-  --price: #0b2a62;
-  --link: #1d4f91;
+  --price: #041935;
+  --link: #1d5a9c;
   --muted: #5c6770;
-  --ring: #9fea3a;
-  --shadow-panel: 0 1px 2px rgb(11 42 98 / 0.05), 0 10px 28px rgb(11 42 98 / 0.07);
+  --ring: #2ec8e6;
+  --shadow-panel: 0 1px 2px rgb(4 25 53 / 0.05), 0 10px 28px rgb(4 25 53 / 0.08);
 }
 
 @theme inline {

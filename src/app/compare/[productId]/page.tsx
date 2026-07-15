@@ -14,6 +14,15 @@ import type { Priority } from "@/lib/types";
 import { productImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getAuthUser } from "@/lib/auth";
+import {
+  removeAlertAction,
+  saveProductAction,
+  setPriceAlertAction,
+  toggleAlertActiveAction,
+  unsaveProductAction,
+} from "@/lib/saved-actions";
+import { getSaveAndAlertState } from "@/lib/saved-data";
 
 const VALID_PRIORITIES: Priority[] = [
   "best-overall",
@@ -45,6 +54,10 @@ export default async function ComparePage({
   const { maxBudget, condition, priority, comparable, fastDelivery } = await searchParams;
   const product = await getCompareProduct(productId);
   if (!product) notFound();
+
+  const redirectTo = `/compare/${productId}`;
+  const authUser = await getAuthUser();
+  const saveState = authUser ? await getSaveAndAlertState(authUser.id, productId) : null;
 
   const filters: CompareFilters = {};
   const parsedBudget = maxBudget ? Number(maxBudget) : undefined;
@@ -130,6 +143,91 @@ export default async function ComparePage({
               {rows.length} buying {rows.length === 1 ? "option" : "options"} across approved
               retailers.
             </p>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              {!authUser ? (
+                <Link
+                  href={`/login?next=${encodeURIComponent(redirectTo)}`}
+                  className="text-sm font-medium text-link hover:underline"
+                >
+                  Sign in to save this product or set a price alert
+                </Link>
+              ) : (
+                <>
+                  <form
+                    action={
+                      saveState?.isSaved
+                        ? unsaveProductAction.bind(null, productId, redirectTo)
+                        : saveProductAction.bind(null, productId, redirectTo)
+                    }
+                  >
+                    <button
+                      type="submit"
+                      className={
+                        saveState?.isSaved
+                          ? "min-h-11 rounded-full border border-border bg-panel px-4 py-2 text-sm font-medium text-gray-700 hover:border-navy-800"
+                          : "btn-cta min-h-11 px-4 py-2 text-sm"
+                      }
+                    >
+                      {saveState?.isSaved ? "Saved ✓" : "Save this product"}
+                    </button>
+                  </form>
+
+                  {saveState?.alert ? (
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+                      <span>
+                        Alert: notify below{" "}
+                        <span className="font-semibold text-foreground">
+                          ${saveState.alert.threshold}
+                        </span>
+                        {!saveState.alert.isActive && " (paused)"}
+                      </span>
+                      <form action={toggleAlertActiveAction.bind(null, productId, "price-drop", redirectTo)}>
+                        <button
+                          type="submit"
+                          className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
+                        >
+                          {saveState.alert.isActive ? "Pause" : "Resume"}
+                        </button>
+                      </form>
+                      <form action={removeAlertAction.bind(null, productId, "price-drop", redirectTo)}>
+                        <button
+                          type="submit"
+                          className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
+                        >
+                          Remove alert
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <form
+                      action={setPriceAlertAction.bind(null, productId, redirectTo)}
+                      className="flex items-center gap-2"
+                    >
+                      <label htmlFor="threshold" className="text-sm text-muted">
+                        Notify below $
+                      </label>
+                      <input
+                        id="threshold"
+                        name="threshold"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        placeholder="0.00"
+                        className="min-h-11 w-24 rounded-md border border-border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent"
+                      />
+                      <button
+                        type="submit"
+                        className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
+                      >
+                        Set price alert
+                      </button>
+                    </form>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>

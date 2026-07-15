@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export function LogoutButton() {
+export function LogoutButton({ variant = "default" }: { variant?: "default" | "compact" }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +18,24 @@ export function LogoutButton() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (variant === "compact") {
+    return (
+      <button
+        type="button"
+        onClick={onLogout}
+        disabled={loading}
+        className="rounded-xl px-2.5 py-1.5 text-left text-sm transition hover:bg-white/10 disabled:opacity-60 sm:px-3"
+      >
+        <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
+          Account
+        </span>
+        <span className="font-semibold leading-tight">
+          {loading ? "Signing out…" : "Sign out"}
+        </span>
+      </button>
+    );
   }
 
   return (
