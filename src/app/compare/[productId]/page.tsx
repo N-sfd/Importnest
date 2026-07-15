@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
+import { Freshness } from "@/components/Freshness";
 import { PageShell } from "@/components/PageShell";
 import { PriceHistorySection } from "@/components/PriceHistorySection";
 import { PriorityTabs } from "@/components/PriorityTabs";
@@ -166,20 +167,9 @@ export default async function ComparePage({
                     ? `Exact match · ${confidencePct}%`
                     : "Match pending review"}
               </span>
-              {freshnessMinutes != null ? (
-                <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted ring-1 ring-border">
-                  {freshnessMinutes === 0
-                    ? "Checked just now"
-                    : freshnessMinutes < 60
-                      ? `Checked ${freshnessMinutes}m ago`
-                      : `Checked ${Math.round(freshnessMinutes / 60)}h ago`}
-                </span>
-              ) : null}
-              {freshnessMinutes != null && freshnessMinutes < 60 ? (
-                <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted ring-1 ring-border">
-                  Price checked recently
-                </span>
-              ) : null}
+              <span className="rounded-full bg-surface px-3 py-1 ring-1 ring-border">
+                <Freshness minutesAgo={freshnessMinutes} />
+              </span>
             </div>
             {product.configuration ? (
               <p className="mt-3 text-sm text-muted">Configuration: {product.configuration}</p>

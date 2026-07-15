@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BrandLink } from "@/components/BrandMark";
+import { HeaderSearch } from "@/components/HeaderSearch";
 import { LogoutButton } from "@/components/LogoutButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthUser } from "@/lib/auth";
 
 const categories = [
@@ -17,31 +19,12 @@ export async function Header() {
     <header className="sticky top-0 z-40">
       <div className="border-b border-white/10 bg-navy-900/95 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-3 py-3 sm:gap-5 sm:px-4">
-          <BrandLink logo="in" />
+          <BrandLink logo="nest" />
 
-          <form
-            action="/search"
-            className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full bg-white focus-within:ring-2 focus-within:ring-ring"
-          >
-            <label htmlFor="header-q" className="sr-only">
-              Search Importnest
-            </label>
-            <input
-              id="header-q"
-              name="q"
-              type="search"
-              placeholder="Search products, models, or UPCs"
-              className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-4"
-            />
-            <button
-              type="submit"
-              className="btn-cta m-1 h-9 shrink-0 px-3.5 text-sm leading-none sm:px-4"
-            >
-              Search
-            </button>
-          </form>
+          <HeaderSearch />
 
-          <nav className="flex shrink-0 items-center gap-1 text-sm sm:gap-2">
+          <nav className="ml-auto flex shrink-0 items-center gap-0.5 text-sm sm:gap-1">
+            <ThemeToggle />
             <Link
               href="/saved"
               className="rounded-xl px-2.5 py-1.5 transition hover:bg-white/10 sm:px-3"

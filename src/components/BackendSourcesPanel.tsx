@@ -1,14 +1,8 @@
 import Image from "next/image";
 import { BackendLinks } from "@/components/BackendLinks";
+import { Freshness } from "@/components/Freshness";
 import type { CompareSourceSummary } from "@/lib/compare-view";
 import { sourceImageFor } from "@/lib/images";
-
-function freshnessLabel(minutes: number | null) {
-  if (minutes == null) return "Not synced";
-  if (minutes === 0) return "Synced just now";
-  if (minutes === 1) return "Synced 1 minute ago";
-  return `Synced ${minutes} minutes ago`;
-}
 
 export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary[] }) {
   if (sources.length === 0) return null;
@@ -34,10 +28,12 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{source.sourceName}</p>
-              <p className="text-xs text-muted">
-                {source.sourceTypeLabel} · {source.listingCount}{" "}
-                {source.listingCount === 1 ? "listing" : "listings"} ·{" "}
-                {freshnessLabel(source.freshnessMinutesAgo)}
+              <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
+                <span>
+                  {source.sourceTypeLabel} · {source.listingCount}{" "}
+                  {source.listingCount === 1 ? "listing" : "listings"} ·
+                </span>
+                <Freshness minutesAgo={source.freshnessMinutesAgo} />
               </p>
             </div>
           </li>

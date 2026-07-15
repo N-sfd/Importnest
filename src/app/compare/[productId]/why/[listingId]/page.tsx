@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { Freshness } from "@/components/Freshness";
 import { PageShell } from "@/components/PageShell";
 import { getListingExplanation, totalKnownCost } from "@/lib/compare-data";
-import { sourceImageFor } from "@/lib/images";
+import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 
 export default async function WhyPage({
   params,
@@ -43,7 +44,7 @@ export default async function WhyPage({
             <Image
               src={
                 listing.hasDistinctSeller
-                  ? "/brand/logo-mark.png"
+                  ? BRAND_FALLBACK_IMAGE
                   : sourceImageFor(listing.sourceId)
               }
               alt=""
@@ -53,11 +54,9 @@ export default async function WhyPage({
             />
             <div>
               <h2 className="text-lg font-bold text-foreground">{listing.sourceName}</h2>
-              <p className="text-xs text-muted">
-                {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
-                {listing.freshnessMinutesAgo === 0
-                  ? "synced just now"
-                  : `synced ${listing.freshnessMinutesAgo}m ago`}
+              <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
+                {listing.sourceTypeLabel ? <span>{listing.sourceTypeLabel} ·</span> : null}
+                <Freshness minutesAgo={listing.freshnessMinutesAgo} />
               </p>
             </div>
           </div>

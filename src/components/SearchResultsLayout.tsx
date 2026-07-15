@@ -7,6 +7,7 @@ import {
   type SearchResultProduct,
   type SearchResultsFacetOptions,
 } from "@/lib/search-results";
+import { productThumbClass } from "@/lib/images";
 import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
 export type ResultsPageParams = {
@@ -322,7 +323,13 @@ export function SearchResultProductCard({
         href={`/compare/${product.id}`}
         className="relative mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-border bg-white sm:mx-0"
       >
-        <Image src={product.imageSrc} alt="" fill className="object-contain p-2" sizes="112px" />
+        <Image
+          src={product.imageSrc}
+          alt=""
+          fill
+          className={productThumbClass(product.imageSrc)}
+          sizes="112px"
+        />
       </Link>
 
       <div className="min-w-0 flex-1 space-y-2">

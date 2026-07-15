@@ -4,6 +4,7 @@ import {
   freshnessLabel,
   type PopularComparison,
 } from "@/lib/popular-comparisons";
+import { productThumbClass } from "@/lib/images";
 import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
 export function PopularComparisonCard({
@@ -27,7 +28,7 @@ export function PopularComparisonCard({
           src={item.imageSrc}
           alt=""
           fill
-          className="object-contain p-1.5"
+          className={productThumbClass(item.imageSrc)}
           sizes="80px"
         />
       </Link>

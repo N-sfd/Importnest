@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { formatFreshness } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { Freshness } from "@/components/Freshness";
+import { productImageFor, productThumbClass } from "@/lib/images";
 import type { WatchlistItem } from "@/lib/saved-data";
 import {
   deleteWatchlistItemAction,
@@ -89,6 +89,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
   const redirectTo = "/saved";
   const change = formatChange(item.priceChange);
   const alertType = item.alertType ?? "price-drop";
+  const imageSrc = productImageFor(item.canonicalProductId);
   const defaultThreshold =
     item.targetPrice != null
       ? item.targetPrice.toFixed(2)
@@ -105,10 +106,10 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-white sm:h-24 sm:w-24"
           >
             <Image
-              src={productImageFor(item.canonicalProductId)}
+              src={imageSrc}
               alt=""
               fill
-              className="object-contain p-1.5"
+              className={productThumbClass(imageSrc)}
               sizes="96px"
             />
           </Link>
@@ -172,7 +173,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                   Last checked
                 </p>
                 <p className="mt-0.5 text-sm font-medium text-navy-900">
-                  {formatFreshness(item.lastCheckedMinutesAgo)}
+                  <Freshness minutesAgo={item.lastCheckedMinutesAgo} />
                 </p>
               </div>
               {item.priceHistory.length >= 2 ? (

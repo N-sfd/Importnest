@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   buildRecommendationPanel,
   formatConditionLabel,
-  formatFreshness,
   isStaleFreshness,
   PRIORITY_LABELS,
   sortCompareRows,
@@ -14,7 +13,8 @@ import {
   type CompareRow,
   type RecommendationPanelModel,
 } from "@/lib/compare-view";
-import { sourceImageFor } from "@/lib/images";
+import { Freshness } from "@/components/Freshness";
+import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 import type { Priority } from "@/lib/types";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
 
@@ -58,9 +58,9 @@ function RecommendationPanel({
           <p className="text-xl font-bold tabular-nums text-price">
             ${model.totalKnownCost.toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-muted">
-            {formatFreshness(model.lastCheckedMinutesAgo)}
-          </p>
+          <div className="mt-1">
+            <Freshness minutesAgo={model.lastCheckedMinutesAgo} />
+          </div>
         </div>
       </div>
 
@@ -143,14 +143,13 @@ function OfferCard({
   const { listing, recommendation } = row;
   const total = totalKnownCost(listing);
   const logoSrc = listing.hasDistinctSeller
-    ? "/brand/logo-mark.png"
+    ? BRAND_FALLBACK_IMAGE
     : sourceImageFor(listing.sourceId);
   const fulfillment = listing.pickupAvailable
     ? listing.deliveryLabel !== "Delivery estimate unavailable"
       ? listing.deliveryLabel
       : "Pickup available"
     : listing.deliveryLabel;
-  const stale = isStaleFreshness(listing.freshnessMinutesAgo);
 
   return (
     <li
@@ -189,15 +188,10 @@ function OfferCard({
                   Approved source
                 </span>
               ) : null}
-              {stale ? (
-                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-950">
-                  Data may be stale
-                </span>
-              ) : null}
             </div>
-            <p className="mt-0.5 text-xs text-muted">
-              {listing.sourceTypeLabel ? `${listing.sourceTypeLabel} · ` : ""}
-              {formatFreshness(listing.freshnessMinutesAgo)}
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
+              {listing.sourceTypeLabel ? <span>{listing.sourceTypeLabel} ·</span> : null}
+              <Freshness minutesAgo={listing.freshnessMinutesAgo} />
             </p>
             <dl className="mt-2 grid gap-1 text-sm text-foreground/80 sm:grid-cols-2">
               <MetaCell label="Condition" value={formatConditionLabel(listing.condition)} />
@@ -254,8 +248,11 @@ export function PriorityTabs({
   const [priority, setPriority] = useState<Priority>(initialPriority ?? "best-overall");
   const sorted = sortCompareRows(rows, priority);
   const topId = sorted[0]?.listing.id;
-  const recommendationLabel = PRIORITY_LABELS[priority];
   const panel = buildRecommendationPanel(sorted, priority);
+  // Derived from the panel (not a static PRIORITY_LABELS lookup) so a stale
+  // top-ranked offer never gets badged with a definitive claim like "Best
+  // overall" — buildRecommendationPanel already swaps in a neutral label then.
+  const recommendationLabel = panel?.label ?? PRIORITY_LABELS[priority];
   const anyStale = sorted.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
   const sourceCount = new Set(sorted.map((r) => r.listing.sourceId)).size;
 

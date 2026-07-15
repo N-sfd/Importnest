@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const SIZES = {
-  sm: { fullH: 48, icon: 44 },
-  md: { fullH: 58, icon: 50 },
-  lg: { fullH: 92, icon: 72 },
+  sm: { fullH: 40, icon: 34 },
+  md: { fullH: 48, icon: 40 },
+  lg: { fullH: 88, icon: 68 },
 } as const;
 
 export type BrandLogo = "in" | "nest";
@@ -22,7 +22,7 @@ const ASSETS: Record<
     plate: "#031634",
     aspect: 1.55,
   },
-  /** logo9 — cart + nest + tag */
+  /** logo9 — cart + nest + tag (footer / primary brand) */
   nest: {
     full: "/brand/logo9-full.png",
     fullDark: "/brand/logo9-full-dark.png",
@@ -33,9 +33,9 @@ const ASSETS: Record<
   },
 };
 
-/** Importnest brand mark — `in` (logo8) or `nest` (logo9). */
+/** Importnest brand mark — prefer `nest` (footer logo). */
 export function BrandMark({
-  logo = "in",
+  logo = "nest",
   showWordmark = true,
   size = "md",
   onDark = false,
@@ -94,7 +94,7 @@ export function BrandMark({
 export function BrandLink({
   className = "",
   onDark = true,
-  logo = "in",
+  logo = "nest",
 }: {
   variant?: "onDark" | "onLight";
   className?: string;
@@ -104,10 +104,10 @@ export function BrandLink({
   return (
     <Link href="/" className={`shrink-0 transition hover:opacity-90 ${className}`}>
       <span className="hidden sm:inline-flex">
-        <BrandMark logo={logo} showWordmark onDark={onDark} size="md" />
+        <BrandMark logo={logo} showWordmark onDark={onDark} size="lg" />
       </span>
       <span className="inline-flex sm:hidden">
-        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="md" />
+        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="lg" />
       </span>
     </Link>
   );

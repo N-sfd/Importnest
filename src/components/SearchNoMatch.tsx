@@ -7,7 +7,7 @@ import {
   StatusBanner,
   StatusPanel,
 } from "@/components/StatusPanel";
-import { productImageFor } from "@/lib/images";
+import { productImageFor, productThumbClass } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import type { SearchIntent } from "@/lib/search-intent";
 
@@ -66,7 +66,7 @@ export async function SearchNoMatch({
                       src={productImageFor(p.id)}
                       alt=""
                       fill
-                      className="object-contain p-1"
+                      className={productThumbClass(productImageFor(p.id))}
                       sizes="64px"
                     />
                   </div>

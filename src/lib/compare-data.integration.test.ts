@@ -1,6 +1,8 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { FALLBACK_COPY, getCompareProduct, getCompareRows } from "@/lib/compare-data";
+import { NEUTRAL_RECOMMENDATION_LABEL } from "@/lib/compare-view";
+import { isFreshnessStale } from "@/lib/freshness";
 
 // This exercises the real dev database (see prisma/schema.prisma DATABASE_URL),
 // not a mock, because the thing under test is exactly the failure mode a mock
@@ -102,7 +104,17 @@ describe("live-synced product comparison (no seeded display copy)", () => {
     const byDelivery = await getCompareRows(PRODUCT_ID, undefined, "fastest-delivery");
 
     expect(byDelivery.map((r) => r.listing.id)).toEqual(byCost.map((r) => r.listing.id));
-    expect(byDelivery[0].recommendation.label).toBe("Best overall");
+
+    const top = byDelivery[0];
+    expect(top.recommendation.label).not.toBe("Fastest delivery");
+    // Real synced freshness varies with when this suite last ran a sync, so
+    // assert the correct label for whichever state the top listing is
+    // actually in, rather than a single hardcoded string.
+    if (isFreshnessStale(top.listing.freshnessMinutesAgo)) {
+      expect(top.recommendation.label).toBe(NEUTRAL_RECOMMENDATION_LABEL);
+    } else {
+      expect(top.recommendation.label).toBe("Best overall");
+    }
   });
 
   it("requireFastDelivery filter excludes all listings when none offer real pickup", async () => {

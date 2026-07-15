@@ -1,4 +1,8 @@
+import { isFreshnessStale } from "@/lib/freshness";
 import type { Priority } from "@/lib/types";
+
+export { formatFreshness, isFreshnessStale, FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
+export { isFreshnessStale as isStaleFreshness } from "@/lib/freshness";
 
 export const FALLBACK_COPY = {
   warranty: "Warranty information not provided",
@@ -136,25 +140,6 @@ export function isSafeRetailerUrl(url: string | null | undefined): boolean {
   } catch {
     return false;
   }
-}
-
-export function formatFreshness(minutes: number | null | undefined): string {
-  if (minutes == null) return "No recent sync";
-  if (minutes <= 0) return "Updated just now";
-  if (minutes === 1) return "Updated 1 min ago";
-  if (minutes < 60) return `Updated ${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return hours === 1 ? "Updated 1 hr ago" : `Updated ${hours} hr ago`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? "Updated 1 day ago" : `Updated ${days} days ago`;
-}
-
-/** Matches seeded RankingConfig.freshnessThresholdMinutes for honest stale badges. */
-export const FRESHNESS_STALE_MINUTES = 60;
-
-export function isStaleFreshness(minutes: number | null | undefined): boolean {
-  if (minutes == null) return true;
-  return minutes >= FRESHNESS_STALE_MINUTES;
 }
 
 export function formatConditionLabel(condition: string): string {
@@ -360,6 +345,14 @@ function joinClause(parts: string[]): string {
 }
 
 /**
+ * Neutral stand-in for a definitive ranking label ("Best overall", "Lowest
+ * cost", "Fastest available", ...) when the top-ranked listing's own data is
+ * stale or of unknown age. A ranking claim is only as trustworthy as the data
+ * it was computed from.
+ */
+export const NEUTRAL_RECOMMENDATION_LABEL = "Available option";
+
+/**
  * Builds the recommendation panel model for the top listing after a priority sort.
  * Explanation text is assembled only from ranking factors backed by listing data.
  */
@@ -375,13 +368,17 @@ export function buildRecommendationPanel(
   const missingInformation = missingInformationForListing(top.listing);
   // Don't claim "Fastest available" when no listing has real pickup/speed signal.
   const anyFulfillmentSignal = peers.some((p) => p.pickupAvailable);
-  const label =
+  const definitiveLabel =
     priority === "fastest-delivery" && !anyFulfillmentSignal
       ? PRIORITY_LABELS["best-overall"]
       : PRIORITY_LABELS[priority];
+  // Stale/unknown-age data doesn't get to claim a definitive ranking label.
+  const dataIsStale = isFreshnessStale(top.listing.freshnessMinutesAgo);
+  const label = dataIsStale ? NEUTRAL_RECOMMENDATION_LABEL : definitiveLabel;
   const clauseParts = positive.map((f) => f.label.toLowerCase());
-  const rationale =
-    clauseParts.length > 0
+  const rationale = dataIsStale
+    ? "This offer currently ranks first for this priority, but its pricing data is outdated — treat the total as an estimate."
+    : clauseParts.length > 0
       ? `This offer is recommended because it has the ${joinClause(clauseParts)}.`
       : `This offer ranks first for ${label.toLowerCase()} among the compared options.`;
 

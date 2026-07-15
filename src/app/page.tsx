@@ -1,6 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
+import { DepartmentGrid } from "@/components/DepartmentCard";
+import { HeroSearch } from "@/components/HeroSearch";
+import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
 import { getAuthUser } from "@/lib/auth";
@@ -35,12 +38,6 @@ const categories = [
   },
 ];
 
-const steps = [
-  { n: "01", label: "Describe what you need", detail: "Natural language, model, or UPC" },
-  { n: "02", label: "Match approved listings", detail: "Only trusted source connectors" },
-  { n: "03", label: "Compare with clarity", detail: "Total cost, delivery, protection" },
-];
-
 export default async function HomePage() {
   const user = await getAuthUser();
   let savedIds = new Set<string>();
@@ -52,7 +49,14 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const popular = await getPopularComparisons(4, savedIds);
+  const [popular, sources] = await Promise.all([
+    getPopularComparisons(4, savedIds),
+    prisma.source.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <PageShell>
@@ -71,37 +75,24 @@ export default async function HomePage() {
             Compare trusted offers in one clear view
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
-            Search once. See total known cost, delivery, and protection—sourced only from
-            approved retailers.
+            Search once. See total known cost, delivery, and protection—sourced only from{" "}
+            <Link
+              href="#approved-sources"
+              className="font-semibold text-cta underline-offset-2 hover:underline"
+            >
+              approved retailers
+            </Link>
+            .
           </p>
         </div>
 
-        <form
-          action="/search"
-          className="relative mt-7 flex items-center overflow-hidden rounded-full bg-white shadow-lg focus-within:ring-2 focus-within:ring-ring"
-        >
-          <label htmlFor="home-q" className="sr-only">
-            What are you shopping for?
-          </label>
-          <input
-            id="home-q"
-            name="q"
-            type="search"
-            placeholder="Try: quiet dishwasher under $900"
-            defaultValue="A quiet dishwasher under $900 with delivery this week"
-            className="min-w-0 flex-1 px-4 py-3.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-5"
-          />
-          <button
-            type="submit"
-            className="btn-cta m-1.5 h-11 shrink-0 px-5 text-sm leading-none sm:px-6"
-          >
-            Search
-          </button>
-        </form>
+        <HeroSearch />
         <p className="relative mt-3 text-xs text-white/55">
           Estimates are labeled. Sponsored placements never change organic ranking.
         </p>
       </section>
+
+      <ApprovedSourcesStrip sources={sources} />
 
       <div className="mt-8 flex items-end justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
@@ -109,47 +100,11 @@ export default async function HomePage() {
           View all
         </Link>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        {categories.map((c) => (
-          <Link
-            key={c.name}
-            href={c.href}
-            className="group overflow-hidden rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)] transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="relative aspect-[4/3] bg-navy-100">
-              <Image
-                src={c.image}
-                alt=""
-                fill
-                className="object-cover transition duration-300 group-hover:scale-[1.03]"
-                sizes="(max-width:640px) 50vw, 25vw"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-950/80 via-navy-950/30 to-transparent px-3.5 py-3.5">
-                <div className="font-bold text-white">{c.name}</div>
-                <div className="text-xs text-white/80">{c.desc}</div>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <DepartmentGrid categories={categories} />
 
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
-      <section className="panel mt-8 p-6 sm:p-7">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
-        <ol className="mt-5 grid gap-4 sm:grid-cols-3">
-          {steps.map((s) => (
-            <li
-              key={s.n}
-              className="rounded-xl border border-border bg-surface/80 px-4 py-4"
-            >
-              <span className="text-xs font-bold tracking-[0.16em] text-accent">{s.n}</span>
-              <p className="mt-2 font-semibold text-foreground">{s.label}</p>
-              <p className="mt-1 text-sm text-muted">{s.detail}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <HowItWorks />
 
       <BackendLinks className="mt-6" />
     </PageShell>
