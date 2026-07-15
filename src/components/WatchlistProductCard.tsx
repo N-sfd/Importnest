@@ -2,16 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { Freshness } from "@/components/Freshness";
 import { productImageFor, productThumbClass } from "@/lib/images";
-import type { WatchlistItem } from "@/lib/saved-data";
+import { formatPriceChange, type PriceChangeTone } from "@/lib/price-change";
+import {
+  removeAlertConfirmMessage,
+  removeProductConfirmMessage,
+  type WatchlistItem,
+} from "@/lib/saved-data";
 import {
   deleteWatchlistItemAction,
   removeAlertAction,
   setPriceAlertAction,
   toggleAlertActiveAction,
 } from "@/lib/saved-actions";
+
+const CHANGE_TONE_CLASS: Record<PriceChangeTone, string> = {
+  down: "text-emerald-800",
+  up: "text-amber-900",
+  none: "text-muted",
+};
+
+/** Native confirm before a destructive form submission; cancels the submit when the shopper backs out. */
+function confirmBeforeSubmit(message: string) {
+  return (event: MouseEvent<HTMLButtonElement>) => {
+    if (!window.confirm(message)) event.preventDefault();
+  };
+}
 
 const statusStyle: Record<string, string> = {
   watching: "bg-navy-100 text-navy-900",
@@ -69,25 +87,10 @@ function PriceSparkline({ points }: { points: { day: string; total: number }[] }
   );
 }
 
-function formatChange(change: number | null) {
-  if (change == null) return null;
-  if (Math.abs(change) < 0.005) return { text: "No change", tone: "text-muted" as const };
-  if (change < 0) {
-    return {
-      text: `Down $${Math.abs(change).toFixed(2)}`,
-      tone: "text-emerald-800" as const,
-    };
-  }
-  return {
-    text: `Up $${change.toFixed(2)}`,
-    tone: "text-amber-900" as const,
-  };
-}
-
 export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
   const [editing, setEditing] = useState(false);
   const redirectTo = "/saved";
-  const change = formatChange(item.priceChange);
+  const change = formatPriceChange(item.priceChange);
   const alertType = item.alertType ?? "price-drop";
   const imageSrc = productImageFor(item.canonicalProductId);
   const defaultThreshold =
@@ -153,18 +156,21 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Source coverage
+                  Offers
                 </p>
                 <p className="mt-0.5 text-sm font-semibold text-navy-900">
-                  {item.sourceCoverage}{" "}
-                  {item.sourceCoverage === 1 ? "source" : "sources"}
+                  {item.offerCount} {item.offerCount === 1 ? "offer" : "offers"}
                 </p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                   Price change
                 </p>
-                <p className={`mt-0.5 text-sm font-semibold tabular-nums ${change?.tone ?? "text-muted"}`}>
+                <p
+                  className={`mt-0.5 text-sm font-semibold tabular-nums ${
+                    change ? CHANGE_TONE_CLASS[change.tone] : "text-muted"
+                  }`}
+                >
                   {change?.text ?? "No history"}
                 </p>
               </div>
@@ -222,6 +228,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             <form action={deleteWatchlistItemAction.bind(null, item.canonicalProductId, redirectTo)}>
               <button
                 type="submit"
+                onClick={confirmBeforeSubmit(removeProductConfirmMessage(item.productName))}
                 className="w-full rounded-full border border-border px-3 py-2 text-sm font-semibold text-muted hover:border-red-300 hover:text-red-700"
               >
                 Remove
@@ -273,6 +280,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             >
               <button
                 type="submit"
+                onClick={confirmBeforeSubmit(removeAlertConfirmMessage(item.productName))}
                 className="rounded-full border border-border bg-panel px-3 py-2 text-sm font-semibold text-muted hover:border-navy-800"
               >
                 Remove alert

@@ -53,7 +53,7 @@ export default async function SavedPage() {
       {items.length === 0 ? (
         <div className="mt-8 space-y-4">
           <StatusPanel
-            title="Nothing saved yet"
+            title="You have not saved any products yet."
             description="Compare a product, then save it to watch price changes from approved retailers."
             actions={
               <>

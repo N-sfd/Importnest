@@ -27,6 +27,16 @@ export function isPriceDropTriggered(threshold: string | null, currentPrice: num
   return currentPrice <= target;
 }
 
+/** Confirmation copy shown before removing a saved product (and its alert) — a destructive, hard-to-undo action. */
+export function removeProductConfirmMessage(productName: string): string {
+  return `Remove ${productName} from your saved products? This also removes any price alert on it.`;
+}
+
+/** Confirmation copy shown before removing a price alert — destructive on its own even when the product stays saved. */
+export function removeAlertConfirmMessage(productName: string): string {
+  return `Remove your price alert for ${productName}?`;
+}
+
 /** Lowest total known cost currently listed for a product, or null if nothing is listed. */
 export async function getBestCurrentPrice(canonicalProductId: string): Promise<number | null> {
   const rows = await getCompareRows(canonicalProductId);
@@ -79,6 +89,8 @@ export type WatchlistItem = {
   status: AlertStatus;
   /** Distinct approved sources currently listing this product */
   sourceCoverage: number;
+  /** Number of approved listings (offers) currently available for this product */
+  offerCount: number;
   /** Current best − previous history best; null when no real prior point */
   priceChange: number | null;
   lastCheckedMinutesAgo: number | null;
@@ -180,6 +192,7 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
         : Math.min(...productListings.map((l) => l.price + l.shipping + l.fees));
 
     const sourceCoverage = new Set(productListings.map((l) => l.sourceId)).size;
+    const offerCount = productListings.length;
 
     const freshest = productListings.reduce<Date | null>((best, l) => {
       if (!best || l.freshnessCapturedAt > best) return l.freshnessCapturedAt;
@@ -222,6 +235,7 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
       alertType: (alert?.type as AlertType | undefined) ?? null,
       status,
       sourceCoverage,
+      offerCount,
       priceChange,
       lastCheckedMinutesAgo: freshest ? minutesSince(freshest) : null,
       priceHistory,
