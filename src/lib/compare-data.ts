@@ -16,8 +16,20 @@ import {
   totalKnownCost,
 } from "@/lib/compare-view";
 import type { Priority } from "@/lib/types";
+import {
+  PRICE_HISTORY_WINDOW_DAYS,
+  emptyPriceHistory,
+  summarizePriceHistory,
+  type ProductPriceHistoryPoint,
+  type ProductPriceHistorySummary,
+} from "@/lib/price-history";
 
 export type { CompareListingView, CompareRecommendationView, CompareRow, CompareSourceSummary };
+export type { ProductPriceHistoryPoint, ProductPriceHistorySummary };
+export {
+  describePriceHistoryForScreenReaders,
+  summarizePriceHistory,
+} from "@/lib/price-history";
 export {
   FALLBACK_COPY,
   totalKnownCost,
@@ -335,27 +347,11 @@ export async function getListingExplanation(listingId: string) {
   };
 }
 
-export type ProductPriceHistoryPoint = {
-  day: string;
-  total: number;
-};
-
-export type ProductPriceHistorySummary = {
-  /** Present only when at least two history points exist */
-  points: ProductPriceHistoryPoint[];
-  currentLowest: number | null;
-  previousPrice: number | null;
-  lowestRecorded: number | null;
-  lastChange: number | null;
-  lastChangeAt: string | null;
-  /** True when chart uses illustrative demo trend (not enough real samples yet). */
-  isIllustrative?: boolean;
-};
-
 /**
- * Builds a daily price-history summary from real PriceHistory rows.
- * For popular demo products with thin history, falls back to an illustrative
- * trend so first-time visitors see the feature working.
+ * Builds a daily price-history summary from real PriceHistory rows only —
+ * no fabricated or interpolated points, ever. A product with fewer than two
+ * real, in-window daily prices simply has no chart yet (see
+ * summarizePriceHistory for the full exclusion rules).
  */
 export async function getProductPriceHistory(
   productId: string,
@@ -370,96 +366,15 @@ export async function getProductPriceHistory(
   });
   const listingIds = listings.map((l) => l.id);
   if (listingIds.length === 0) {
-    return demoPriceHistory(productId, currentLowest) ?? emptyHistory(currentLowest);
+    return emptyPriceHistory(currentLowest);
   }
 
+  const windowStart = new Date(Date.now() - PRICE_HISTORY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
   const rows = await prisma.priceHistory.findMany({
-    where: { listingId: { in: listingIds } },
+    where: { listingId: { in: listingIds }, capturedAt: { gte: windowStart } },
     select: { price: true, shipping: true, capturedAt: true },
     orderBy: { capturedAt: "asc" },
   });
 
-  const byDay = new Map<string, number>();
-  for (const row of rows) {
-    const day = row.capturedAt.toISOString().slice(0, 10);
-    const total = row.price + row.shipping;
-    const existing = byDay.get(day);
-    if (existing == null || total < existing) byDay.set(day, total);
-  }
-
-  const points = [...byDay.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([day, total]) => ({ day, total }));
-
-  if (points.length < 2) {
-    return demoPriceHistory(productId, currentLowest) ?? emptyHistory(currentLowest);
-  }
-
-  const latest = points[points.length - 1]!;
-  const previous = points[points.length - 2]!;
-  const lowestRecorded = Math.min(...points.map((p) => p.total));
-  const effectiveCurrent = currentLowest ?? latest.total;
-
-  return {
-    points,
-    currentLowest: effectiveCurrent,
-    previousPrice: previous.total,
-    lowestRecorded,
-    lastChange: effectiveCurrent - previous.total,
-    lastChangeAt: latest.day,
-    isIllustrative: false,
-  };
-}
-
-function emptyHistory(currentLowest: number | null): ProductPriceHistorySummary {
-  return {
-    points: [],
-    currentLowest,
-    previousPrice: null,
-    lowestRecorded: null,
-    lastChange: null,
-    lastChangeAt: null,
-    isIllustrative: false,
-  };
-}
-
-/** Seeded demo products — illustrative 14-day curve when DB history is thin. */
-const DEMO_BASELINE: Record<string, number> = {
-  "cp-apex-ah4200": 899,
-  "cp-running-shoe": 129,
-  "cp-air-purifier": 249,
-  "cp-cordless-vacuum": 289,
-};
-
-function demoPriceHistory(
-  productId: string,
-  currentLowest: number | null,
-): ProductPriceHistorySummary | null {
-  const baseline = DEMO_BASELINE[productId];
-  if (baseline == null) return null;
-
-  const end = currentLowest ?? baseline;
-  const offsets = [0.08, 0.06, 0.07, 0.05, 0.04, 0.055, 0.03, 0.045, 0.02, 0.035, 0.015, 0.025, 0.01, 0];
-  const points: ProductPriceHistoryPoint[] = offsets.map((pct, i) => {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() - (offsets.length - 1 - i));
-    return {
-      day: d.toISOString().slice(0, 10),
-      total: Math.round((end * (1 + pct)) * 100) / 100,
-    };
-  });
-  // Force last point to the live lowest so the chart lands on today's total.
-  points[points.length - 1]!.total = Math.round(end * 100) / 100;
-
-  const previous = points[points.length - 2]!;
-  const latest = points[points.length - 1]!;
-  return {
-    points,
-    currentLowest: end,
-    previousPrice: previous.total,
-    lowestRecorded: Math.min(...points.map((p) => p.total)),
-    lastChange: latest.total - previous.total,
-    lastChangeAt: latest.day,
-    isIllustrative: true,
-  };
+  return summarizePriceHistory(rows, currentLowest);
 }

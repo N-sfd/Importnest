@@ -1,4 +1,5 @@
-import type { ProductPriceHistorySummary } from "@/lib/compare-data";
+import { describePriceHistoryForScreenReaders, type ProductPriceHistorySummary } from "@/lib/compare-data";
+import { formatPriceChange } from "@/lib/price-change";
 
 function PriceTrendChart({
   points,
@@ -51,25 +52,26 @@ function PriceTrendChart({
   );
 }
 
+/**
+ * Price history for the comparison page — real PriceHistory records only.
+ * A product with fewer than two valid, in-window daily prices shows the
+ * honest "not enough checks yet" message instead of a chart; nothing here is
+ * ever interpolated or invented to fill the gap.
+ */
 export function PriceHistorySection({ summary }: { summary: ProductPriceHistorySummary }) {
   const hasChart = summary.points.length >= 2;
+  const change = formatPriceChange(summary.lastChange);
 
   return (
     <section className="panel mt-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 className="text-lg font-bold tracking-tight text-foreground">Price history</h2>
-        {summary.isIllustrative ? (
-          <span className="rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-muted ring-1 ring-border">
-            Illustrative 14-day trend
-          </span>
-        ) : null}
-      </div>
+      <h2 className="text-lg font-bold tracking-tight text-foreground">Price history</h2>
       {!hasChart ? (
         <p className="mt-3 text-sm text-muted">
           Price history will appear after more price checks.
         </p>
       ) : (
         <>
+          <p className="sr-only">{describePriceHistoryForScreenReaders(summary)}</p>
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {summary.currentLowest != null ? (
               <div>
@@ -79,31 +81,27 @@ export function PriceHistorySection({ summary }: { summary: ProductPriceHistoryS
                 </dd>
               </div>
             ) : null}
-            {summary.previousPrice != null ? (
+            {summary.previousLowest != null ? (
               <div>
-                <dt className="text-xs font-medium text-muted">Previous price</dt>
+                <dt className="text-xs font-medium text-muted">Previous lowest price</dt>
                 <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                  ${summary.previousPrice.toFixed(2)}
+                  ${summary.previousLowest.toFixed(2)}
                 </dd>
               </div>
             ) : null}
-            {summary.lowestRecorded != null ? (
+            {summary.thirtyDayLow != null ? (
               <div>
-                <dt className="text-xs font-medium text-muted">Lowest recorded</dt>
+                <dt className="text-xs font-medium text-muted">30-day low</dt>
                 <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                  ${summary.lowestRecorded.toFixed(2)}
+                  ${summary.thirtyDayLow.toFixed(2)}
                 </dd>
               </div>
             ) : null}
-            {summary.lastChange != null ? (
+            {change ? (
               <div>
                 <dt className="text-xs font-medium text-muted">Last price change</dt>
                 <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                  {Math.abs(summary.lastChange) < 0.005
-                    ? "No change"
-                    : summary.lastChange < 0
-                      ? `Down $${Math.abs(summary.lastChange).toFixed(2)}`
-                      : `Up $${summary.lastChange.toFixed(2)}`}
+                  {change.text}
                   {summary.lastChangeAt ? (
                     <span className="mt-0.5 block text-xs font-normal text-muted">
                       {summary.lastChangeAt}
@@ -114,12 +112,6 @@ export function PriceHistorySection({ summary }: { summary: ProductPriceHistoryS
             ) : null}
           </dl>
           <PriceTrendChart points={summary.points} />
-          {summary.isIllustrative ? (
-            <p className="mt-2 text-xs text-muted">
-              Sampled trend for this demo product. Live syncs replace this with real Total Known Cost
-              history.
-            </p>
-          ) : null}
         </>
       )}
     </section>
