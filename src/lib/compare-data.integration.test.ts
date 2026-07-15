@@ -92,4 +92,21 @@ describe("live-synced product comparison (no seeded display copy)", () => {
     const unfiltered = await getCompareRows(PRODUCT_ID);
     expect(newOnly.length).toBe(unfiltered.length);
   });
+
+  it("fastest-delivery priority honestly falls back to cost ranking when no listing has real pickup data", async () => {
+    // None of the synced iPhone listings have pickup available (no structured
+    // delivery-date data exists at all) — ranking must degrade to cost order
+    // rather than fabricating a delivery-speed signal, and the #1 listing must
+    // NOT be mislabeled "Fastest delivery" when nothing is actually faster.
+    const byCost = await getCompareRows(PRODUCT_ID, undefined, "best-overall");
+    const byDelivery = await getCompareRows(PRODUCT_ID, undefined, "fastest-delivery");
+
+    expect(byDelivery.map((r) => r.listing.id)).toEqual(byCost.map((r) => r.listing.id));
+    expect(byDelivery[0].recommendation.label).toBe("Best overall");
+  });
+
+  it("requireFastDelivery filter excludes all listings when none offer real pickup", async () => {
+    const filtered = await getCompareRows(PRODUCT_ID, { requireFastDelivery: true });
+    expect(filtered).toEqual([]);
+  });
 });

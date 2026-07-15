@@ -297,3 +297,17 @@ export function paramsToRecord(params: SearchFlowParams): Record<string, string>
   }
   return record;
 }
+
+const URGENT_DELIVERY_PATTERN = /\b(asap|today|tonight|tomorrow|now|immediately)\b/i;
+
+/**
+ * There's no structured delivery-date data anywhere in the schema, so a
+ * deliveryBy answer can only drive a real filter when it signals genuine
+ * urgency — narrowed to pickup-available listings (the one real "fast"
+ * signal available), not a fabricated ship-speed estimate. "this week" or a
+ * specific day name isn't urgent enough to justify excluding shipped items.
+ */
+export function isUrgentDeliveryPhrase(deliveryBy: string | undefined): boolean {
+  if (!deliveryBy) return false;
+  return URGENT_DELIVERY_PATTERN.test(deliveryBy);
+}

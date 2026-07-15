@@ -4,6 +4,7 @@ import {
   getClarifyingQuestions,
   intentFromSearchParams,
   isExplicitIdentifierQuery,
+  isUrgentDeliveryPhrase,
   needsClarification,
   parseQueryHeuristics,
   searchIntentSchema,
@@ -117,5 +118,23 @@ describe("sortPriorityToComparePriority", () => {
   });
   it("returns undefined when no priority was captured", () => {
     expect(sortPriorityToComparePriority(undefined)).toBeUndefined();
+  });
+});
+
+describe("isUrgentDeliveryPhrase", () => {
+  it("treats ASAP/today/tomorrow-style answers as urgent", () => {
+    expect(isUrgentDeliveryPhrase("asap")).toBe(true);
+    expect(isUrgentDeliveryPhrase("today")).toBe(true);
+    expect(isUrgentDeliveryPhrase("tomorrow")).toBe(true);
+    expect(isUrgentDeliveryPhrase("I need it ASAP please")).toBe(true);
+  });
+  it("does not treat looser timing as urgent", () => {
+    expect(isUrgentDeliveryPhrase("this week")).toBe(false);
+    expect(isUrgentDeliveryPhrase("by friday")).toBe(false);
+    expect(isUrgentDeliveryPhrase("any")).toBe(false);
+  });
+  it("handles undefined/empty safely", () => {
+    expect(isUrgentDeliveryPhrase(undefined)).toBe(false);
+    expect(isUrgentDeliveryPhrase("")).toBe(false);
   });
 });

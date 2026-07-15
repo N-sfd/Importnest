@@ -6,6 +6,7 @@ import type {
   CompareSourceSummary,
 } from "@/lib/compare-view";
 import { minutesSince, totalKnownCost } from "@/lib/compare-view";
+import type { Priority } from "@/lib/types";
 
 export type { CompareListingView, CompareRecommendationView, CompareRow, CompareSourceSummary };
 export { totalKnownCost, sortCompareRows, minutesSince } from "@/lib/compare-view";
@@ -89,22 +90,38 @@ function enrichListing(l: ListingRecord): CompareListingView {
  * listings for a product, instead of reading a hand-authored per-listing-id
  * table. This is what lets any newly synced product render a comparison
  * without needing manual copy written for it.
+ *
+ * `priority` is the shopper's confirmed ranking preference. "fastest-delivery"
+ * only has a real signal to rank on when a listing offers pickup — there's no
+ * structured delivery-date data anywhere in the schema, so absent that it
+ * degrades to cost ranking rather than fabricating a delivery-speed order.
+ * "best-returns" has no real per-listing data at all yet (every listing shows
+ * the same FALLBACK_COPY.returns placeholder) and always degrades to cost.
  */
 function computeRecommendations(
   listings: CompareListingView[],
+  priority: Priority = "best-overall",
 ): Map<string, CompareRecommendationView> {
   const withCost = listings.map((listing) => ({ listing, cost: totalKnownCost(listing) }));
-  const ranked = [...withCost].sort((a, b) => a.cost - b.cost);
-  const cheapest = ranked[0];
+
+  const ranked = [...withCost].sort((a, b) => {
+    if (priority === "fastest-delivery") {
+      const pickupDiff = Number(b.listing.pickupAvailable) - Number(a.listing.pickupAvailable);
+      if (pickupDiff !== 0) return pickupDiff;
+    }
+    return a.cost - b.cost;
+  });
+  const best = ranked[0];
+  const bestIsFastest = priority === "fastest-delivery" && best.listing.pickupAvailable;
 
   const map = new Map<string, CompareRecommendationView>();
 
   ranked.forEach(({ listing, cost }, index) => {
-    const isCheapest = index === 0;
-    const costDelta = cost - cheapest.cost;
+    const isBest = index === 0;
+    const costDelta = cost - best.cost;
 
     const factors: CompareRecommendationView["factors"] = [];
-    if (isCheapest) {
+    if (isBest && !bestIsFastest) {
       factors.push({
         label: "Lowest total cost",
         detail: `$${cost.toFixed(2)} total, the lowest among compared offers.`,
@@ -141,13 +158,15 @@ function computeRecommendations(
     map.set(listing.id, {
       listingId: listing.id,
       rank: index + 1,
-      label: isCheapest ? "Best overall" : "Alternative option",
-      rationale: isCheapest
-        ? `Recommended because it has the lowest total known cost ($${cost.toFixed(2)}) among compared offers.`
-        : `$${costDelta.toFixed(2)} more than the lowest total cost option.`,
-      tradeOff: isCheapest
+      label: isBest ? (bestIsFastest ? "Fastest delivery" : "Best overall") : "Alternative option",
+      rationale: isBest
+        ? bestIsFastest
+          ? `Recommended because local pickup is available, avoiding the wait for shipping ($${cost.toFixed(2)} total).`
+          : `Recommended because it has the lowest total known cost ($${cost.toFixed(2)}) among compared offers.`
+        : `$${costDelta.toFixed(2)} more than the ${bestIsFastest ? "fastest pickup" : "lowest total cost"} option.`,
+      tradeOff: isBest
         ? undefined
-        : `This option costs $${costDelta.toFixed(2)} more than the lowest-priced listing compared.`,
+        : `This option costs $${costDelta.toFixed(2)} more than the ${bestIsFastest ? "fastest-pickup" : "lowest-priced"} listing compared.`,
       factors,
       assumptions,
     });
@@ -201,6 +220,13 @@ export type CompareFilters = {
   maxBudget?: number;
   /** Uses SearchIntent's condition vocabulary (open_box, not open-box); "any" should be omitted by callers rather than passed through. */
   condition?: "new" | "open_box" | "refurbished" | "used";
+  /**
+   * Hard-filters to pickup-available listings only. This is the only real
+   * "fast delivery" signal the schema has (no structured delivery-date data
+   * exists), so it's the honest way to act on an urgent deliveryBy answer
+   * ("ASAP", "today") rather than guessing at ship speed.
+   */
+  requireFastDelivery?: boolean;
 };
 
 function conditionMatchesFilter(listingCondition: string, filter: CompareFilters["condition"]): boolean {
@@ -212,19 +238,24 @@ function conditionMatchesFilter(listingCondition: string, filter: CompareFilters
   return listingCondition === filter;
 }
 
-export async function getCompareRows(productId: string, filters?: CompareFilters): Promise<CompareRow[]> {
+export async function getCompareRows(
+  productId: string,
+  filters?: CompareFilters,
+  priority?: Priority,
+): Promise<CompareRow[]> {
   const allListings = (await getMatchedListings(productId)).map(enrichListing);
   const listings = filters
     ? allListings.filter(
         (l) =>
           (filters.maxBudget == null || totalKnownCost(l) <= filters.maxBudget) &&
-          conditionMatchesFilter(l.condition, filters.condition),
+          conditionMatchesFilter(l.condition, filters.condition) &&
+          (!filters.requireFastDelivery || l.pickupAvailable),
       )
     : allListings;
 
   // Recomputed over the filtered set so "lowest cost"/"best overall" reflect
   // what's actually shown, not an option the shopper's own filters excluded.
-  const recommendations = computeRecommendations(listings);
+  const recommendations = computeRecommendations(listings, priority);
 
   return listings
     .map((listing) => ({
