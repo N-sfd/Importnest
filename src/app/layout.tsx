@@ -21,12 +21,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Importnest — Compare trusted retailer offers",
+  title: "Importnest — Compare smarter. Shop confidently.",
   description:
     "Compare purchasing options across approved online sources with transparent, explainable recommendations.",
   icons: {
     icon: "/brand/logo.svg",
-    apple: "/brand/logo-full.png",
+    apple: "/brand/apple-touch-icon.png",
   },
 };
 

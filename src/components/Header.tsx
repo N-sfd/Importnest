@@ -17,7 +17,7 @@ export async function Header() {
     <header className="sticky top-0 z-40">
       <div className="border-b border-white/10 bg-navy-900/95 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-3 py-3 sm:gap-5 sm:px-4">
-          <BrandLink />
+          <BrandLink logo="in" />
 
           <form
             action="/search"
