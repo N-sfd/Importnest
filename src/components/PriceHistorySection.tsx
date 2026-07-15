@@ -1,10 +1,16 @@
 import type { ProductPriceHistorySummary } from "@/lib/compare-data";
 
-function PriceTrendChart({ points }: { points: { day: string; total: number }[] }) {
+function PriceTrendChart({
+  points,
+  stroke = "#00b8d4",
+}: {
+  points: { day: string; total: number }[];
+  stroke?: string;
+}) {
   const width = 320;
-  const height = 96;
+  const height = 110;
   const padX = 8;
-  const padY = 10;
+  const padY = 12;
   const totals = points.map((p) => p.total);
   const min = Math.min(...totals);
   const max = Math.max(...totals);
@@ -13,8 +19,10 @@ function PriceTrendChart({ points }: { points: { day: string; total: number }[] 
   const coords = points.map((p, i) => {
     const x = padX + (i / (points.length - 1)) * (width - padX * 2);
     const y = height - padY - ((p.total - min) / range) * (height - padY * 2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
+    return { x, y };
   });
+  const line = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  const area = `${padX},${height - padY} ${line} ${width - padX},${height - padY}`;
 
   return (
     <svg
@@ -25,14 +33,20 @@ function PriceTrendChart({ points }: { points: { day: string; total: number }[] 
       role="img"
       aria-label={`Price trend from $${totals[0]!.toFixed(2)} to $${totals[totals.length - 1]!.toFixed(2)}`}
     >
+      <polygon fill={`${stroke}22`} points={area} />
       <polyline
         fill="none"
-        stroke="#050a14"
-        strokeWidth="2"
+        stroke={stroke}
+        strokeWidth="2.5"
         strokeLinejoin="round"
         strokeLinecap="round"
-        points={coords.join(" ")}
+        points={line}
       />
+      {coords.map((c, i) =>
+        i === coords.length - 1 || i === 0 ? (
+          <circle key={i} cx={c.x} cy={c.y} r="3.2" fill={stroke} />
+        ) : null,
+      )}
     </svg>
   );
 }
@@ -42,7 +56,14 @@ export function PriceHistorySection({ summary }: { summary: ProductPriceHistoryS
 
   return (
     <section className="panel mt-4 p-4 sm:p-6">
-      <h2 className="text-lg font-bold tracking-tight text-foreground">Price history</h2>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-lg font-bold tracking-tight text-foreground">Price history</h2>
+        {summary.isIllustrative ? (
+          <span className="rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-muted ring-1 ring-border">
+            Illustrative 14-day trend
+          </span>
+        ) : null}
+      </div>
       {!hasChart ? (
         <p className="mt-3 text-sm text-muted">
           Price history will appear after more price checks.
@@ -93,6 +114,12 @@ export function PriceHistorySection({ summary }: { summary: ProductPriceHistoryS
             ) : null}
           </dl>
           <PriceTrendChart points={summary.points} />
+          {summary.isIllustrative ? (
+            <p className="mt-2 text-xs text-muted">
+              Sampled trend for this demo product. Live syncs replace this with real Total Known Cost
+              history.
+            </p>
+          ) : null}
         </>
       )}
     </section>

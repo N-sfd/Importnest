@@ -2,14 +2,16 @@ import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { DepartmentGrid } from "@/components/DepartmentCard";
-import { ExampleSearches } from "@/components/ExampleSearches";
 import { FeaturedComparison } from "@/components/FeaturedComparison";
 import { HeroSearch } from "@/components/HeroSearch";
+import { HomepageCompareDemo } from "@/components/HomepageCompareDemo";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
+import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
+import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
 import { getAuthUser } from "@/lib/auth";
 import { categoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
@@ -90,38 +92,50 @@ export default async function HomePage() {
           className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/15 blur-3xl"
         />
 
-        <div className="relative max-w-2xl">
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Compare trusted offers in one clear view
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
-            Search once. See total known cost, delivery, and protection—sourced only from{" "}
-            <Link
-              href="#approved-sources"
-              className="font-semibold text-cta underline-offset-2 hover:underline"
-            >
-              approved retailers
-            </Link>
-            .
-          </p>
-        </div>
+        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Compare trusted offers in one clear view
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
+              Search once. See{" "}
+              <span className="font-semibold text-cta">Total Known Cost</span> — item + shipping +
+              fees — from{" "}
+              <Link
+                href="#approved-sources"
+                className="font-semibold text-cta underline-offset-2 hover:underline"
+              >
+                approved retailers
+              </Link>{" "}
+              only.
+            </p>
 
-        <HeroSearch />
-        <p className="relative mt-3 text-xs text-white/55">
-          Estimates are labeled. Sponsored placements never change organic ranking.
-        </p>
+            <HeroSearch />
+            <p className="relative mt-3 text-xs text-white/55">
+              Estimates are labeled. Sponsored placements never change organic ranking.
+            </p>
+          </div>
+
+          <TotalKnownCostHook />
+        </div>
       </section>
 
-      <ExampleSearches />
       <RecentSearches items={recentSearches} />
       <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
       {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
       <ApprovedSourcesStrip sources={sources} />
 
+      <HomepageCompareDemo />
+
+      <PriceAlertTeaser signedIn={Boolean(user)} />
+
       <div className="mt-8 flex items-end justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
-        <Link href="/search?category=appliances" className="text-sm font-semibold text-link hover:underline">
+        <Link
+          href="/search?category=home"
+          className="text-sm font-semibold text-link hover:underline"
+        >
           View all
         </Link>
       </div>

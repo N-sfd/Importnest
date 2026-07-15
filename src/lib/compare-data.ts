@@ -8,12 +8,11 @@ import type {
 import {
   FALLBACK_COPY,
   buildRecommendationPanel,
-  conditionRank,
+  hasStructuredProtectionData,
   isSafeRetailerUrl,
   minutesSince,
-  overallScore,
-  protectionScore,
   rankingFactorsForListing,
+  sortCompareRows,
   totalKnownCost,
 } from "@/lib/compare-view";
 import type { Priority } from "@/lib/types";
@@ -99,26 +98,29 @@ function enrichListing(l: ListingRecord): CompareListingView {
   return view;
 }
 
+/** Wraps sortCompareRows so listing ordering has exactly one implementation, reused server-side everywhere. */
+function sortListings(listings: CompareListingView[], priority: Priority): CompareListingView[] {
+  const wrapped: CompareRow[] = listings.map((listing) => ({
+    listing,
+    recommendation: {
+      listingId: listing.id,
+      rank: 0,
+      label: "Alternative option",
+      rationale: "",
+      factors: [],
+      tradeOffs: [],
+      missingInformation: [],
+      assumptions: [],
+    },
+  }));
+  return sortCompareRows(wrapped, priority).map((r) => r.listing);
+}
+
 function computeRecommendations(
   listings: CompareListingView[],
   priority: Priority = "best-overall",
 ): Map<string, CompareRecommendationView> {
-  const ranked = [...listings].sort((a, b) => {
-    if (priority === "lowest-cost") return totalKnownCost(a) - totalKnownCost(b);
-    if (priority === "fastest-delivery") {
-      const p = Number(b.pickupAvailable) - Number(a.pickupAvailable);
-      return p !== 0 ? p : totalKnownCost(a) - totalKnownCost(b);
-    }
-    if (priority === "best-condition") {
-      const c = conditionRank(a.condition) - conditionRank(b.condition);
-      return c !== 0 ? c : totalKnownCost(a) - totalKnownCost(b);
-    }
-    if (priority === "best-protection") {
-      const p = protectionScore(b) - protectionScore(a);
-      return p !== 0 ? p : totalKnownCost(a) - totalKnownCost(b);
-    }
-    return overallScore(b) - overallScore(a);
-  });
+  const ranked = sortListings(listings, priority);
 
   const map = new Map<string, CompareRecommendationView>();
   const draftRows: CompareRow[] = ranked.map((listing, index) => ({
@@ -217,6 +219,17 @@ async function getMatchedListings(productId: string): Promise<ListingRecord[]> {
     },
     include: { source: true },
   });
+}
+
+/**
+ * Whether "Best protection" is a meaningful sort for this product — i.e. at
+ * least one compared listing has a real structured warranty/return fact.
+ * Callers should hide or disable the priority option entirely when this is
+ * false rather than sort by a signal nothing actually has.
+ */
+export async function supportsBestProtection(productId: string): Promise<boolean> {
+  const listings = (await getMatchedListings(productId)).map(enrichListing);
+  return hasStructuredProtectionData(listings);
 }
 
 export type CompareFilters = {
@@ -335,11 +348,14 @@ export type ProductPriceHistorySummary = {
   lowestRecorded: number | null;
   lastChange: number | null;
   lastChangeAt: string | null;
+  /** True when chart uses illustrative demo trend (not enough real samples yet). */
+  isIllustrative?: boolean;
 };
 
 /**
  * Builds a daily price-history summary from real PriceHistory rows.
- * Chart points are empty unless ≥2 daily buckets exist.
+ * For popular demo products with thin history, falls back to an illustrative
+ * trend so first-time visitors see the feature working.
  */
 export async function getProductPriceHistory(
   productId: string,
@@ -354,14 +370,7 @@ export async function getProductPriceHistory(
   });
   const listingIds = listings.map((l) => l.id);
   if (listingIds.length === 0) {
-    return {
-      points: [],
-      currentLowest,
-      previousPrice: null,
-      lowestRecorded: null,
-      lastChange: null,
-      lastChangeAt: null,
-    };
+    return demoPriceHistory(productId, currentLowest) ?? emptyHistory(currentLowest);
   }
 
   const rows = await prisma.priceHistory.findMany({
@@ -383,14 +392,7 @@ export async function getProductPriceHistory(
     .map(([day, total]) => ({ day, total }));
 
   if (points.length < 2) {
-    return {
-      points: [],
-      currentLowest,
-      previousPrice: null,
-      lowestRecorded: null,
-      lastChange: null,
-      lastChangeAt: null,
-    };
+    return demoPriceHistory(productId, currentLowest) ?? emptyHistory(currentLowest);
   }
 
   const latest = points[points.length - 1]!;
@@ -405,5 +407,59 @@ export async function getProductPriceHistory(
     lowestRecorded,
     lastChange: effectiveCurrent - previous.total,
     lastChangeAt: latest.day,
+    isIllustrative: false,
+  };
+}
+
+function emptyHistory(currentLowest: number | null): ProductPriceHistorySummary {
+  return {
+    points: [],
+    currentLowest,
+    previousPrice: null,
+    lowestRecorded: null,
+    lastChange: null,
+    lastChangeAt: null,
+    isIllustrative: false,
+  };
+}
+
+/** Seeded demo products — illustrative 14-day curve when DB history is thin. */
+const DEMO_BASELINE: Record<string, number> = {
+  "cp-apex-ah4200": 899,
+  "cp-running-shoe": 129,
+  "cp-air-purifier": 249,
+  "cp-cordless-vacuum": 289,
+};
+
+function demoPriceHistory(
+  productId: string,
+  currentLowest: number | null,
+): ProductPriceHistorySummary | null {
+  const baseline = DEMO_BASELINE[productId];
+  if (baseline == null) return null;
+
+  const end = currentLowest ?? baseline;
+  const offsets = [0.08, 0.06, 0.07, 0.05, 0.04, 0.055, 0.03, 0.045, 0.02, 0.035, 0.015, 0.025, 0.01, 0];
+  const points: ProductPriceHistoryPoint[] = offsets.map((pct, i) => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - (offsets.length - 1 - i));
+    return {
+      day: d.toISOString().slice(0, 10),
+      total: Math.round((end * (1 + pct)) * 100) / 100,
+    };
+  });
+  // Force last point to the live lowest so the chart lands on today's total.
+  points[points.length - 1]!.total = Math.round(end * 100) / 100;
+
+  const previous = points[points.length - 2]!;
+  const latest = points[points.length - 1]!;
+  return {
+    points,
+    currentLowest: end,
+    previousPrice: previous.total,
+    lowestRecorded: Math.min(...points.map((p) => p.total)),
+    lastChange: latest.total - previous.total,
+    lastChangeAt: latest.day,
+    isIllustrative: true,
   };
 }

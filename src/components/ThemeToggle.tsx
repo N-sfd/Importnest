@@ -26,6 +26,7 @@ function applyTheme(theme: Theme) {
   }
 }
 
+/** Clear switch control — not a flat nav link. */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>("light");
   const [ready, setReady] = useState(false);
@@ -43,19 +44,32 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     applyTheme(next);
   }
 
+  const isDark = ready && theme === "dark";
+
   return (
     <button
       type="button"
       onClick={toggle}
-      className={`rounded-xl px-2.5 py-1.5 transition hover:bg-white/10 sm:px-3 ${className}`}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      title={theme === "dark" ? "Light mode" : "Dark mode"}
+      role="switch"
+      aria-checked={isDark}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Light mode" : "Dark mode"}
+      className={`inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-2.5 py-1.5 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
     >
-      <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
-        Theme
+      <span className="hidden text-[10px] font-semibold uppercase tracking-wider text-white/60 sm:inline">
+        {isDark ? "Dark" : "Light"}
       </span>
-      <span className="font-semibold leading-tight">
-        {!ready ? "Auto" : theme === "dark" ? "Dark" : "Light"}
+      <span
+        aria-hidden
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+          isDark ? "bg-cta" : "bg-white/35"
+        }`}
+      >
+        <span
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+            isDark ? "translate-x-4" : "translate-x-0"
+          }`}
+        />
       </span>
     </button>
   );

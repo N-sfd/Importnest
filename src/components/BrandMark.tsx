@@ -23,10 +23,10 @@ const ASSETS = {
     iconDark: "/brand/logo-app-icon-dark.png",
     circle: "/brand/logo-circle-light.png",
     circleDark: "/brand/logo-circle-dark.png",
-    /** Wide banner with wordmark + tagline */
-    horizontalAspect: 4.2,
-    /** Stacked mark + wordmark + tagline */
-    stackedAspect: 1.15,
+    /** Wide banner with wordmark + tagline (tight pack ~870×180) */
+    horizontalAspect: 4.83,
+    /** Primary lockup ~785×550 */
+    stackedAspect: 1.43,
   },
   in: {
     horizontal: "/brand/logo8-full-dark.png",

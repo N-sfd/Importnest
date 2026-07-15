@@ -1,10 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { DEMO_SEARCH_LABEL, DEMO_SEARCH_QUERY } from "@/lib/search-prompts";
+import {
+  DEMO_SEARCH_LABEL,
+  DEMO_SEARCH_QUERY,
+  EXAMPLE_SEARCHES,
+} from "@/lib/search-prompts";
 
 export function HeroSearch() {
   const tryHref = `/search?q=${encodeURIComponent(DEMO_SEARCH_QUERY)}`;
+  const pills = [
+    { label: DEMO_SEARCH_LABEL, href: tryHref },
+    ...EXAMPLE_SEARCHES.slice(0, 3).map((e) => ({
+      label: e.label,
+      href: `/search?q=${encodeURIComponent(e.query)}`,
+    })),
+  ];
 
   return (
     <div className="relative mt-7">
@@ -31,15 +42,20 @@ export function HeroSearch() {
         </button>
       </form>
 
-      <p className="mt-3 text-sm text-white/70">
-        <span className="text-white/50">Try this: </span>
-        <Link
-          href={tryHref}
-          className="font-semibold text-cta underline-offset-2 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {DEMO_SEARCH_LABEL}
-        </Link>
-      </p>
+      <div className="mt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-white/50">Try this</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {pills.map((pill) => (
+            <Link
+              key={pill.href + pill.label}
+              href={pill.href}
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:border-cta hover:bg-cta/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {pill.label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

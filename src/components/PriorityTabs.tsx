@@ -1,37 +1,51 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  buildRecommendationPanel,
   formatConditionLabel,
   isStaleFreshness,
   NO_RECOMMENDATION_TEXT,
-  PRIORITY_LABELS,
-  sortCompareRows,
   totalKnownCost,
   type CompareRow,
   type RecommendationPanelModel,
 } from "@/lib/compare-view";
+import { CostBreakdown } from "@/components/CostBreakdown";
 import { Freshness } from "@/components/Freshness";
+import { ProtectionDetails } from "@/components/ProtectionDetails";
 import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 import type { Priority } from "@/lib/types";
+import { RefreshPricesButton } from "@/components/RefreshPricesButton";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
+import { formatFreshness } from "@/lib/freshness";
 
-const PRIORITIES: Priority[] = [
-  "best-overall",
-  "lowest-cost",
-  "fastest-delivery",
-  "best-condition",
-  "best-protection",
-];
-
-function MetaCell({ label, value }: { label: string; value: string }) {
+/** Single pill style shared by every card badge — only the tone color varies. */
+function Badge({
+  tone,
+  children,
+}: {
+  tone: "top" | "authorized" | "neutral";
+  children: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "top"
+      ? "bg-cta/30 text-navy-900"
+      : tone === "authorized"
+        ? "bg-navy-100 text-navy-900"
+        : "bg-surface text-muted";
   return (
-    <div>
-      <dt className="inline text-muted">{label}: </dt>
-      <dd className="inline capitalize">{value}</dd>
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${toneClass}`}>
+      {children}
+    </span>
+  );
+}
+
+/** Fixed-width label column so values line up at the same position on every card. */
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-2 text-sm">
+      <span className="w-24 shrink-0 text-xs font-medium text-muted sm:w-28">{label}</span>
+      <span className="min-w-0 flex-1 text-foreground/85">{children}</span>
     </div>
   );
 }
@@ -149,80 +163,75 @@ function OfferCard({
         isTop ? "border-cta ring-2 ring-cta/25" : "border-border"
       }`}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-1 gap-3">
-          <Image
-            src={logoSrc}
-            alt=""
-            width={48}
-            height={48}
-            className="h-12 w-12 shrink-0 rounded-xl border border-border bg-white object-contain p-1"
-          />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3
-                className="truncate text-base font-semibold text-foreground"
-                title={listing.sourceName}
-              >
-                {listing.sourceName}
-              </h3>
-              {isTop ? (
-                <span className="rounded-full bg-cta/30 px-2.5 py-0.5 text-xs font-bold text-navy-900">
-                  {recommendationLabel}
-                </span>
-              ) : (
-                <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-medium text-muted">
-                  {recommendation.label}
-                </span>
-              )}
-              {listing.isAuthorizedSource ? (
-                <span className="rounded-full bg-navy-100 px-2.5 py-0.5 text-xs font-medium text-navy-900">
-                  Approved source
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
-              {listing.sourceTypeLabel ? <span>{listing.sourceTypeLabel} ·</span> : null}
-              <Freshness minutesAgo={listing.freshnessMinutesAgo} />
-            </p>
-            <dl className="mt-2 grid gap-1 text-sm text-foreground/80 sm:grid-cols-2">
-              <MetaCell label="Condition" value={formatConditionLabel(listing.condition)} />
-              <MetaCell label="Availability" value={listing.availabilityLabel} />
-              <MetaCell label="Delivery / pickup" value={fulfillment} />
-              <MetaCell
-                label="Item price"
-                value={`$${listing.price.toFixed(2)}${
-                  listing.shipping === 0 ? " · Free shipping" : ` · +$${listing.shipping.toFixed(2)} ship`
-                }`}
-              />
-              <MetaCell label="Warranty" value={listing.warrantyLabel} />
-              <MetaCell label="Returns" value={listing.returnPolicyLabel} />
-            </dl>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-          <div className="text-left sm:text-right">
-            <p className="text-xs font-medium text-muted">Total known cost</p>
-            <p className="text-xl font-bold tabular-nums text-price">${total.toFixed(2)}</p>
-          </div>
-          <Link
-            href={`/compare/${productId}/why/${listing.id}`}
-            className="text-sm font-semibold text-link hover:underline"
-          >
-            Why this option
-          </Link>
-          {listing.url ? (
-            <a
-              href={`/go/${listing.id}`}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="btn-cta px-4 py-2.5 text-center text-sm sm:min-w-[8.5rem]"
+      {/* Retailer or source, plus recommendation badge(s) */}
+      <div className="flex min-w-0 items-start gap-3">
+        <Image
+          src={logoSrc}
+          alt=""
+          width={40}
+          height={40}
+          className="h-10 w-10 shrink-0 rounded-xl border border-border bg-white object-contain p-1"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3
+              className="truncate text-base font-semibold text-foreground"
+              title={listing.sourceName}
             >
-              View offer
-            </a>
+              {listing.sourceName}
+            </h3>
+            {isTop ? (
+              <Badge tone="top">{recommendationLabel}</Badge>
+            ) : (
+              <Badge tone="neutral">{recommendation.label}</Badge>
+            )}
+            {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
+          </div>
+          {listing.sourceTypeLabel ? (
+            <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
+              {listing.sourceTypeLabel}
+            </p>
           ) : null}
         </div>
+      </div>
+
+      {/* Condition · Total known cost · Delivery/pickup · Protection · Freshness, one order on every card */}
+      <div className="mt-3 space-y-2">
+        <FieldRow label="Condition">{formatConditionLabel(listing.condition)}</FieldRow>
+        <CostBreakdown
+          itemPrice={listing.price}
+          shipping={listing.shipping}
+          mandatoryFees={listing.mandatoryFees}
+          verifiedDiscount={listing.verifiedDiscount}
+          totalKnownCost={total}
+        />
+        <FieldRow label="Delivery / pickup">{fulfillment}</FieldRow>
+        <FieldRow label="Protection">
+          <ProtectionDetails details={listing.protectionDetails} />
+        </FieldRow>
+        <FieldRow label="Freshness">
+          <Freshness minutesAgo={listing.freshnessMinutesAgo} />
+        </FieldRow>
+      </div>
+
+      {/* Why this option · View offer (hidden without a valid retailer URL) */}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Link
+          href={`/compare/${productId}/why/${listing.id}`}
+          className="text-sm font-semibold text-link hover:underline"
+        >
+          Why this option
+        </Link>
+        {listing.url ? (
+          <a
+            href={`/go/${listing.id}`}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="btn-cta px-4 py-2 text-center text-sm"
+          >
+            View offer
+          </a>
+        ) : null}
       </div>
     </li>
   );
@@ -231,26 +240,29 @@ function OfferCard({
 export function PriorityTabs({
   productId,
   rows,
-  initialPriority,
+  priority,
+  priorityOptions,
+  panel,
 }: {
   productId: string;
+  /** Already ranked server-side for `priority` — this component never re-sorts. */
   rows: CompareRow[];
-  initialPriority?: Priority;
+  priority: Priority;
+  /** Tabs to render — server-filtered (e.g. Best protection dropped when no listing has structured data), with a navigable href per option. */
+  priorityOptions: { key: Priority; label: string; href: string }[];
+  /** Precomputed server-side from the same sorted `rows`; null means nothing to rank or a genuine tie for first. */
+  panel: RecommendationPanelModel | null;
 }) {
-  const [priority, setPriority] = useState<Priority>(initialPriority ?? "best-overall");
-  const sorted = sortCompareRows(rows, priority);
-  const panel = buildRecommendationPanel(sorted, priority);
   // No badge/highlight at all when there's no reliable recommendation (tie,
   // or nothing to rank) — an arbitrary sort-order pick must never look like
-  // a confident claim. When panel exists, its label is already stale-aware
-  // (swapped to a neutral label rather than e.g. "Best overall") — derive
-  // from it instead of a static PRIORITY_LABELS lookup.
-  const topId = panel ? sorted[0]?.listing.id : undefined;
+  // a confident claim.
+  const topId = panel ? rows[0]?.listing.id : undefined;
   const recommendationLabel = panel?.label ?? "";
-  const anyStale = sorted.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
-  const sourceCount = new Set(sorted.map((r) => r.listing.sourceId)).size;
+  const anyStale = rows.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
+  const oldestMinutes = Math.max(0, ...rows.map((r) => r.listing.freshnessMinutesAgo ?? 0));
+  const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
 
-  if (sorted.length === 0) {
+  if (rows.length === 0) {
     return (
       <StatusPanel
         tone="warn"
@@ -271,9 +283,10 @@ export function PriorityTabs({
       {/* Recommendation summary */}
       {anyStale ? (
         <StatusBanner
-          tone="warn"
-          title="Some prices look stale"
-          description="At least one offer has not refreshed within the last hour. Treat those totals as possibly outdated."
+          tone="info"
+          title={`Prices last checked: ${formatFreshness(oldestMinutes).replace(/^Updated /i, "")}`}
+          description="Totals still reflect the last sync. Refresh for the latest item, shipping, and fee figures before you buy."
+          action={<RefreshPricesButton productId={productId} />}
         />
       ) : null}
 
@@ -289,34 +302,61 @@ export function PriorityTabs({
         </div>
       )}
 
-      {/* Priority controls */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-y border-border py-3">
-        <span className="mr-1 text-sm font-semibold text-foreground">Sort by</span>
-        {PRIORITIES.map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setPriority(key)}
-            aria-pressed={priority === key}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-              priority === key
-                ? "btn-navy shadow-sm"
-                : "border border-border bg-surface text-muted hover:border-accent hover:text-foreground"
-            }`}
+      {/* Priority controls — segment bar on desktop, select on mobile. Every
+          option is a link to a pre-ranked URL; choosing one never re-sorts
+          in the browser, it navigates and the server returns the new order. */}
+      <div className="mt-4 border-y border-border py-3">
+        <label htmlFor="compare-priority" className="mb-2 block text-sm font-semibold text-foreground sm:mb-0 sm:mr-3 sm:inline">
+          Sort by
+        </label>
+        <div className="sm:hidden">
+          <select
+            id="compare-priority"
+            value={priority}
+            onChange={(e) => {
+              const next = priorityOptions.find((option) => option.key === e.target.value);
+              if (next) window.location.href = next.href;
+            }}
+            className="mt-1 w-full rounded-xl border border-border bg-panel px-3 py-2.5 text-sm font-semibold text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-ring/40"
           >
-            {PRIORITY_LABELS[key]}
-          </button>
-        ))}
+            {priorityOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div
+          role="tablist"
+          aria-label="Sort priority"
+          className="mt-2 hidden rounded-full border border-border bg-surface p-1 sm:inline-flex sm:flex-wrap"
+        >
+          {priorityOptions.map((option) => (
+            <Link
+              key={option.key}
+              href={option.href}
+              role="tab"
+              aria-selected={priority === option.key}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                priority === option.key
+                  ? "bg-cta text-white shadow-sm"
+                  : "text-muted hover:bg-panel hover:text-foreground"
+              }`}
+            >
+              {option.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Offer cards */}
       <p className="mt-4 text-sm text-muted">
-        {sorted.length} {sorted.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
+        {rows.length} {rows.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
         {sourceCount === 1 ? "source" : "sources"}
       </p>
 
       <ul className="mt-3 space-y-3 pb-24 lg:pb-0">
-        {sorted.map((row) => (
+        {rows.map((row) => (
           <OfferCard
             key={row.listing.id}
             productId={productId}

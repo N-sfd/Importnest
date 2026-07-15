@@ -17,15 +17,22 @@ function MiniSearchPreview() {
 function MiniApprovedPreview() {
   return (
     <ul className="space-y-1.5" aria-hidden>
-      {["Official Brand Store", "Authorized Outlet", "Retailer Direct"].map((name) => (
+      {[
+        { name: "Best Buy", badge: "National" },
+        { name: "Apex Home Store", badge: "Manufacturer" },
+        { name: "Local Apex Dealer", badge: "Authorized" },
+      ].map((row) => (
         <li
-          key={name}
+          key={row.name}
           className="flex items-center gap-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-[11px] dark:bg-panel"
         >
           <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-cta/35 text-[10px] font-bold text-navy-900">
             ✓
           </span>
-          <span className="truncate font-medium text-foreground">{name}</span>
+          <span className="min-w-0 flex-1 truncate font-medium text-foreground">{row.name}</span>
+          <span className="shrink-0 rounded-full bg-surface px-1.5 py-0.5 text-[9px] font-bold text-muted">
+            {row.badge}
+          </span>
         </li>
       ))}
     </ul>

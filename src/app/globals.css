@@ -6,30 +6,30 @@
   --surface: #f3f5f7;
   --panel: #ffffff;
   --border: #e2e6ea;
-  --navy-950: #01060f;
-  /* Logo plate */
-  --navy-900: #050a14;
+  --navy-950: #021027;
+  /* Header / chrome navy (richer blue, not near-black) */
+  --navy-900: #041935;
   --navy-800: #0b1f38;
   --navy-100: #e8f4f8;
   /* Logo teal / cyan (NEST, cart, tag) — primary buttons + accents */
   --accent: #00b8d4;
   --cta: #00b8d4;
   --cta-hover: #0098b5;
-  --price: #050a14;
+  --price: #041935;
   --link: #008fad;
   --muted: #5c6770;
   --ring: #00b8d4;
-  --shadow-panel: 0 1px 2px rgb(5 10 20 / 0.05), 0 10px 28px rgb(5 10 20 / 0.08);
+  --shadow-panel: 0 1px 2px rgb(4 25 53 / 0.05), 0 10px 28px rgb(4 25 53 / 0.08);
 }
 
 html.dark {
-  --background: #050a14;
+  --background: #041935;
   --foreground: #e8eef6;
   --surface: #08111d;
   --panel: #0c1828;
   --border: #1e3048;
-  --navy-950: #01060f;
-  --navy-900: #050a14;
+  --navy-950: #021027;
+  --navy-900: #041935;
   --navy-800: #0b1f38;
   --navy-100: #152536;
   --accent: #2ec8e6;

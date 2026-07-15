@@ -3,10 +3,14 @@ import {
   buildRecommendationPanel,
   FALLBACK_COPY,
   formatMatchStatus,
+  hasFulfillmentSignal,
+  hasStructuredProtectionData,
   hasTiedTop,
   NEUTRAL_RECOMMENDATION_LABEL,
   NO_RECOMMENDATION_TEXT,
   PRIORITY_LABELS,
+  protectionDetailItems,
+  protectionScore,
   sortCompareRows,
   type CompareListingView,
   type CompareRow,
@@ -25,6 +29,58 @@ describe("formatMatchStatus — product identity match label", () => {
   it("reads as pending review when there is no confidence score at all", () => {
     expect(formatMatchStatus(undefined, null)).toBe("Match pending review");
     expect(formatMatchStatus("exact", null)).toBe("Match pending review");
+  });
+});
+
+describe("protectionDetailItems — structured warranty/return facts", () => {
+  it("returns nothing when no structured data was provided at all", () => {
+    expect(protectionDetailItems(undefined)).toEqual([]);
+  });
+
+  it("returns nothing when the details object has no populated fields", () => {
+    expect(protectionDetailItems({})).toEqual([]);
+  });
+
+  it("treats a whitespace-only value the same as not provided", () => {
+    expect(protectionDetailItems({ manufacturerWarranty: "   " })).toEqual([]);
+  });
+
+  it("surfaces only the manufacturer warranty when that's the only field present", () => {
+    expect(protectionDetailItems({ manufacturerWarranty: "1-year manufacturer warranty" })).toEqual([
+      { label: "Manufacturer warranty", value: "1-year manufacturer warranty" },
+    ]);
+  });
+
+  it("surfaces only the return period when that's the only field present", () => {
+    expect(protectionDetailItems({ returnPeriod: "30-day returns" })).toEqual([
+      { label: "Return period", value: "30-day returns" },
+    ]);
+  });
+
+  it("surfaces both warranty and return facts together, in a fixed order", () => {
+    expect(
+      protectionDetailItems({
+        returnPeriod: "30-day returns",
+        manufacturerWarranty: "1-year manufacturer warranty",
+      }),
+    ).toEqual([
+      { label: "Manufacturer warranty", value: "1-year manufacturer warranty" },
+      { label: "Return period", value: "30-day returns" },
+    ]);
+  });
+
+  it("surfaces a final-sale restriction alongside the other populated fields", () => {
+    expect(
+      protectionDetailItems({
+        retailerWarranty: "90-day retailer warranty",
+        restockingFee: "15% restocking fee",
+        finalSaleRestriction: "Final sale — no returns",
+      }),
+    ).toEqual([
+      { label: "Retailer warranty", value: "90-day retailer warranty" },
+      { label: "Restocking fee", value: "15% restocking fee" },
+      { label: "Final sale", value: "Final sale — no returns" },
+    ]);
   });
 });
 
@@ -108,9 +164,9 @@ describe("buildRecommendationPanel — recommendation summary content", () => {
     );
     const panel = buildRecommendationPanel(rows, "lowest-cost");
 
-    expect(panel?.label).toBe("Lowest cost");
+    expect(panel?.label).toBe(PRIORITY_LABELS["lowest-cost"]);
     expect(panel?.listingId).toBe("cheap");
-    expect(panel?.rationale).toContain("Lowest cost because it has");
+    expect(panel?.rationale).toContain(`${PRIORITY_LABELS["lowest-cost"]} because it has`);
     expect(panel?.rationale).toContain("lowest total known cost");
     expect(panel?.tradeOffLine).toBeNull();
   });
@@ -170,8 +226,8 @@ describe("buildRecommendationPanel — recommendation summary content", () => {
 
     expect(panel?.listingId).toBe("stale-cheapest");
     expect(panel?.label).toBe(NEUTRAL_RECOMMENDATION_LABEL);
-    expect(panel?.rationale).toContain("outdated");
-    expect(panel?.rationale).not.toContain("Lowest cost because");
+    expect(panel?.rationale).toContain("refresh live prices");
+    expect(panel?.rationale).not.toContain(`${PRIORITY_LABELS["lowest-cost"]} because`);
   });
 
   it("missing information: reports real data gaps without inventing values", () => {
@@ -213,5 +269,310 @@ describe("hasTiedTop / NO_RECOMMENDATION_TEXT", () => {
 
   it("exposes the exact fallback copy to show when there's no reliable recommendation", () => {
     expect(NO_RECOMMENDATION_TEXT).toBe("No clear best option based on the available data.");
+  });
+});
+
+describe("PRIORITY_LABELS — supported sort options", () => {
+  it("matches the exact required set of labels", () => {
+    expect(PRIORITY_LABELS).toEqual({
+      "best-overall": "Best overall",
+      "lowest-cost": "Lowest total cost",
+      "fastest-delivery": "Fastest available",
+      "best-condition": "Best condition",
+      "best-protection": "Best protection",
+    });
+  });
+});
+
+describe("sortCompareRows — best-overall", () => {
+  it("prefers a cheaper, authorized, new-condition, pickup-available offer over a plain one at the same cost", () => {
+    const rows = [
+      makeRow({ id: "plain", price: 100 }),
+      makeRow({
+        id: "loaded",
+        price: 100,
+        isAuthorizedSource: true,
+        condition: "new",
+        pickupAvailable: true,
+      }),
+    ];
+    expect(sortCompareRows(rows, "best-overall").map((r) => r.listing.id)).toEqual([
+      "loaded",
+      "plain",
+    ]);
+  });
+
+  it("ranks a cheaper offer above a pricier one with no other distinguishing factors", () => {
+    const rows = [makeRow({ id: "pricier", price: 120 }), makeRow({ id: "cheaper", price: 80 })];
+    expect(sortCompareRows(rows, "best-overall").map((r) => r.listing.id)).toEqual([
+      "cheaper",
+      "pricier",
+    ]);
+  });
+});
+
+describe("sortCompareRows — lowest-cost", () => {
+  it("ranks strictly by ascending total known cost", () => {
+    const rows = [
+      makeRow({ id: "c", price: 90, shipping: 5, mandatoryFees: 2 }),
+      makeRow({ id: "a", price: 50 }),
+      makeRow({ id: "b", price: 70 }),
+    ];
+    expect(sortCompareRows(rows, "lowest-cost").map((r) => r.listing.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("ignores condition and authorization — cost is the only signal", () => {
+    const rows = [
+      makeRow({ id: "premium", price: 60, isAuthorizedSource: true, condition: "new" }),
+      makeRow({ id: "budget", price: 55, isAuthorizedSource: false, condition: "used" }),
+    ];
+    expect(sortCompareRows(rows, "lowest-cost").map((r) => r.listing.id)).toEqual([
+      "budget",
+      "premium",
+    ]);
+  });
+});
+
+describe("sortCompareRows — fastest-delivery (pickup, then availability, then cost — never a fabricated delivery date)", () => {
+  it("ranks confirmed pickup above everything else, regardless of cost", () => {
+    const rows = [
+      makeRow({ id: "cheap-no-pickup", price: 10, pickupAvailable: false }),
+      makeRow({ id: "pricier-pickup", price: 50, pickupAvailable: true }),
+    ];
+    expect(sortCompareRows(rows, "fastest-delivery").map((r) => r.listing.id)).toEqual([
+      "pricier-pickup",
+      "cheap-no-pickup",
+    ]);
+  });
+
+  it("falls back to a known availability signal when no listing has pickup", () => {
+    const rows = [
+      makeRow({
+        id: "unknown-availability",
+        price: 40,
+        pickupAvailable: false,
+        availabilityLabel: FALLBACK_COPY.availability,
+      }),
+      makeRow({
+        id: "known-availability",
+        price: 45,
+        pickupAvailable: false,
+        availabilityLabel: "Listed for shipping",
+      }),
+    ];
+    // Known availability outranks unknown even though it costs more — the
+    // only real fulfillment signal available without delivery-date data.
+    expect(sortCompareRows(rows, "fastest-delivery").map((r) => r.listing.id)).toEqual([
+      "known-availability",
+      "unknown-availability",
+    ]);
+  });
+
+  it("falls back to cost when neither pickup nor availability distinguishes the offers", () => {
+    const rows = [
+      makeRow({
+        id: "pricier",
+        price: 60,
+        pickupAvailable: false,
+        availabilityLabel: FALLBACK_COPY.availability,
+      }),
+      makeRow({
+        id: "cheaper",
+        price: 40,
+        pickupAvailable: false,
+        availabilityLabel: FALLBACK_COPY.availability,
+      }),
+    ];
+    expect(sortCompareRows(rows, "fastest-delivery").map((r) => r.listing.id)).toEqual([
+      "cheaper",
+      "pricier",
+    ]);
+  });
+});
+
+describe("sortCompareRows — best-condition", () => {
+  it("ranks new > open-box > certified-refurbished > refurbished > used", () => {
+    const rows = [
+      makeRow({ id: "used", condition: "used", price: 10 }),
+      makeRow({ id: "new", condition: "new", price: 90 }),
+      makeRow({ id: "open-box", condition: "open-box", price: 50 }),
+      makeRow({ id: "refurb", condition: "refurbished", price: 40 }),
+      makeRow({ id: "cert-refurb", condition: "certified-refurbished", price: 45 }),
+    ];
+    expect(sortCompareRows(rows, "best-condition").map((r) => r.listing.id)).toEqual([
+      "new",
+      "open-box",
+      "cert-refurb",
+      "refurb",
+      "used",
+    ]);
+  });
+
+  it("breaks a condition tie by lowest total known cost", () => {
+    const rows = [
+      makeRow({ id: "new-pricier", condition: "new", price: 100 }),
+      makeRow({ id: "new-cheaper", condition: "new", price: 80 }),
+    ];
+    expect(sortCompareRows(rows, "best-condition").map((r) => r.listing.id)).toEqual([
+      "new-cheaper",
+      "new-pricier",
+    ]);
+  });
+});
+
+describe("sortCompareRows — best-protection (structured data only, never rewards silence)", () => {
+  it("ranks a listing with a structured protection fact above one with none", () => {
+    const rows = [
+      makeRow({ id: "no-data", price: 50 }),
+      makeRow({
+        id: "has-data",
+        price: 50,
+        protectionDetails: { manufacturerWarranty: "1-year manufacturer warranty" },
+      }),
+    ];
+    expect(sortCompareRows(rows, "best-protection").map((r) => r.listing.id)).toEqual([
+      "has-data",
+      "no-data",
+    ]);
+  });
+
+  it("ranks more structured facts above fewer, all else equal", () => {
+    const rows = [
+      makeRow({
+        id: "one-fact",
+        price: 50,
+        protectionDetails: { returnPeriod: "30-day returns" },
+      }),
+      makeRow({
+        id: "three-facts",
+        price: 50,
+        protectionDetails: {
+          manufacturerWarranty: "1-year manufacturer warranty",
+          returnPeriod: "30-day returns",
+          restockingFee: "No restocking fee",
+        },
+      }),
+    ];
+    expect(sortCompareRows(rows, "best-protection").map((r) => r.listing.id)).toEqual([
+      "three-facts",
+      "one-fact",
+    ]);
+  });
+
+  it("still rewards an authorized source and new condition alongside structured data", () => {
+    const rows = [
+      makeRow({ id: "third-party-used", price: 50, condition: "used", isAuthorizedSource: false }),
+      makeRow({ id: "authorized-new", price: 50, condition: "new", isAuthorizedSource: true }),
+    ];
+    expect(sortCompareRows(rows, "best-protection").map((r) => r.listing.id)).toEqual([
+      "authorized-new",
+      "third-party-used",
+    ]);
+  });
+});
+
+describe("sortCompareRows — deterministic tie-breaking", () => {
+  const priorities = [
+    "best-overall",
+    "lowest-cost",
+    "fastest-delivery",
+    "best-condition",
+    "best-protection",
+  ] as const;
+
+  it("breaks a total tie by listing id, the same way regardless of the input array's original order", () => {
+    const a = makeRow({ id: "b-listing", price: 50 });
+    const b = makeRow({ id: "a-listing", price: 50 });
+
+    for (const priority of priorities) {
+      expect(sortCompareRows([a, b], priority).map((r) => r.listing.id)).toEqual([
+        "a-listing",
+        "b-listing",
+      ]);
+      expect(sortCompareRows([b, a], priority).map((r) => r.listing.id)).toEqual([
+        "a-listing",
+        "b-listing",
+      ]);
+    }
+  });
+
+  it("produces the same order regardless of how the input rows were shuffled", () => {
+    const rows = [
+      makeRow({ id: "z", price: 60 }),
+      makeRow({ id: "y", price: 60 }),
+      makeRow({ id: "x", price: 60 }),
+    ];
+    const shuffled = [rows[2]!, rows[0]!, rows[1]!];
+
+    expect(sortCompareRows(shuffled, "lowest-cost").map((r) => r.listing.id)).toEqual(
+      sortCompareRows(rows, "lowest-cost").map((r) => r.listing.id),
+    );
+    expect(sortCompareRows(rows, "lowest-cost").map((r) => r.listing.id)).toEqual(["x", "y", "z"]);
+  });
+});
+
+describe("protectionScore — driven only by structured data, never by silence", () => {
+  it("scores zero for an unauthorized, used listing with no structured protection data", () => {
+    expect(protectionScore(makeListing({ condition: "used", isAuthorizedSource: false }))).toBe(0);
+  });
+
+  it("adds 10 points per structured protection fact supplied", () => {
+    const oneFact = protectionScore(
+      makeListing({ condition: "used", protectionDetails: { returnPeriod: "30-day returns" } }),
+    );
+    const twoFacts = protectionScore(
+      makeListing({
+        condition: "used",
+        protectionDetails: { returnPeriod: "30-day returns", restockingFee: "0%" },
+      }),
+    );
+    expect(twoFacts - oneFact).toBe(10);
+  });
+});
+
+describe("hasStructuredProtectionData — gates whether Best protection is offered at all", () => {
+  it("is false when no compared listing has any structured protection fact", () => {
+    expect(hasStructuredProtectionData([makeListing({ id: "a" }), makeListing({ id: "b" })])).toBe(
+      false,
+    );
+  });
+
+  it("is true when at least one compared listing has a structured protection fact", () => {
+    expect(
+      hasStructuredProtectionData([
+        makeListing({ id: "a" }),
+        makeListing({ id: "b", protectionDetails: { returnPeriod: "30-day returns" } }),
+      ]),
+    ).toBe(true);
+  });
+});
+
+describe("hasFulfillmentSignal — fallback signals for Fastest available, no delivery-date claims", () => {
+  it("is true for confirmed pickup", () => {
+    expect(
+      hasFulfillmentSignal(
+        makeListing({ pickupAvailable: true, availabilityLabel: FALLBACK_COPY.availability }),
+      ),
+    ).toBe(true);
+  });
+
+  it("is true for a known, non-fallback availability status even without pickup", () => {
+    expect(
+      hasFulfillmentSignal(
+        makeListing({ pickupAvailable: false, availabilityLabel: "Listed for shipping" }),
+      ),
+    ).toBe(true);
+  });
+
+  it("is false when neither pickup nor a known availability status exists", () => {
+    expect(
+      hasFulfillmentSignal(
+        makeListing({ pickupAvailable: false, availabilityLabel: FALLBACK_COPY.availability }),
+      ),
+    ).toBe(false);
   });
 });

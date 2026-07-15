@@ -42,14 +42,14 @@ export function productThumbClass(src: string) {
 
 /** Retailer / connector logos for listings loaded from the backend. */
 export const sourceImages: Record<string, string> = {
-  "src-official": "/sources/official.svg",
-  "src-retailer-direct": "/sources/retailer-direct.svg",
-  "src-local-electronics": "/sources/local-electronics.svg",
+  "src-official": "/sources/brands/apex-home.svg",
+  "src-retailer-direct": "/sources/brands/best-buy.svg",
+  "src-local-electronics": "/sources/brands/local-apex-dealer.svg",
   "src-authorized-outlet": "/sources/authorized-outlet.svg",
-  "src-discount-home": "/sources/discount-home.svg",
-  "src-amazon": "/sources/amazon.svg",
-  "src-idealo": "/sources/idealo.svg",
-  "src-google-shopping": "/sources/google-shopping.svg",
+  "src-discount-home": "/sources/brands/wayfair.svg",
+  "src-amazon": "/sources/brands/amazon.svg",
+  "src-idealo": "/sources/brands/idealo.svg",
+  "src-google-shopping": "/sources/brands/google-shopping.svg",
 };
 
 export function sourceImageFor(sourceId: string) {

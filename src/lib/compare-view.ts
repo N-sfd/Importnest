@@ -13,6 +13,19 @@ export const FALLBACK_COPY = {
   availability: "Stock status not provided",
 } as const;
 
+/**
+ * Structured warranty/return facts for one listing. Every field is optional
+ * because sources rarely provide all of them — only render what's present,
+ * never fabricate a value for a field the source didn't supply.
+ */
+export type ProtectionDetails = {
+  manufacturerWarranty?: string;
+  retailerWarranty?: string;
+  returnPeriod?: string;
+  restockingFee?: string;
+  finalSaleRestriction?: string;
+};
+
 export type CompareListingView = {
   id: string;
   sourceId: string;
@@ -42,7 +55,38 @@ export type CompareListingView = {
   availabilityLabel: string;
   warrantyLabel: string;
   returnPolicyLabel: string;
+  /** Present only when the source supplied at least one structured protection fact. */
+  protectionDetails?: ProtectionDetails;
 };
+
+/** Compact stand-in for the old "Warranty information not provided · Return policy not provided" copy. */
+export const PROTECTION_UNAVAILABLE_LABEL = "Protection details unavailable";
+export const PROTECTION_UNAVAILABLE_DETAIL =
+  "This source did not provide structured warranty or return information.";
+export const PROTECTION_AVAILABLE_LABEL = "Protection details";
+
+const PROTECTION_DETAIL_FIELDS: { key: keyof ProtectionDetails; label: string }[] = [
+  { key: "manufacturerWarranty", label: "Manufacturer warranty" },
+  { key: "retailerWarranty", label: "Retailer warranty" },
+  { key: "returnPeriod", label: "Return period" },
+  { key: "restockingFee", label: "Restocking fee" },
+  { key: "finalSaleRestriction", label: "Final sale" },
+];
+
+/**
+ * Only the protection facts this source actually supplied, in a fixed
+ * display order. Empty/whitespace-only values are treated as not provided —
+ * never invents a value for a field the source left out.
+ */
+export function protectionDetailItems(
+  details: ProtectionDetails | undefined,
+): { label: string; value: string }[] {
+  if (!details) return [];
+  return PROTECTION_DETAIL_FIELDS.flatMap(({ key, label }) => {
+    const value = details[key]?.trim();
+    return value ? [{ label, value }] : [];
+  });
+}
 
 export type CompareSourceSummary = {
   sourceId: string;
@@ -120,18 +164,23 @@ export function conditionRank(condition: string): number {
 }
 
 /**
- * Buyer-protection proxy from real fields only: authorized channel and
- * condition. Warranty/return copy is usually placeholder today, so those
- * only boost when they are not the shared fallback strings.
+ * Buyer-protection proxy from real fields only: authorized channel,
+ * condition, and how many structured protection facts (manufacturer/retailer
+ * warranty, return period, restocking fee, final-sale restriction) the
+ * source actually supplied. Never rewards a source for silence.
  */
 export function protectionScore(listing: CompareListingView): number {
   let score = 0;
   if (listing.isAuthorizedSource) score += 40;
   if (listing.condition === "new") score += 20;
   else if (listing.condition === "open-box") score += 8;
-  if (listing.warrantyLabel !== FALLBACK_COPY.warranty) score += 25;
-  if (listing.returnPolicyLabel !== FALLBACK_COPY.returns) score += 25;
+  score += protectionDetailItems(listing.protectionDetails).length * 10;
   return score;
+}
+
+/** True when at least one compared listing has any structured protection fact. */
+export function hasStructuredProtectionData(listings: CompareListingView[]): boolean {
+  return listings.some((l) => protectionDetailItems(l.protectionDetails).length > 0);
 }
 
 export function isSafeRetailerUrl(url: string | null | undefined): boolean {
@@ -178,7 +227,7 @@ export function formatMatchStatus(
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
   "best-overall": "Best overall",
-  "lowest-cost": "Lowest cost",
+  "lowest-cost": "Lowest total cost",
   "fastest-delivery": "Fastest available",
   "best-condition": "Best condition",
   "best-protection": "Best protection",
@@ -192,33 +241,63 @@ export function overallScore(listing: CompareListingView): number {
   return s;
 }
 
+/**
+ * True when a listing carries any real fulfillment signal at all — pickup or
+ * a known (non-fallback) availability status. There is no delivery-date
+ * field in this data model, so "fastest available" ranks and labels itself
+ * from these proxies only; it never claims a specific delivery speed.
+ */
+export function hasFulfillmentSignal(listing: CompareListingView): boolean {
+  return listing.pickupAvailable || listing.availabilityLabel !== FALLBACK_COPY.availability;
+}
+
+/** Final tiebreaker shared by every priority so equal-ranked rows still sort deterministically. */
+function idTiebreak(a: CompareListingView, b: CompareListingView): number {
+  return a.id.localeCompare(b.id);
+}
+
 export function sortCompareRows(rows: CompareRow[], priority: Priority): CompareRow[] {
   const copy = [...rows];
   switch (priority) {
     case "lowest-cost":
-      return copy.sort((a, b) => totalKnownCost(a.listing) - totalKnownCost(b.listing));
+      return copy.sort(
+        (a, b) =>
+          totalKnownCost(a.listing) - totalKnownCost(b.listing) || idTiebreak(a.listing, b.listing),
+      );
     case "fastest-delivery":
       return copy.sort((a, b) => {
         const pickup = Number(b.listing.pickupAvailable) - Number(a.listing.pickupAvailable);
         if (pickup !== 0) return pickup;
-        return totalKnownCost(a.listing) - totalKnownCost(b.listing);
+        // No listing has confirmed pickup here — fall back to any known availability signal.
+        const availability =
+          Number(hasFulfillmentSignal(b.listing)) - Number(hasFulfillmentSignal(a.listing));
+        if (availability !== 0) return availability;
+        return (
+          totalKnownCost(a.listing) - totalKnownCost(b.listing) || idTiebreak(a.listing, b.listing)
+        );
       });
     case "best-condition":
       return copy.sort((a, b) => {
         const c = conditionRank(a.listing.condition) - conditionRank(b.listing.condition);
         if (c !== 0) return c;
-        return totalKnownCost(a.listing) - totalKnownCost(b.listing);
+        return (
+          totalKnownCost(a.listing) - totalKnownCost(b.listing) || idTiebreak(a.listing, b.listing)
+        );
       });
     case "best-protection":
       return copy.sort((a, b) => {
         const pa = protectionScore(a.listing);
         const pb = protectionScore(b.listing);
         if (pb !== pa) return pb - pa;
-        return totalKnownCost(a.listing) - totalKnownCost(b.listing);
+        return (
+          totalKnownCost(a.listing) - totalKnownCost(b.listing) || idTiebreak(a.listing, b.listing)
+        );
       });
     case "best-overall":
     default:
-      return copy.sort((a, b) => overallScore(b.listing) - overallScore(a.listing));
+      return copy.sort(
+        (a, b) => overallScore(b.listing) - overallScore(a.listing) || idTiebreak(a.listing, b.listing),
+      );
   }
 }
 
@@ -378,7 +457,7 @@ function priorityComparisonKey(listing: CompareListingView, priority: Priority):
     case "lowest-cost":
       return String(totalKnownCost(listing));
     case "fastest-delivery":
-      return `${listing.pickupAvailable ? 1 : 0}:${totalKnownCost(listing)}`;
+      return `${listing.pickupAvailable ? 1 : 0}:${hasFulfillmentSignal(listing) ? 1 : 0}:${totalKnownCost(listing)}`;
     case "best-condition":
       return String(conditionRank(listing.condition));
     case "best-protection":
@@ -421,8 +500,8 @@ export function buildRecommendationPanel(
   const { positive, tradeOffs } = rankingFactorsForListing(top.listing, peers, priority);
   const cappedPositive = positive.slice(0, 3);
   const missingInformation = missingInformationForListing(top.listing);
-  // Don't claim "Fastest available" when no listing has real pickup/speed signal.
-  const anyFulfillmentSignal = peers.some((p) => p.pickupAvailable);
+  // Don't claim "Fastest available" when no listing has real pickup/availability signal.
+  const anyFulfillmentSignal = peers.some((p) => hasFulfillmentSignal(p));
   const definitiveLabel =
     priority === "fastest-delivery" && !anyFulfillmentSignal
       ? PRIORITY_LABELS["best-overall"]
@@ -434,7 +513,7 @@ export function buildRecommendationPanel(
   const freshQualifier = !dataIsStale && anyPeerStale ? " among the fresh offers compared" : "";
   const reasons = cappedPositive.map((f) => f.label.toLowerCase());
   const rationale = dataIsStale
-    ? "This offer currently ranks first for this priority, but its pricing data is outdated — treat the total as an estimate."
+    ? "This offer ranks first for this priority. Pricing was last synced a while ago — refresh live prices if you are about to buy."
     : reasons.length > 0
       ? `${label} because it has ${joinClause(reasons)}${freshQualifier}.`
       : `${label} — ranks first among the compared options.`;

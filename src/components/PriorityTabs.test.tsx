@@ -2,13 +2,18 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PriorityTabs } from "@/components/PriorityTabs";
 import {
+  buildRecommendationPanel,
   FALLBACK_COPY,
   NEUTRAL_RECOMMENDATION_LABEL,
   NO_RECOMMENDATION_TEXT,
+  PRIORITY_LABELS,
+  sortCompareRows,
   type CompareListingView,
   type CompareRow,
 } from "@/lib/compare-view";
 import { FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
+import { BRAND_FALLBACK_IMAGE } from "@/lib/images";
+import type { Priority } from "@/lib/types";
 
 function makeListing(overrides: Partial<CompareListingView> = {}): CompareListingView {
   return {
@@ -53,9 +58,48 @@ function makeRow(listingOverrides: Partial<CompareListingView> = {}): CompareRow
   };
 }
 
+const ALL_PRIORITIES: Priority[] = [
+  "best-overall",
+  "lowest-cost",
+  "fastest-delivery",
+  "best-condition",
+  "best-protection",
+];
+
+/**
+ * Mirrors what the compare page does server-side: sort once for `priority`,
+ * derive the recommendation panel from that same order, and build tab hrefs.
+ * PriorityTabs itself never re-sorts — this is the only place ranking happens.
+ */
+function renderPriorityTabs(
+  rawRows: CompareRow[],
+  options: { priority?: Priority; productId?: string; priorityKeys?: Priority[] } = {},
+): string {
+  const priority = options.priority ?? "best-overall";
+  const productId = options.productId ?? "cp-1";
+  const priorityKeys = options.priorityKeys ?? ALL_PRIORITIES;
+  const rows = sortCompareRows(rawRows, priority);
+  const panel = buildRecommendationPanel(rows, priority);
+  const priorityOptions = priorityKeys.map((key) => ({
+    key,
+    label: PRIORITY_LABELS[key],
+    href: `/compare/${productId}?priority=${key}`,
+  }));
+
+  return renderToStaticMarkup(
+    <PriorityTabs
+      productId={productId}
+      rows={rows}
+      priority={priority}
+      priorityOptions={priorityOptions}
+      panel={panel}
+    />,
+  );
+}
+
 describe("PriorityTabs — no offers", () => {
   it("renders an honest empty state instead of an offer list", () => {
-    const html = renderToStaticMarkup(<PriorityTabs productId="cp-1" rows={[]} />);
+    const html = renderPriorityTabs([]);
     expect(html).toContain("Source temporarily unavailable");
     expect(html).not.toContain("Sort by");
   });
@@ -67,19 +111,19 @@ describe("PriorityTabs — stale offers", () => {
       makeRow({ id: "a", price: 50, freshnessMinutesAgo: FRESHNESS_STALE_MINUTES }),
       makeRow({ id: "b", price: 80, freshnessMinutesAgo: 2 }),
     ];
-    const html = renderToStaticMarkup(<PriorityTabs productId="cp-1" rows={rows} />);
+    const html = renderPriorityTabs(rows);
 
-    expect(html).toContain("Some prices look stale");
-    expect(html).toContain("Data may be outdated");
+    expect(html).toContain("Prices last checked");
+    expect(html).toContain("Refresh live prices");
     expect(html).toContain(NEUTRAL_RECOMMENDATION_LABEL);
   });
 
   it("assigns the definitive label (not the neutral fallback) when every offer is fresh", () => {
     const rows = [makeRow({ id: "a", price: 50, freshnessMinutesAgo: 2 })];
-    const html = renderToStaticMarkup(<PriorityTabs productId="cp-1" rows={rows} />);
+    const html = renderPriorityTabs(rows);
 
+    expect(html).not.toContain("Prices last checked");
     expect(html).not.toContain("Some prices look stale");
-    expect(html).not.toContain("Data may be outdated");
     expect(html).not.toContain(NEUTRAL_RECOMMENDATION_LABEL);
   });
 });
@@ -102,9 +146,7 @@ describe("PriorityTabs — recommendation summary content", () => {
         freshnessMinutesAgo: 5,
       }),
     ];
-    const html = renderToStaticMarkup(
-      <PriorityTabs productId="cp-1" rows={rows} initialPriority="fastest-delivery" />,
-    );
+    const html = renderPriorityTabs(rows, { priority: "fastest-delivery" });
 
     expect(html).toContain("because it has faster pickup availability");
     expect(html).toContain("It costs $15.00 more than the cheapest listing but has faster pickup availability.");
@@ -117,11 +159,107 @@ describe("PriorityTabs — recommendation summary content", () => {
       makeRow({ id: "a", price: 60, freshnessMinutesAgo: 5 }),
       makeRow({ id: "b", price: 60, freshnessMinutesAgo: 5 }),
     ];
-    const html = renderToStaticMarkup(
-      <PriorityTabs productId="cp-1" rows={rows} initialPriority="lowest-cost" />,
-    );
+    const html = renderPriorityTabs(rows, { priority: "lowest-cost" });
 
     expect(html).toContain(NO_RECOMMENDATION_TEXT);
     expect(html).not.toContain("Recommended");
+  });
+});
+
+describe("PriorityTabs — priority tabs", () => {
+  it("renders a link (not a client-side button) for every supported priority, marking the active one", () => {
+    const rows = [makeRow({ id: "a" })];
+    const html = renderPriorityTabs(rows, { priority: "best-condition" });
+
+    for (const key of ALL_PRIORITIES) {
+      expect(html).toContain(`href="/compare/cp-1?priority=${key}"`);
+    }
+    expect(html).toContain(PRIORITY_LABELS["lowest-cost"]);
+    expect(html).toContain('aria-selected="true"');
+  });
+
+  it("omits Best protection from the tab list when the caller excludes it (no structured protection data)", () => {
+    const rows = [makeRow({ id: "a" })];
+    const html = renderPriorityTabs(rows, {
+      priorityKeys: ["best-overall", "lowest-cost", "fastest-delivery", "best-condition"],
+    });
+
+    expect(html).not.toContain(`priority=best-protection`);
+    expect(html).not.toContain(PRIORITY_LABELS["best-protection"]);
+  });
+});
+
+describe("PriorityTabs — offer card, View offer visibility", () => {
+  it("shows View offer linking to /go/<id> when the listing has a valid URL", () => {
+    const rows = [makeRow({ id: "a", url: "https://example.com/offer" })];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain("View offer");
+    expect(html).toContain('href="/go/a"');
+    expect(html).toContain("Why this option");
+  });
+
+  it("hides View offer (but keeps Why this option) when the listing has no valid URL", () => {
+    const rows = [makeRow({ id: "a", url: undefined })];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).not.toContain("View offer");
+    expect(html).toContain("Why this option");
+  });
+});
+
+describe("PriorityTabs — offer card, stale listing", () => {
+  it("shows the refresh nudge next to freshness on a stale offer", () => {
+    const rows = [makeRow({ id: "a", freshnessMinutesAgo: FRESHNESS_STALE_MINUTES })];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain("Tap refresh for latest");
+  });
+});
+
+describe("PriorityTabs — offer card, comparable-source listing (different merchant than the sync feed)", () => {
+  it("uses the brand fallback logo and hides the source-type line when the merchant differs from the connector", () => {
+    const rows = [
+      makeRow({
+        id: "a",
+        sourceName: "Best Buy",
+        hasDistinctSeller: true,
+        sourceTypeLabel: "",
+      }),
+    ];
+    const html = renderPriorityTabs(rows);
+    const fallbackFilename = BRAND_FALLBACK_IMAGE.split("/").pop()!;
+
+    expect(html).toContain(fallbackFilename);
+    expect(html).toContain("Best Buy");
+    expect(html).not.toContain("Affiliate feed");
+  });
+});
+
+describe("PriorityTabs — offer card, different conditions", () => {
+  it("renders each listing's own condition label distinctly", () => {
+    const rows = [
+      makeRow({ id: "new", condition: "new" }),
+      makeRow({ id: "open-box", condition: "open-box" }),
+      makeRow({ id: "used", condition: "used" }),
+      makeRow({ id: "refurb", condition: "certified-refurbished" }),
+    ];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain("New");
+    expect(html).toContain("Open-box");
+    expect(html).toContain("Used");
+    expect(html).toContain("Refurbished");
+  });
+});
+
+describe("PriorityTabs — offer card, no delivery data", () => {
+  it("shows the honest delivery fallback instead of a fabricated estimate", () => {
+    const rows = [
+      makeRow({ id: "a", deliveryLabel: FALLBACK_COPY.delivery, pickupAvailable: false }),
+    ];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain(FALLBACK_COPY.delivery);
   });
 });

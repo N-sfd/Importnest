@@ -1,17 +1,19 @@
-import Image from "next/image";
 import Link from "next/link";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
-import { Freshness } from "@/components/Freshness";
 import { PageShell } from "@/components/PageShell";
 import { PriceHistorySection } from "@/components/PriceHistorySection";
 import { PriorityTabs } from "@/components/PriorityTabs";
+import { ProductSummary } from "@/components/ProductSummary";
 import {
+  PRIORITY_LABELS,
+  buildRecommendationPanel,
   getCompareProduct,
   getCompareRows,
   getProductPriceHistory,
   getProductSourceSummaries,
   minutesSince,
+  supportsBestProtection,
   totalKnownCost,
   type CompareFilters,
 } from "@/lib/compare-data";
@@ -89,13 +91,34 @@ export default async function ComparePage({
   if (fastDelivery === "1") filters.requireFastDelivery = true;
   const hasFilters =
     filters.maxBudget != null || filters.condition != null || filters.requireFastDelivery === true;
-  const initialPriority = parsePriority(priority);
+  const requestedPriority = parsePriority(priority);
+  // "Best protection" only ranks by a real signal — fall back to "Best overall"
+  // when nothing in this product's compared offers has structured protection data.
+  const bestProtectionSupported = await supportsBestProtection(productId);
+  const effectivePriority: Priority =
+    requestedPriority === "best-protection" && !bestProtectionSupported
+      ? "best-overall"
+      : (requestedPriority ?? "best-overall");
 
+  // Ranking is computed once, here, server-side — the priority tabs below
+  // only navigate between pre-ranked URLs, they never re-sort in the browser.
   const rows = await getCompareRows(
     productId,
     hasFilters ? filters : undefined,
-    initialPriority,
+    effectivePriority,
   );
+  const panel = buildRecommendationPanel(rows, effectivePriority);
+  const priorityOptions = VALID_PRIORITIES.filter(
+    (key) => key !== "best-protection" || bestProtectionSupported,
+  ).map((key) => ({
+    key,
+    label: PRIORITY_LABELS[key],
+    href: `/compare/${productId}?${new URLSearchParams(
+      Object.entries({ priority: key, maxBudget, condition, comparable, fastDelivery }).filter(
+        ([, v]) => v,
+      ) as [string, string][],
+    ).toString()}`,
+  }));
   const sources = await getProductSourceSummaries(productId);
   const bestMatch = product.matches[0];
   const freshest = await prisma.listing.findFirst({
@@ -107,7 +130,6 @@ export default async function ComparePage({
   const matchStatusLabel = formatMatchStatus(bestMatch?.type, confidencePct);
   const lowestKnown =
     rows.length > 0 ? Math.min(...rows.map((r) => totalKnownCost(r.listing))) : null;
-  const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
   const suggestedAlert =
     lowestKnown != null ? Math.max(1, Math.floor(lowestKnown * 0.95)).toFixed(2) : "";
   const priceHistory = await getProductPriceHistory(productId, lowestKnown);
@@ -129,76 +151,34 @@ export default async function ComparePage({
         <span className="text-foreground">{product.modelName}</span>
       </nav>
 
-      <section className="panel fade-up p-4 sm:p-6">
-        <div className="grid gap-6 sm:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-          <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-white">
-            <Image
-              src={productImageFor(productId)}
-              alt={product.modelName}
-              fill
-              className="object-contain p-3"
-              sizes="(max-width:640px) 100vw, 280px"
-              priority
+      <ProductSummary
+        imageSrc={productImageFor(productId)}
+        brandName={product.brand.name}
+        productName={product.modelName}
+        modelNumber={product.modelNumber}
+        matchStatusLabel={matchStatusLabel}
+        offerCount={rows.length}
+        lastCheckedMinutesAgo={freshnessMinutes}
+        actions={
+          !authUser ? (
+            <Link
+              href={`/login?next=${encodeURIComponent(redirectTo)}`}
+              className="text-sm font-medium text-link hover:underline"
+            >
+              Sign in to save this product or set a price alert
+            </Link>
+          ) : (
+            <ProductActions
+              productId={productId}
+              redirectTo={redirectTo}
+              isSaved={Boolean(saveState?.isSaved)}
+              alert={saveState?.alert ?? null}
+              suggestedAlert={suggestedAlert}
+              currentLowestPrice={lowestKnown}
             />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-link">{product.brand.name}</p>
-            <h1 className="mt-1 text-xl font-bold leading-snug tracking-tight text-foreground sm:text-2xl">
-              {product.modelName}
-            </h1>
-            {product.modelNumber ? (
-              <p className="mt-1 text-sm text-muted">Model: {product.modelNumber}</p>
-            ) : null}
-            {product.configuration ? (
-              <p className="mt-1 text-sm text-muted">Configuration: {product.configuration}</p>
-            ) : null}
-
-            {/* Match status and data freshness */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-navy-100 px-3 py-1 text-xs font-semibold text-navy-900">
-                {matchStatusLabel}
-              </span>
-              <span className="rounded-full bg-surface px-3 py-1 ring-1 ring-border">
-                <Freshness minutesAgo={freshnessMinutes} />
-              </span>
-            </div>
-            <p className="mt-3 text-sm text-foreground/80">
-              {rows.length} {rows.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
-              {sourceCount === 1 ? "source" : "sources"}
-              {lowestKnown != null ? (
-                <>
-                  {" "}
-                  · From{" "}
-                  <span className="font-bold tabular-nums text-price">
-                    ${lowestKnown.toFixed(2)}
-                  </span>
-                </>
-              ) : null}
-            </p>
-
-            {/* Save product and create alert actions */}
-            <div className="mt-4 border-t border-border pt-4">
-              {!authUser ? (
-                <Link
-                  href={`/login?next=${encodeURIComponent(redirectTo)}`}
-                  className="text-sm font-medium text-link hover:underline"
-                >
-                  Sign in to save this product or set a price alert
-                </Link>
-              ) : (
-                <ProductActions
-                  productId={productId}
-                  redirectTo={redirectTo}
-                  isSaved={Boolean(saveState?.isSaved)}
-                  alert={saveState?.alert ?? null}
-                  suggestedAlert={suggestedAlert}
-                  currentLowestPrice={lowestKnown}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+          )
+        }
+      />
 
       {comparable === "1" ? (
         <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
@@ -221,7 +201,13 @@ export default async function ComparePage({
           </div>
         ) : (
           <div className="mt-4">
-            <PriorityTabs productId={productId} rows={rows} initialPriority={initialPriority} />
+            <PriorityTabs
+              productId={productId}
+              rows={rows}
+              priority={effectivePriority}
+              priorityOptions={priorityOptions}
+              panel={panel}
+            />
           </div>
         )}
       </section>
