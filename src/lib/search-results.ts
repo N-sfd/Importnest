@@ -445,6 +445,25 @@ export async function getSearchResults(
   };
 }
 
+/**
+ * Splits a results list into exact matches and comparable alternatives —
+ * `getSearchResults` already sorts exact matches first, but callers that
+ * want to render them as two clearly separate groups (never interleaved
+ * under one undifferentiated heading) need the split itself.
+ */
+export function partitionByMatchKind(products: SearchResultProduct[]): {
+  exact: SearchResultProduct[];
+  comparable: SearchResultProduct[];
+} {
+  const exact: SearchResultProduct[] = [];
+  const comparable: SearchResultProduct[] = [];
+  for (const p of products) {
+    if (p.matchKind === "comparable") comparable.push(p);
+    else exact.push(p);
+  }
+  return { exact, comparable };
+}
+
 export function intentToResultsFilters(
   intent: Partial<SearchIntent>,
   extras: Partial<SearchResultsFilters> = {},

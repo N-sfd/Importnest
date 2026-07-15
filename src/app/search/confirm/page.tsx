@@ -52,5 +52,12 @@ export default async function ConfirmPage({
     redirect(`/search/results?${result.searchParams.toString()}`);
   }
 
-  return <SearchNoMatch query={query} intent={intent} comparableCandidates={result.comparableCandidates} />;
+  return (
+    <SearchNoMatch
+      query={query}
+      intent={intent}
+      comparableCandidates={result.comparableCandidates}
+      currentParams={params}
+    />
+  );
 }

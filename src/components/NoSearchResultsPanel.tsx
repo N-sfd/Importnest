@@ -4,6 +4,7 @@ import {
   StatusPanel,
 } from "@/components/StatusPanel";
 import type { ResultsPageParams } from "@/components/SearchResultsLayout";
+import { browseCategoryHref } from "@/lib/search-intent";
 
 /** Filter keys a shopper can clear one-at-a-time from the no-results panel. */
 const REMOVABLE: { key: keyof ResultsPageParams; label: string }[] = [
@@ -52,9 +53,7 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
   });
 
   const exactOnly = params.comparable === "0" || params.alt === "exact";
-  const categoryHref = params.category
-    ? `/search/results?category=${encodeURIComponent(params.category)}`
-    : "/search/results?category=appliances";
+  const categoryHref = browseCategoryHref(params.category);
   const editHref = params.q
     ? `/search/clarify?${new URLSearchParams(
         Object.fromEntries(

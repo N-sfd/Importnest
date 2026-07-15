@@ -284,6 +284,56 @@ export function paramsToRecord(params: SearchFlowParams): Record<string, string>
   return record;
 }
 
+/** Fields a shopper can drop one at a time to broaden a no-match search — budget gets its own dedicated "Change budget" action instead. */
+const REMOVABLE_SEARCH_FLOW_FIELDS: { key: keyof SearchFlowParams; label: string }[] = [
+  { key: "condition", label: "condition filter" },
+  { key: "brands", label: "brand preference" },
+  { key: "deliveryBy", label: "delivery timing" },
+];
+
+/** The first captured filter (other than budget) a shopper could remove to broaden a no-match search, if any. */
+export function findRemovableSearchFlowField(
+  params: SearchFlowParams,
+): { key: keyof SearchFlowParams; label: string } | undefined {
+  return REMOVABLE_SEARCH_FLOW_FIELDS.find(({ key }) => Boolean(params[key]));
+}
+
+/**
+ * Builds a /search/clarify link with one field cleared — clarify re-asks
+ * that question naturally (answeredQuestionIds no longer includes it)
+ * rather than needing a separate "remove filter" code path. Every other
+ * captured param, including the session id, is preserved untouched so the
+ * shopper's session and remaining preferences survive the click.
+ */
+export function searchFlowHrefWithout(
+  params: SearchFlowParams,
+  key: keyof SearchFlowParams,
+): string {
+  const next: SearchFlowParams = { ...params };
+  delete next[key];
+  // Re-asking a just-cleared question must not be skipped past straight to confirmation.
+  delete next.continue;
+  delete next.confirmed;
+  const qs = new URLSearchParams(paramsToRecord(next)).toString();
+  return qs ? `/search/clarify?${qs}` : "/search/clarify";
+}
+
+/** Turns comparable alternatives on, preserving every other captured param (including sid). */
+export function allowComparableHref(params: SearchFlowParams): string {
+  const next: SearchFlowParams = { ...params, alt: "comparable" };
+  delete next.continue;
+  delete next.confirmed;
+  const qs = new URLSearchParams(paramsToRecord(next)).toString();
+  return `/search/clarify?${qs}`;
+}
+
+/** Never falls back to a fabricated category — browses everything when none is actually known. */
+export function browseCategoryHref(categorySlug: string | undefined): string {
+  return categorySlug
+    ? `/search/results?category=${encodeURIComponent(categorySlug)}`
+    : "/search/results";
+}
+
 const URGENT_DELIVERY_PATTERN = /\b(asap|today|tonight|tomorrow|now|immediately)\b/i;
 
 /**

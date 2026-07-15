@@ -1,6 +1,11 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { finalizeSearch, recordClarificationAnswer, startSearchSession } from "@/lib/search-data";
+import {
+  finalizeSearch,
+  findComparableProducts,
+  recordClarificationAnswer,
+  startSearchSession,
+} from "@/lib/search-data";
 
 // Exercises the real database because the thing under test is exactly a
 // Prisma error code (P2025 "record not found" on update, P2003 foreign-key
@@ -97,5 +102,45 @@ describe("session security — cross-session isolation", () => {
     const untouched = await prisma.searchSession.findUnique({ where: { id: b.id } });
     expect(untouched!.status).toBe("clarifying");
     expect(untouched!.criteria).toBeNull();
+  });
+});
+
+// Real database because the thing under test is exactly the category/brand/
+// name word-overlap query against seeded catalog rows — a mock would hide a
+// regression where a generic query like "dishwasher" stops surfacing any
+// comparable candidate at all.
+describe("comparable alternatives available", () => {
+  const sessionsToClean: string[] = [];
+
+  afterAll(async () => {
+    await prisma.searchSession.deleteMany({ where: { id: { in: sessionsToClean } } });
+    await prisma.$disconnect();
+  });
+
+  it("findComparableProducts surfaces at least one candidate for a generic category query with no exact match", async () => {
+    const candidates = await findComparableProducts("dishwasher");
+    expect(candidates.length).toBeGreaterThan(0);
+  });
+
+  it("finalizeSearch reports a real comparable candidate list rather than a fabricated one for a generic query", async () => {
+    const session = await startSearchSession("dishwasher", null);
+    sessionsToClean.push(session.id);
+
+    const result = await finalizeSearch(
+      "dishwasher",
+      { query: "dishwasher" },
+      { directMatch: null, sessionId: session.id },
+    );
+    // Either it auto-resolved a single comparable candidate (redirect,
+    // flagged isComparable via ?comparable=1), routed to the results list, or
+    // reported the no-match state with real candidate ids — never a crash,
+    // and never candidates for a product that doesn't exist in the catalog.
+    expect(["redirect", "results", "no-match"]).toContain(result.kind);
+    if (result.kind === "no-match") {
+      for (const id of result.comparableCandidates) {
+        const exists = await prisma.canonicalProduct.findUnique({ where: { id } });
+        expect(exists).not.toBeNull();
+      }
+    }
   });
 });

@@ -13,6 +13,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   getSearchResults,
+  partitionByMatchKind,
   type ResultsSort,
   type SearchResultsFilters,
 } from "@/lib/search-results";
@@ -88,6 +89,11 @@ export default async function SearchResultsPage({
     ),
   ).toString()}`;
   const activeFilters = countActiveResultFilters(params);
+  // Exact matches and comparable alternatives are already sorted exact-first;
+  // when a text search actually produced both kinds, render them as two
+  // clearly separate, distinctly headed groups rather than one mixed list.
+  const { exact, comparable } = partitionByMatchKind(results.products);
+  const showSeparateMatchSections = Boolean(params.q) && exact.length > 0 && comparable.length > 0;
 
   return (
     <PageShell>
@@ -107,6 +113,34 @@ export default async function SearchResultsPage({
 
           {results.products.length === 0 ? (
             <NoSearchResultsPanel params={params} />
+          ) : showSeparateMatchSections ? (
+            <>
+              <ul className="space-y-3">
+                {exact.map((p) => (
+                  <li key={p.id}>
+                    <SearchResultProductCard
+                      product={p}
+                      signedIn={Boolean(authUser)}
+                      redirectTo={redirectTo}
+                    />
+                  </li>
+                ))}
+              </ul>
+              <h2 className="pt-2 text-sm font-bold uppercase tracking-wide text-muted">
+                Comparable alternatives
+              </h2>
+              <ul className="space-y-3">
+                {comparable.map((p) => (
+                  <li key={p.id}>
+                    <SearchResultProductCard
+                      product={p}
+                      signedIn={Boolean(authUser)}
+                      redirectTo={redirectTo}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <ul className="space-y-3">
               {results.products.map((p) => (

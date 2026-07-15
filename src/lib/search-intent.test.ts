@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  allowComparableHref,
   answeredQuestionIds,
+  browseCategoryHref,
+  findRemovableSearchFlowField,
   getClarifyingQuestions,
   intentFromSearchParams,
   isUrgentDeliveryPhrase,
   parseQueryHeuristics,
+  searchFlowHrefWithout,
   searchIntentSchema,
   sortPriorityToComparePriority,
+  type SearchFlowParams,
 } from "@/lib/search-intent";
 
 describe("parseQueryHeuristics", () => {
@@ -97,6 +102,89 @@ describe("sortPriorityToComparePriority", () => {
   });
   it("returns undefined when no priority was captured", () => {
     expect(sortPriorityToComparePriority(undefined)).toBeUndefined();
+  });
+});
+
+describe("findRemovableSearchFlowField", () => {
+  it("finds nothing to remove when no filter beyond the query itself was captured", () => {
+    expect(findRemovableSearchFlowField({ q: "dishwasher" })).toBeUndefined();
+  });
+
+  it("finds a removable filter when one was captured", () => {
+    const found = findRemovableSearchFlowField({ q: "dishwasher", condition: "used" });
+    expect(found?.key).toBe("condition");
+  });
+
+  it("never offers to remove budget — that has its own dedicated 'Change budget' action", () => {
+    expect(findRemovableSearchFlowField({ q: "dishwasher", budgetMax: "100" })).toBeUndefined();
+  });
+});
+
+describe("searchFlowHrefWithout — user relaxes one filter", () => {
+  const params: SearchFlowParams = {
+    q: "quiet dishwasher",
+    condition: "used",
+    budgetMax: "200",
+    deliveryBy: "this week",
+    sid: "session-abc123",
+    continue: "1",
+  };
+
+  it("clears only the targeted field", () => {
+    const href = searchFlowHrefWithout(params, "condition");
+    const qs = new URLSearchParams(href.split("?")[1]);
+    expect(qs.has("condition")).toBe(false);
+  });
+
+  it("preserves every other captured preference, including budget and delivery timing", () => {
+    const href = searchFlowHrefWithout(params, "condition");
+    const qs = new URLSearchParams(href.split("?")[1]);
+    expect(qs.get("q")).toBe("quiet dishwasher");
+    expect(qs.get("budgetMax")).toBe("200");
+    expect(qs.get("deliveryBy")).toBe("this week");
+  });
+
+  it("preserves the search session id across the action (session remains preserved)", () => {
+    const href = searchFlowHrefWithout(params, "condition");
+    const qs = new URLSearchParams(href.split("?")[1]);
+    expect(qs.get("sid")).toBe("session-abc123");
+  });
+
+  it("drops 'continue' so the re-asked question isn't skipped straight back to confirmation", () => {
+    const href = searchFlowHrefWithout(params, "condition");
+    const qs = new URLSearchParams(href.split("?")[1]);
+    expect(qs.has("continue")).toBe(false);
+  });
+
+  it("routes back into the clarify step so the cleared question is re-asked", () => {
+    expect(searchFlowHrefWithout(params, "budgetMax")).toMatch(/^\/search\/clarify\?/);
+  });
+});
+
+describe("allowComparableHref — session remains preserved", () => {
+  it("turns comparable alternatives on while preserving the query, other filters, and the session id", () => {
+    const href = allowComparableHref({
+      q: "quiet dishwasher",
+      alt: "exact",
+      budgetMax: "200",
+      sid: "session-abc123",
+    });
+    const qs = new URLSearchParams(href.split("?")[1]);
+
+    expect(qs.get("alt")).toBe("comparable");
+    expect(qs.get("q")).toBe("quiet dishwasher");
+    expect(qs.get("budgetMax")).toBe("200");
+    expect(qs.get("sid")).toBe("session-abc123");
+  });
+});
+
+describe("browseCategoryHref", () => {
+  it("links to the known category", () => {
+    expect(browseCategoryHref("appliances")).toBe("/search/results?category=appliances");
+  });
+
+  it("never fabricates a category — browses everything when none is known", () => {
+    expect(browseCategoryHref(undefined)).toBe("/search/results");
   });
 });
 

@@ -335,7 +335,7 @@ export function SearchResultProductCard({
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap gap-1.5">
           {isExact ? <ResultBadge tone="exact">Exact match</ResultBadge> : null}
-          {isComparable ? <ResultBadge tone="comparable">Comparable option</ResultBadge> : null}
+          {isComparable ? <ResultBadge tone="comparable">Comparable alternative</ResultBadge> : null}
           {product.highlights.slice(0, 2).map((h) => (
             <ResultBadge key={h} tone="highlight">
               {HIGHLIGHT_LABELS[h]}

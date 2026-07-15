@@ -50,7 +50,8 @@ export default async function ClarifyPage({
     const categoryRecord = params.category
       ? await prisma.category.findUnique({ where: { slug: params.category } })
       : null;
-    const result = await finalizeSearch(query, buildIntent(query, params), {
+    const intent = buildIntent(query, params);
+    const result = await finalizeSearch(query, intent, {
       directMatch,
       categoryId: categoryRecord?.id,
       userId: user?.id ?? null,
@@ -63,7 +64,14 @@ export default async function ClarifyPage({
     if (result.kind === "results") {
       redirect(`/search/results?${result.searchParams.toString()}`);
     }
-    return <SearchNoMatch query={query} comparableCandidates={result.comparableCandidates} />;
+    return (
+      <SearchNoMatch
+        query={query}
+        intent={intent}
+        comparableCandidates={result.comparableCandidates}
+        currentParams={params}
+      />
+    );
   }
 
   const heuristics = timeSync("search.parseQueryHeuristics", () => parseQueryHeuristics(query));

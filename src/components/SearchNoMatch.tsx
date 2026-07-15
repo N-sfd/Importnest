@@ -9,47 +9,50 @@ import {
 } from "@/components/StatusPanel";
 import { productImageFor, productThumbClass } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
-import type { SearchIntent } from "@/lib/search-intent";
+import {
+  allowComparableHref,
+  browseCategoryHref,
+  findRemovableSearchFlowField,
+  searchFlowHrefWithout,
+  type SearchFlowParams,
+  type SearchIntent,
+} from "@/lib/search-intent";
 
-export async function SearchNoMatch({
+type NoMatchCandidateProduct = { id: string; modelName: string; brand: { name: string } };
+
+/**
+ * The actual "no exact match" content, kept free of PageShell (which pulls in
+ * an async, auth-checking Header) so it can be unit-tested directly without a
+ * database or session — SearchNoMatch below just supplies the page chrome.
+ */
+export function SearchNoMatchContent({
   query,
   intent,
-  comparableCandidates,
+  products,
+  categorySlug,
+  currentParams,
 }: {
   query: string;
   intent?: Partial<SearchIntent>;
-  comparableCandidates: string[];
+  products: NoMatchCandidateProduct[];
+  categorySlug: string | undefined;
+  currentParams: SearchFlowParams;
 }) {
-  const products =
-    comparableCandidates.length > 0
-      ? await prisma.canonicalProduct.findMany({
-          where: { id: { in: comparableCandidates } },
-          include: { brand: true },
-        })
-      : [];
-
-  const categorySlug =
-    intent?.category ??
-    (products[0]
-      ? (
-          await prisma.canonicalProduct.findUnique({
-            where: { id: products[0].id },
-            include: { category: true },
-          })
-        )?.category.slug
-      : undefined);
+  const removable = findRemovableSearchFlowField(currentParams);
+  const hasBudget = Boolean(currentParams.budgetMax);
+  const canOfferComparable = intent?.allowComparableAlternatives === false;
 
   return (
-    <PageShell>
+    <>
       {products.length > 0 ? (
         <>
           <StatusBanner
             tone="accent"
-            title="No exact match"
-            description={`We could not find an exact match for “${query}”, but comparable products are available.`}
+            title="No exact match found"
+            description={`We could not find an exact match for “${query}”, but comparable alternatives are available.`}
           />
           <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-navy-900">
-            Comparable products available
+            Comparable alternatives available
           </h1>
           <p className="mt-1 text-sm text-muted">
             These alternatives share category or attribute overlap with your search.
@@ -75,41 +78,50 @@ export async function SearchNoMatch({
                     <p className="text-sm text-muted">{p.brand.name}</p>
                   </div>
                   <span className="shrink-0 rounded border border-dashed border-navy-800/35 bg-surface px-2.5 py-1 text-xs font-semibold text-navy-800">
-                    Comparable option
+                    Comparable alternative
                   </span>
                 </Link>
               </li>
             ))}
           </ul>
           <div className="mt-6 flex flex-wrap gap-3">
-            <PrimaryAction href="/">Edit search</PrimaryAction>
-            {categorySlug ? (
-              <SecondaryAction href={`/search/results?category=${categorySlug}`}>
-                Browse category
+            <PrimaryAction href="/">Search again</PrimaryAction>
+            {hasBudget ? (
+              <SecondaryAction href={searchFlowHrefWithout(currentParams, "budgetMax")}>
+                Change budget
               </SecondaryAction>
-            ) : (
-              <SecondaryAction href="/search/results">Browse all products</SecondaryAction>
-            )}
+            ) : null}
+            {removable ? (
+              <SecondaryAction href={searchFlowHrefWithout(currentParams, removable.key)}>
+                Remove {removable.label}
+              </SecondaryAction>
+            ) : null}
+            <SecondaryAction href={browseCategoryHref(categorySlug)}>Browse category</SecondaryAction>
           </div>
         </>
       ) : (
         <StatusPanel
-          title="No matching product found"
+          title="No exact match found"
           description={`We could not match “${query}” to a product we track. Try a different name, the exact model number, or a UPC.`}
           actions={
             <>
-              <PrimaryAction href="/">Edit search</PrimaryAction>
-              <SecondaryAction
-                href={`/search/clarify?${new URLSearchParams({
-                  q: query,
-                  alt: "comparable",
-                }).toString()}`}
-              >
-                Allow comparable alternatives
-              </SecondaryAction>
-              <SecondaryAction href="/search/results?category=appliances">
-                Browse category
-              </SecondaryAction>
+              <PrimaryAction href="/">Search again</PrimaryAction>
+              {canOfferComparable ? (
+                <SecondaryAction href={allowComparableHref(currentParams)}>
+                  Allow comparable products
+                </SecondaryAction>
+              ) : null}
+              {hasBudget ? (
+                <SecondaryAction href={searchFlowHrefWithout(currentParams, "budgetMax")}>
+                  Change budget
+                </SecondaryAction>
+              ) : null}
+              {removable ? (
+                <SecondaryAction href={searchFlowHrefWithout(currentParams, removable.key)}>
+                  Remove {removable.label}
+                </SecondaryAction>
+              ) : null}
+              <SecondaryAction href={browseCategoryHref(categorySlug)}>Browse category</SecondaryAction>
             </>
           }
         />
@@ -146,6 +158,57 @@ export async function SearchNoMatch({
           </div>
         </div>
       ) : null}
+    </>
+  );
+}
+
+/**
+ * Honest "no exact match" state shared by /search, /search/clarify (defensive
+ * fast-path), and /search/confirm. Comparable alternatives, when any exist,
+ * are always labeled "Comparable alternative" and never presented as if they
+ * were an exact match. Captured preferences (currentParams/intent) stay
+ * visible and are preserved — including the search session id — across every
+ * action offered here.
+ */
+export async function SearchNoMatch({
+  query,
+  intent,
+  comparableCandidates,
+  currentParams,
+}: {
+  query: string;
+  intent?: Partial<SearchIntent>;
+  comparableCandidates: string[];
+  currentParams: SearchFlowParams;
+}) {
+  const products =
+    comparableCandidates.length > 0
+      ? await prisma.canonicalProduct.findMany({
+          where: { id: { in: comparableCandidates } },
+          include: { brand: true },
+        })
+      : [];
+
+  const categorySlug =
+    intent?.category ??
+    (products[0]
+      ? (
+          await prisma.canonicalProduct.findUnique({
+            where: { id: products[0].id },
+            include: { category: true },
+          })
+        )?.category.slug
+      : undefined);
+
+  return (
+    <PageShell>
+      <SearchNoMatchContent
+        query={query}
+        intent={intent}
+        products={products}
+        categorySlug={categorySlug}
+        currentParams={currentParams}
+      />
     </PageShell>
   );
 }
