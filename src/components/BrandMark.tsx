@@ -8,14 +8,27 @@ const SIZES = {
   xl: { fullH: 96, icon: 72 },
 } as const;
 
-export type BrandLogo = "in" | "nest";
+export type BrandLogo = "in" | "nest" | "logo9";
 export type BrandLayout = "horizontal" | "stacked";
 
 /**
  * Nest pack (current primary): cart + nest + verified tag.
+ * `logo9` is the wide navy horizontal lockup used in header + footer.
  * `in` keeps the older iN mark for optional call-sites.
  */
 const ASSETS = {
+  logo9: {
+    horizontal: "/brand/logo9.png",
+    stacked: "/brand/logo9-full.png",
+    icon: "/brand/logo9-icon.png",
+    iconDark: "/brand/logo9-icon-dark.png",
+    circle: "/brand/logo9-mark.png",
+    circleDark: "/brand/logo9-mark-dark.png",
+    /** Wide horizontal lockup ~2172×724, rounded rect with transparent corners */
+    horizontalAspect: 3.0,
+    /** Primary lockup ~785×550 */
+    stackedAspect: 1.43,
+  },
   nest: {
     horizontal: "/brand/logo-horizontal.png",
     stacked: "/brand/logo-primary.png",
@@ -111,8 +124,9 @@ export function BrandLink({
       <span className="hidden sm:inline-flex">
         <BrandMark logo={logo} showWordmark layout="horizontal" onDark={onDark} size="lg" />
       </span>
+      {/* Same horizontal lockup on mobile — scaled smaller, not a different icon */}
       <span className="inline-flex sm:hidden">
-        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="md" />
+        <BrandMark logo={logo} showWordmark layout="horizontal" onDark={onDark} size="sm" />
       </span>
     </Link>
   );

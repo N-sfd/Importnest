@@ -13,7 +13,7 @@ export async function Header() {
     <header className="sticky top-0 z-40">
       <div className="border-b border-white/10 bg-navy-900 text-white">
         <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-3 py-3 sm:gap-5 sm:px-4">
-          <BrandLink logo="nest" />
+          <BrandLink logo="logo9" />
 
           <HeaderSearch />
 
