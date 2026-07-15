@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const SIZES = {
-  sm: { fullH: 40, icon: 36 },
-  md: { fullH: 48, icon: 42 },
-  lg: { fullH: 80, icon: 64 },
+  sm: { fullH: 48, icon: 44 },
+  md: { fullH: 58, icon: 50 },
+  lg: { fullH: 92, icon: 72 },
 } as const;
 
 export type BrandLogo = "in" | "nest";
@@ -107,7 +107,7 @@ export function BrandLink({
         <BrandMark logo={logo} showWordmark onDark={onDark} size="md" />
       </span>
       <span className="inline-flex sm:hidden">
-        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="sm" />
+        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="md" />
       </span>
     </Link>
   );
