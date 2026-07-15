@@ -4,7 +4,7 @@ import { BrandMark } from "@/components/BrandMark";
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-white/10 bg-navy-900 text-white">
-      <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-12 sm:grid-cols-[1.2fr_1fr_1fr] sm:px-6">
+      <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-12 sm:grid-cols-[1.2fr_1fr_1fr_1fr] sm:px-6">
         <div>
           <BrandMark logo="logo9" size="lg" showWordmark layout="horizontal" onDark />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
@@ -43,6 +43,41 @@ export function Footer() {
             <li>
               <Link href="/login" className="transition hover:text-cta">
                 Admin sign in
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Trust</p>
+          <ul className="mt-3 space-y-2.5 text-sm text-white/80">
+            <li>
+              <Link href="/how-ranking-works" className="transition hover:text-cta">
+                How ranking works
+              </Link>
+            </li>
+            <li>
+              <Link href="/data-freshness" className="transition hover:text-cta">
+                Data freshness policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/affiliate-disclosure" className="transition hover:text-cta">
+                Affiliate disclosure
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="transition hover:text-cta">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="transition hover:text-cta">
+                Terms
+              </Link>
+            </li>
+            <li>
+              <Link href="/report-incorrect-information" className="transition hover:text-cta">
+                Report incorrect information
               </Link>
             </li>
           </ul>
