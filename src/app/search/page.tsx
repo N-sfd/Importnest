@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
+import { getOrCreateAppUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { classifyAndResolve, finalizeSearch } from "@/lib/search-data";
 import { buildIntent, paramsToRecord, type SearchFlowParams } from "@/lib/search-intent";
@@ -49,10 +50,12 @@ export default async function SearchEntryPage({
     const categoryRecord = params.category
       ? await prisma.category.findUnique({ where: { slug: params.category } })
       : null;
+    const user = await getOrCreateAppUser();
 
     const result = await finalizeSearch(query, buildIntent(query, params), {
       directMatch,
       categoryId: categoryRecord?.id,
+      userId: user?.id ?? null,
     });
 
     console.info(`[perf] search.redirect(fast-path) ${(performance.now() - start).toFixed(1)}ms`);

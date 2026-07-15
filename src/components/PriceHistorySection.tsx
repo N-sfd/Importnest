@@ -27,7 +27,7 @@ function PriceTrendChart({ points }: { points: { day: string; total: number }[] 
     >
       <polyline
         fill="none"
-        stroke="#041935"
+        stroke="#050a14"
         strokeWidth="2"
         strokeLinejoin="round"
         strokeLinecap="round"

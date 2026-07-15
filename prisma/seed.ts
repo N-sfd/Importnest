@@ -13,6 +13,7 @@ async function clearDatabase() {
   await prisma.sponsoredCampaign.deleteMany();
   await prisma.alert.deleteMany();
   await prisma.savedProduct.deleteMany();
+  await prisma.searchClarification.deleteMany();
   await prisma.searchSession.deleteMany();
   await prisma.listing.deleteMany();
   await prisma.productAttribute.deleteMany();
@@ -29,14 +30,79 @@ function minutesAgo(minutes: number) {
   return new Date(Date.now() - minutes * 60_000);
 }
 
+type ListingSeed = {
+  id: string;
+  sourceId: string;
+  condition: string;
+  price: number;
+  shipping?: number;
+  fees?: number;
+  deliveryLabel: string;
+  freshnessMinutesAgo: number;
+  matchConfidence: number;
+  matchType?: string;
+  matchStatus?: string;
+  sellerName?: string;
+  url?: string;
+};
+
+async function seedListings(productId: string, defs: ListingSeed[]) {
+  for (const def of defs) {
+    await prisma.listing.create({
+      data: {
+        id: def.id,
+        sourceId: def.sourceId,
+        canonicalProductId: productId,
+        condition: def.condition,
+        price: def.price,
+        shipping: def.shipping ?? 0,
+        fees: def.fees ?? 0,
+        deliveryLabel: def.deliveryLabel,
+        sellerName: def.sellerName,
+        url: def.url ?? `https://example.com/offers/${def.id}`,
+        freshnessCapturedAt: minutesAgo(def.freshnessMinutesAgo),
+      },
+    });
+
+    await prisma.productMatch.create({
+      data: {
+        id: `match-${def.id}`,
+        canonicalProductId: productId,
+        listingId: def.id,
+        type: def.matchType ?? "exact",
+        confidence: def.matchConfidence,
+        status: def.matchStatus ?? "approved",
+      },
+    });
+  }
+}
+
 async function main() {
   await clearDatabase();
 
-  const brand = await prisma.brand.create({
+  const brandApex = await prisma.brand.create({
     data: {
       id: "brand-apex",
       name: "Apex Home",
       slug: "apex-home",
+      isAuthorized: true,
+    },
+  });
+
+  const brandStride = await prisma.brand.create({
+    data: {
+      id: "brand-stride",
+      name: "Stride",
+      slug: "stride",
+      isAuthorized: true,
+    },
+  });
+
+  const brandAura = await prisma.brand.create({
+    data: {
+      id: "brand-aura",
+      name: "Aura Pure",
+      slug: "aura-pure",
       isAuthorized: true,
     },
   });
@@ -72,7 +138,7 @@ async function main() {
   const product = await prisma.canonicalProduct.create({
     data: {
       id: "cp-apex-ah4200",
-      brandId: brand.id,
+      brandId: brandApex.id,
       categoryId: category.id,
       modelName: "Apex Home Quiet Dishwasher",
       modelNumber: "AH-4200",
@@ -93,22 +159,74 @@ async function main() {
     },
   });
 
-  // Stub products referenced by Saved / Alerts screens in mock data.
-  const stubProducts = [
-    { id: "cp-air-purifier", modelName: "Air purifier for large room", categorySlug: "home" },
-    { id: "cp-running-shoe", modelName: "Running shoe, size 9", categorySlug: "footwear" },
-    { id: "cp-cordless-vacuum", modelName: "Cordless vacuum", categorySlug: "appliances" },
-  ];
-  for (const stub of stubProducts) {
-    await prisma.canonicalProduct.create({
-      data: {
-        id: stub.id,
-        brandId: brand.id,
-        categoryId: categoryBySlug[stub.categorySlug] ?? category.id,
-        modelName: stub.modelName,
+  const airPurifier = await prisma.canonicalProduct.create({
+    data: {
+      id: "cp-air-purifier",
+      brandId: brandAura.id,
+      categoryId: categoryBySlug.home,
+      modelName: "Aura Pure HEPA Air Purifier",
+      modelNumber: "AP-900",
+      configuration: "Large room, White",
+      identifiers: {
+        create: [
+          { type: "UPC", value: "012345678912" },
+          { type: "MPN", value: "AP-900" },
+        ],
       },
-    });
-  }
+      attributes: {
+        create: [
+          { key: "Coverage", value: "900", unit: "sq ft" },
+          { key: "Filter", value: "True HEPA" },
+        ],
+      },
+    },
+  });
+
+  const runningShoe = await prisma.canonicalProduct.create({
+    data: {
+      id: "cp-running-shoe",
+      brandId: brandStride.id,
+      categoryId: categoryBySlug.footwear,
+      modelName: "Stride Velocity Run",
+      modelNumber: "SV-9",
+      configuration: "Size 9, Black/White",
+      identifiers: {
+        create: [
+          { type: "UPC", value: "012345678929" },
+          { type: "MPN", value: "SV-9" },
+        ],
+      },
+      attributes: {
+        create: [
+          { key: "Size", value: "9" },
+          { key: "Cushioning", value: "Max" },
+        ],
+      },
+    },
+  });
+
+  const cordlessVacuum = await prisma.canonicalProduct.create({
+    data: {
+      id: "cp-cordless-vacuum",
+      brandId: brandApex.id,
+      categoryId: category.id,
+      modelName: "Apex Home Cordless Stick Vacuum",
+      modelNumber: "CV-210",
+      configuration: "Standard, Graphite",
+      identifiers: {
+        create: [
+          { type: "UPC", value: "012345678936" },
+          { type: "MPN", value: "CV-210" },
+        ],
+      },
+      attributes: {
+        create: [
+          { key: "Runtime", value: "45", unit: "min" },
+          { key: "Weight", value: "5.8", unit: "lb" },
+        ],
+      },
+    },
+  });
 
   const sources = [
     { id: "src-official", name: "Official Brand Store", sourceType: "manufacturer-feed" },
@@ -116,59 +234,50 @@ async function main() {
     { id: "src-local-electronics", name: "Local Electronics", sourceType: "partner-feed" },
     { id: "src-authorized-outlet", name: "Authorized Outlet", sourceType: "licensed-provider" },
     { id: "src-discount-home", name: "Discount Home Supply", sourceType: "web-extraction" },
+    { id: "src-amazon", name: "Amazon", sourceType: "affiliate-feed" },
+    { id: "src-idealo", name: "Idealo", sourceType: "licensed-provider" },
+    { id: "src-google-shopping", name: "Google Shopping", sourceType: "affiliate-feed" },
   ];
   for (const source of sources) {
     await prisma.source.create({ data: { ...source, isActive: true } });
   }
 
-  const listingDefs = [
+  const dishwasherListings: ListingSeed[] = [
     {
       id: "listing-official",
       sourceId: "src-official",
       condition: "new",
       price: 899.0,
-      shipping: 0,
-      fees: 0,
       deliveryLabel: "Thu, free",
       freshnessMinutesAgo: 4,
       matchConfidence: 0.98,
-      matchType: "exact",
     },
     {
       id: "listing-retailer-direct",
       sourceId: "src-retailer-direct",
       condition: "new",
       price: 879.99,
-      shipping: 0,
-      fees: 0,
       deliveryLabel: "Tomorrow",
       freshnessMinutesAgo: 4,
       matchConfidence: 0.97,
-      matchType: "exact",
     },
     {
       id: "listing-local-electronics",
       sourceId: "src-local-electronics",
       condition: "open-box",
       price: 842.0,
-      shipping: 0,
-      fees: 0,
       deliveryLabel: "Pickup today",
       freshnessMinutesAgo: 4,
       matchConfidence: 0.95,
-      matchType: "exact",
     },
     {
       id: "listing-authorized-outlet",
       sourceId: "src-authorized-outlet",
       condition: "certified-refurbished",
       price: 799.0,
-      shipping: 0,
-      fees: 0,
       deliveryLabel: "3-5 days",
       freshnessMinutesAgo: 22,
       matchConfidence: 0.93,
-      matchType: "exact",
     },
     {
       id: "listing-discount-home",
@@ -176,41 +285,204 @@ async function main() {
       condition: "new",
       price: 769.0,
       shipping: 29.0,
-      fees: 0,
       deliveryLabel: "5-7 days",
       freshnessMinutesAgo: 35,
       matchConfidence: 0.62,
-      matchType: "exact",
       matchStatus: "pending",
     },
-  ] as const;
+    {
+      id: "listing-amazon-ah4200",
+      sourceId: "src-amazon",
+      condition: "new",
+      price: 884.99,
+      deliveryLabel: "Tomorrow",
+      freshnessMinutesAgo: 3,
+      matchConfidence: 0.96,
+      sellerName: "Amazon.com",
+    },
+    {
+      id: "listing-idealo-ah4200",
+      sourceId: "src-idealo",
+      condition: "new",
+      price: 858.0,
+      shipping: 12.99,
+      deliveryLabel: "2-4 days",
+      freshnessMinutesAgo: 8,
+      matchConfidence: 0.94,
+      sellerName: "HomeMarket DE",
+    },
+    {
+      id: "listing-google-ah4200",
+      sourceId: "src-google-shopping",
+      condition: "new",
+      price: 869.5,
+      deliveryLabel: "Fri, free",
+      freshnessMinutesAgo: 6,
+      matchConfidence: 0.95,
+      sellerName: "Best Appliance Hub",
+    },
+  ];
 
-  for (const def of listingDefs) {
-    await prisma.listing.create({
-      data: {
-        id: def.id,
-        sourceId: def.sourceId,
-        canonicalProductId: product.id,
-        condition: def.condition,
-        price: def.price,
-        shipping: def.shipping,
-        fees: def.fees,
-        deliveryLabel: def.deliveryLabel,
-        freshnessCapturedAt: minutesAgo(def.freshnessMinutesAgo),
-      },
-    });
+  const airPurifierListings: ListingSeed[] = [
+    {
+      id: "listing-amazon-ap900",
+      sourceId: "src-amazon",
+      condition: "new",
+      price: 239.0,
+      deliveryLabel: "Tomorrow",
+      freshnessMinutesAgo: 5,
+      matchConfidence: 0.97,
+      sellerName: "Amazon.com",
+    },
+    {
+      id: "listing-idealo-ap900",
+      sourceId: "src-idealo",
+      condition: "new",
+      price: 229.99,
+      shipping: 4.99,
+      deliveryLabel: "3-5 days",
+      freshnessMinutesAgo: 12,
+      matchConfidence: 0.94,
+      sellerName: "CleanAir Shop",
+    },
+    {
+      id: "listing-google-ap900",
+      sourceId: "src-google-shopping",
+      condition: "new",
+      price: 234.5,
+      deliveryLabel: "Thu, free",
+      freshnessMinutesAgo: 7,
+      matchConfidence: 0.95,
+      sellerName: "Home Wellness Co",
+    },
+    {
+      id: "listing-retailer-ap900",
+      sourceId: "src-retailer-direct",
+      condition: "new",
+      price: 249.0,
+      deliveryLabel: "2 days",
+      freshnessMinutesAgo: 10,
+      matchConfidence: 0.96,
+    },
+    {
+      id: "listing-official-ap900",
+      sourceId: "src-official",
+      condition: "new",
+      price: 259.0,
+      deliveryLabel: "Thu, free",
+      freshnessMinutesAgo: 9,
+      matchConfidence: 0.98,
+    },
+  ];
 
-    await prisma.productMatch.create({
-      data: {
-        id: `match-${def.id}`,
-        canonicalProductId: product.id,
-        listingId: def.id,
-        type: def.matchType,
-        confidence: def.matchConfidence,
-        status: "matchStatus" in def ? def.matchStatus : "approved",
-      },
-    });
-  }
+  const shoeListings: ListingSeed[] = [
+    {
+      id: "listing-amazon-sv9",
+      sourceId: "src-amazon",
+      condition: "new",
+      price: 129.0,
+      deliveryLabel: "Tomorrow",
+      freshnessMinutesAgo: 2,
+      matchConfidence: 0.97,
+      sellerName: "Amazon.com",
+    },
+    {
+      id: "listing-idealo-sv9",
+      sourceId: "src-idealo",
+      condition: "new",
+      price: 119.95,
+      shipping: 5.5,
+      deliveryLabel: "2-3 days",
+      freshnessMinutesAgo: 11,
+      matchConfidence: 0.93,
+      sellerName: "RunHouse EU",
+    },
+    {
+      id: "listing-google-sv9",
+      sourceId: "src-google-shopping",
+      condition: "new",
+      price: 124.0,
+      deliveryLabel: "Fri, free",
+      freshnessMinutesAgo: 4,
+      matchConfidence: 0.95,
+      sellerName: "SportLane",
+    },
+    {
+      id: "listing-outlet-sv9",
+      sourceId: "src-authorized-outlet",
+      condition: "open-box",
+      price: 99.0,
+      deliveryLabel: "3-5 days",
+      freshnessMinutesAgo: 20,
+      matchConfidence: 0.91,
+    },
+    {
+      id: "listing-retailer-sv9",
+      sourceId: "src-retailer-direct",
+      condition: "new",
+      price: 134.0,
+      deliveryLabel: "Tomorrow",
+      freshnessMinutesAgo: 6,
+      matchConfidence: 0.96,
+    },
+  ];
+
+  const vacuumListings: ListingSeed[] = [
+    {
+      id: "listing-amazon-cv210",
+      sourceId: "src-amazon",
+      condition: "new",
+      price: 279.0,
+      deliveryLabel: "Tomorrow",
+      freshnessMinutesAgo: 3,
+      matchConfidence: 0.97,
+      sellerName: "Amazon.com",
+    },
+    {
+      id: "listing-idealo-cv210",
+      sourceId: "src-idealo",
+      condition: "new",
+      price: 268.0,
+      shipping: 9.99,
+      deliveryLabel: "3-4 days",
+      freshnessMinutesAgo: 14,
+      matchConfidence: 0.94,
+      sellerName: "VacuumWorld",
+    },
+    {
+      id: "listing-google-cv210",
+      sourceId: "src-google-shopping",
+      condition: "new",
+      price: 274.5,
+      deliveryLabel: "Thu, free",
+      freshnessMinutesAgo: 5,
+      matchConfidence: 0.95,
+      sellerName: "FloorCare Direct",
+    },
+    {
+      id: "listing-local-cv210",
+      sourceId: "src-local-electronics",
+      condition: "new",
+      price: 289.0,
+      deliveryLabel: "Pickup today",
+      freshnessMinutesAgo: 8,
+      matchConfidence: 0.96,
+    },
+    {
+      id: "listing-official-cv210",
+      sourceId: "src-official",
+      condition: "new",
+      price: 299.0,
+      deliveryLabel: "Fri, free",
+      freshnessMinutesAgo: 7,
+      matchConfidence: 0.98,
+    },
+  ];
+
+  await seedListings(product.id, dishwasherListings);
+  await seedListings(airPurifier.id, airPurifierListings);
+  await seedListings(runningShoe.id, shoeListings);
+  await seedListings(cordlessVacuum.id, vacuumListings);
 
   const demoUser = await prisma.appUser.create({
     data: {
@@ -263,48 +535,47 @@ async function main() {
       ],
     },
     {
-      listingId: "listing-retailer-direct",
+      listingId: "listing-idealo-ah4200",
       rank: 2,
       label: "Lowest cost",
-      rationale: "Lowest total known cost among new-condition listings, with next-day delivery.",
+      rationale: "Lowest total known cost among new-condition marketplace listings.",
       factors: [
         {
-          label: "Lowest new-condition price",
-          detail: "$19.01 less than Official Brand Store.",
+          label: "Lowest listed marketplace price",
+          detail: "Idealo aggregates competitive EU retailers.",
           positive: true,
         },
         {
-          label: "Shorter warranty",
-          detail: "1-year vs 2-year at Official Brand Store.",
+          label: "Paid shipping",
+          detail: "$12.99 shipping adds to total cost.",
+          positive: false,
+        },
+      ],
+    },
+    {
+      listingId: "listing-amazon-ah4200",
+      rank: 3,
+      label: "Fastest delivery",
+      rationale: "Next-day delivery with strong marketplace fulfillment reliability.",
+      factors: [
+        { label: "Tomorrow delivery", detail: "Fast Prime-style shipping window.", positive: true },
+        {
+          label: "Marketplace seller terms",
+          detail: "Return and warranty terms follow Amazon listing rules.",
           positive: false,
         },
       ],
     },
     {
       listingId: "listing-local-electronics",
-      rank: 3,
-      label: "Fastest",
+      rank: 4,
+      label: "Fastest pickup",
       rationale: "Available for pickup today; fastest way to receive the product.",
       factors: [
         { label: "Pickup today", detail: "Ready for same-day collection.", positive: true },
         {
           label: "Open-box condition",
           detail: "Not new; inspect before purchase.",
-          positive: false,
-        },
-      ],
-    },
-    {
-      listingId: "listing-authorized-outlet",
-      rank: 4,
-      label: "Best value (refurbished)",
-      rationale:
-        "Lowest total cost overall via a certified refurbished unit with a full year of warranty coverage.",
-      factors: [
-        { label: "Lowest total cost", detail: "$100 less than the official store.", positive: true },
-        {
-          label: "Certified refurbished",
-          detail: "Inspected and certified by an authorized outlet.",
           positive: false,
         },
       ],
@@ -421,9 +692,16 @@ async function main() {
     },
   });
 
+  const listingCount =
+    dishwasherListings.length +
+    airPurifierListings.length +
+    shoeListings.length +
+    vacuumListings.length;
+
   console.log("Seed complete:");
-  console.log(`  Brand / category / product: ${product.modelName}`);
-  console.log(`  Listings: ${listingDefs.length}`);
+  console.log(`  Products: 4 (dishwasher, air purifier, shoe, vacuum)`);
+  console.log(`  Sources: ${sources.length} (incl. Amazon, Idealo, Google Shopping)`);
+  console.log(`  Listings: ${listingCount}`);
   console.log(`  Recommendations: ${recommendationDefs.length}`);
   console.log(`  Saved products / alerts: ${savedDefs.length}`);
   console.log("  Match review cases: 1");

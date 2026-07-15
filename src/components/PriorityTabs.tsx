@@ -274,7 +274,23 @@ export function PriorityTabs({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+      {/* Recommendation summary */}
+      {anyStale ? (
+        <StatusBanner
+          tone="warn"
+          title="Some prices look stale"
+          description="At least one offer has not refreshed within the last hour. Treat those totals as possibly outdated."
+        />
+      ) : null}
+
+      {panel ? (
+        <div className={anyStale ? "mt-4" : ""}>
+          <RecommendationPanel model={panel} productId={productId} />
+        </div>
+      ) : null}
+
+      {/* Priority controls */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-y border-border py-3">
         <span className="mr-1 text-sm font-semibold text-foreground">Sort by</span>
         {PRIORITIES.map((key) => (
           <button
@@ -284,8 +300,8 @@ export function PriorityTabs({
             aria-pressed={priority === key}
             className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               priority === key
-                ? "bg-navy-900 text-white shadow-sm"
-                : "border border-border bg-surface text-muted hover:border-navy-800 hover:text-foreground"
+                ? "btn-navy shadow-sm"
+                : "border border-border bg-surface text-muted hover:border-accent hover:text-foreground"
             }`}
           >
             {PRIORITY_LABELS[key]}
@@ -293,22 +309,7 @@ export function PriorityTabs({
         ))}
       </div>
 
-      {anyStale ? (
-        <div className="mt-4">
-          <StatusBanner
-            tone="warn"
-            title="Some prices look stale"
-            description="At least one offer has not refreshed within the last hour. Treat those totals as possibly outdated."
-          />
-        </div>
-      ) : null}
-
-      {panel ? (
-        <div className="mt-4">
-          <RecommendationPanel model={panel} productId={productId} />
-        </div>
-      ) : null}
-
+      {/* Offer cards */}
       <p className="mt-4 text-sm text-muted">
         {sorted.length} {sorted.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
         {sourceCount === 1 ? "source" : "sources"}

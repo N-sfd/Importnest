@@ -92,6 +92,7 @@ export async function recordSearchSession(input: {
   categoryId?: string | null;
   matchedProductId: string | null;
   criteria?: Record<string, unknown>;
+  userId?: string | null;
 }) {
   return prisma.searchSession.create({
     data: {
@@ -100,18 +101,24 @@ export async function recordSearchSession(input: {
       categoryId: input.categoryId ?? undefined,
       status: input.matchedProductId ? "matched" : "no-match",
       criteria: input.criteria ? JSON.stringify(input.criteria) : undefined,
+      userId: input.userId ?? undefined,
     },
   });
 }
 
 /** Opens a session when a query enters the clarification flow, so each answer can be persisted against it. */
-export async function startSearchSession(query: string, categoryId?: string | null) {
+export async function startSearchSession(
+  query: string,
+  categoryId?: string | null,
+  userId?: string | null,
+) {
   return prisma.searchSession.create({
     data: {
       query,
       inputType: classifyInput(query.trim()),
       categoryId: categoryId ?? undefined,
       status: "clarifying",
+      userId: userId ?? undefined,
     },
   });
 }
@@ -241,7 +248,12 @@ export type FinalizeSearchResult =
 export async function finalizeSearch(
   query: string,
   intent: SearchIntent,
-  options: { directMatch: string | null; sessionId?: string; categoryId?: string | null },
+  options: {
+    directMatch: string | null;
+    sessionId?: string;
+    categoryId?: string | null;
+    userId?: string | null;
+  },
 ): Promise<FinalizeSearchResult> {
   let finalMatch = options.directMatch;
   let isComparable = false;
@@ -283,6 +295,7 @@ export async function finalizeSearch(
       categoryId: options.categoryId,
       matchedProductId: finalMatch,
       criteria: capturedFields.length ? intent : undefined,
+      userId: options.userId,
     });
   }
 

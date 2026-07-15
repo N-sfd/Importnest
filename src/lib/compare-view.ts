@@ -158,6 +158,22 @@ export function formatConditionLabel(condition: string): string {
   }
 }
 
+/**
+ * Product-identity match-status badge text. No confidence score at all means
+ * the match hasn't been reviewed yet; otherwise only an explicit "comparable"
+ * type reads as a comparable product — anything else with a real confidence
+ * score (including the historical default before `type` was tracked) reads
+ * as an exact match.
+ */
+export function formatMatchStatus(
+  matchType: "exact" | "comparable" | string | null | undefined,
+  confidencePct: number | null | undefined,
+): string {
+  if (confidencePct == null) return "Match pending review";
+  const label = matchType === "comparable" ? "Comparable product" : "Exact match";
+  return `${label} · ${confidencePct}%`;
+}
+
 export const PRIORITY_LABELS: Record<Priority, string> = {
   "best-overall": "Best overall",
   "lowest-cost": "Lowest cost",

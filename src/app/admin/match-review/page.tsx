@@ -96,22 +96,13 @@ export default async function MatchReviewPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap justify-end gap-3">
-        <button
-          type="button"
-          className="rounded-full border border-border bg-panel px-4 py-2 text-sm font-medium text-gray-700 hover:border-navy-800"
-        >
+        <button type="button" className="btn-accent px-4 py-2 text-sm text-foreground">
           Reject match
         </button>
-        <button
-          type="button"
-          className="rounded-full border border-border bg-panel px-4 py-2 text-sm font-medium text-gray-700 hover:border-navy-800"
-        >
+        <button type="button" className="btn-accent px-4 py-2 text-sm text-foreground">
           Mark comparable
         </button>
-        <button
-          type="button"
-          className="rounded-full bg-cta px-4 py-2 text-sm font-semibold text-navy-900 hover:bg-cta-hover"
-        >
+        <button type="button" className="btn-cta px-4 py-2 text-sm">
           Approve exact match
         </button>
       </div>

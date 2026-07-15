@@ -15,19 +15,14 @@ import {
   totalKnownCost,
   type CompareFilters,
 } from "@/lib/compare-data";
+import { formatMatchStatus } from "@/lib/compare-view";
 import type { Priority } from "@/lib/types";
 import { productImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
-import {
-  removeAlertAction,
-  saveProductAction,
-  setPriceAlertAction,
-  toggleAlertActiveAction,
-  unsaveProductAction,
-} from "@/lib/saved-actions";
 import { getSaveAndAlertState } from "@/lib/saved-data";
+import { ProductActions } from "@/components/ProductActions";
 
 const VALID_PRIORITIES: Priority[] = [
   "best-overall",
@@ -109,12 +104,7 @@ export default async function ComparePage({
   });
   const freshnessMinutes = freshest ? minutesSince(freshest.freshnessCapturedAt) : null;
   const confidencePct = bestMatch ? Math.round(bestMatch.confidence * 100) : null;
-  const matchTypeLabel =
-    bestMatch?.type === "comparable"
-      ? "Comparable product"
-      : bestMatch?.type === "exact"
-        ? "Exact match"
-        : null;
+  const matchStatusLabel = formatMatchStatus(bestMatch?.type, confidencePct);
   const lowestKnown =
     rows.length > 0 ? Math.min(...rows.map((r) => totalKnownCost(r.listing))) : null;
   const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
@@ -159,22 +149,20 @@ export default async function ComparePage({
             {product.modelNumber ? (
               <p className="mt-1 text-sm text-muted">Model: {product.modelNumber}</p>
             ) : null}
+            {product.configuration ? (
+              <p className="mt-1 text-sm text-muted">Configuration: {product.configuration}</p>
+            ) : null}
+
+            {/* Match status and data freshness */}
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full bg-navy-100 px-3 py-1 text-xs font-semibold text-navy-900">
-                {matchTypeLabel && confidencePct != null
-                  ? `${matchTypeLabel} · ${confidencePct}%`
-                  : confidencePct != null
-                    ? `Exact match · ${confidencePct}%`
-                    : "Match pending review"}
+                {matchStatusLabel}
               </span>
               <span className="rounded-full bg-surface px-3 py-1 ring-1 ring-border">
                 <Freshness minutesAgo={freshnessMinutes} />
               </span>
             </div>
-            {product.configuration ? (
-              <p className="mt-3 text-sm text-muted">Configuration: {product.configuration}</p>
-            ) : null}
-            <p className="mt-4 text-sm text-foreground/80">
+            <p className="mt-3 text-sm text-foreground/80">
               {rows.length} {rows.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
               {sourceCount === 1 ? "source" : "sources"}
               {lowestKnown != null ? (
@@ -188,7 +176,8 @@ export default async function ComparePage({
               ) : null}
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            {/* Save product and create alert actions */}
+            <div className="mt-4 border-t border-border pt-4">
               {!authUser ? (
                 <Link
                   href={`/login?next=${encodeURIComponent(redirectTo)}`}
@@ -197,98 +186,14 @@ export default async function ComparePage({
                   Sign in to save this product or set a price alert
                 </Link>
               ) : (
-                <>
-                  <form
-                    action={
-                      saveState?.isSaved
-                        ? unsaveProductAction.bind(null, productId, redirectTo)
-                        : saveProductAction.bind(null, productId, redirectTo)
-                    }
-                  >
-                    <button
-                      type="submit"
-                      className={
-                        saveState?.isSaved
-                          ? "min-h-11 rounded-full border border-border bg-panel px-4 py-2 text-sm font-medium text-gray-700 hover:border-navy-800"
-                          : "btn-cta min-h-11 px-4 py-2 text-sm"
-                      }
-                    >
-                      {saveState?.isSaved ? "Saved ✓" : "Save this product"}
-                    </button>
-                  </form>
-
-                  {saveState?.alert ? (
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
-                      <span>
-                        Alert: notify below{" "}
-                        <span className="font-semibold text-foreground">
-                          ${saveState.alert.threshold}
-                        </span>
-                        {lowestKnown != null ? (
-                          <>
-                            {" "}
-                            · current{" "}
-                            <span className="font-semibold text-foreground">
-                              ${lowestKnown.toFixed(2)}
-                            </span>
-                          </>
-                        ) : null}
-                        {!saveState.alert.isActive ? " (paused)" : null}
-                      </span>
-                      <form
-                        action={toggleAlertActiveAction.bind(
-                          null,
-                          productId,
-                          "price-drop",
-                          redirectTo,
-                        )}
-                      >
-                        <button
-                          type="submit"
-                          className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
-                        >
-                          {saveState.alert.isActive ? "Pause" : "Resume"}
-                        </button>
-                      </form>
-                      <form
-                        action={removeAlertAction.bind(null, productId, "price-drop", redirectTo)}
-                      >
-                        <button
-                          type="submit"
-                          className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
-                        >
-                          Remove alert
-                        </button>
-                      </form>
-                    </div>
-                  ) : (
-                    <form
-                      action={setPriceAlertAction.bind(null, productId, redirectTo)}
-                      className="flex items-center gap-2"
-                    >
-                      <label htmlFor="threshold" className="text-sm text-muted">
-                        Notify below $
-                      </label>
-                      <input
-                        id="threshold"
-                        name="threshold"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        required
-                        defaultValue={suggestedAlert}
-                        placeholder="0.00"
-                        className="min-h-11 w-24 rounded-md border border-border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent"
-                      />
-                      <button
-                        type="submit"
-                        className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
-                      >
-                        Set price alert
-                      </button>
-                    </form>
-                  )}
-                </>
+                <ProductActions
+                  productId={productId}
+                  redirectTo={redirectTo}
+                  isSaved={Boolean(saveState?.isSaved)}
+                  alert={saveState?.alert ?? null}
+                  suggestedAlert={suggestedAlert}
+                  currentLowestPrice={lowestKnown}
+                />
               )}
             </div>
           </div>

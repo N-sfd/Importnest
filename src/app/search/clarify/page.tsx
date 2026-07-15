@@ -4,6 +4,7 @@ import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { extractIntentWithAIOutcome } from "@/lib/ai-search-intent";
 import { StatusBanner } from "@/components/StatusPanel";
+import { getOrCreateAppUser } from "@/lib/auth";
 import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
 import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
@@ -44,6 +45,7 @@ export default async function ClarifyPage({
   // rather than asking unnecessary questions. A generic category term must
   // never take this path, even on a direct hit to this route.
   const { classification, directMatch } = await classifyAndResolve(query);
+  const user = await getOrCreateAppUser();
   if (classification.classification === "exact_product") {
     const categoryRecord = params.category
       ? await prisma.category.findUnique({ where: { slug: params.category } })
@@ -51,6 +53,7 @@ export default async function ClarifyPage({
     const result = await finalizeSearch(query, buildIntent(query, params), {
       directMatch,
       categoryId: categoryRecord?.id,
+      userId: user?.id ?? null,
     });
     console.info(`[perf] search.clarify(defensive-fast-path) ${(performance.now() - start).toFixed(1)}ms`);
     if (result.kind === "redirect") {
@@ -96,7 +99,7 @@ export default async function ClarifyPage({
         const categoryRecord = params.category
           ? await prisma.category.findUnique({ where: { slug: params.category } })
           : null;
-        const sessionId = (await startSearchSession(query, categoryRecord?.id)).id;
+        const sessionId = (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
         const qs = new URLSearchParams({ ...paramsToRecord(params), ...aiParams, sid: sessionId });
         redirect(`/search/clarify?${qs.toString()}`);
       }
@@ -112,7 +115,7 @@ export default async function ClarifyPage({
   const categoryRecord = params.category
     ? await prisma.category.findUnique({ where: { slug: params.category } })
     : null;
-  const sessionId = params.sid ?? (await startSearchSession(query, categoryRecord?.id)).id;
+  const sessionId = params.sid ?? (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
   const currentParams = { sid: sessionId, ...paramsToRecord(params) };
 
   if (readyForConfirmation) {

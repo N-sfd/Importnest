@@ -6,37 +6,40 @@
   --surface: #f3f5f7;
   --panel: #ffffff;
   --border: #e2e6ea;
-  --navy-950: #021022;
-  --navy-900: #041935;
-  --navy-800: #0a2a4d;
-  --navy-100: #e6eef8;
-  --accent: #2ec8e6;
-  --cta: #9fea3a;
-  --cta-hover: #8ad82e;
-  --price: #041935;
-  --link: #1d5a9c;
+  --navy-950: #01060f;
+  /* Logo plate */
+  --navy-900: #050a14;
+  --navy-800: #0b1f38;
+  --navy-100: #e8f4f8;
+  /* Logo teal / cyan (NEST, cart, tag) */
+  --accent: #00b8d4;
+  /* Logo lime (checkmark + swoosh) — primary buttons */
+  --cta: #a4d037;
+  --cta-hover: #92bc2e;
+  --price: #050a14;
+  --link: #008fad;
   --muted: #5c6770;
-  --ring: #2ec8e6;
-  --shadow-panel: 0 1px 2px rgb(4 25 53 / 0.05), 0 10px 28px rgb(4 25 53 / 0.08);
+  --ring: #00b8d4;
+  --shadow-panel: 0 1px 2px rgb(5 10 20 / 0.05), 0 10px 28px rgb(5 10 20 / 0.08);
 }
 
 html.dark {
-  --background: #071018;
+  --background: #050a14;
   --foreground: #e8eef6;
-  --surface: #0a1420;
-  --panel: #101c2c;
-  --border: #243447;
-  --navy-950: #010810;
-  --navy-900: #06182e;
-  --navy-800: #0d2744;
+  --surface: #08111d;
+  --panel: #0c1828;
+  --border: #1e3048;
+  --navy-950: #01060f;
+  --navy-900: #050a14;
+  --navy-800: #0b1f38;
   --navy-100: #152536;
-  --accent: #3ad4f0;
-  --cta: #9fea3a;
-  --cta-hover: #8ad82e;
+  --accent: #2ec8e6;
+  --cta: #a4d037;
+  --cta-hover: #b8e04a;
   --price: #f2f6fb;
-  --link: #7eb8e8;
+  --link: #5ed4ec;
   --muted: #9aa8b5;
-  --ring: #3ad4f0;
+  --ring: #2ec8e6;
   --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px rgb(0 0 0 / 0.28);
   color-scheme: dark;
 }
@@ -94,11 +97,45 @@ a {
 
 .btn-cta:hover {
   background: var(--cta-hover);
-  box-shadow: 0 4px 14px rgb(159 234 58 / 0.35);
+  box-shadow: 0 4px 14px rgb(164 208 55 / 0.4);
 }
 
 .btn-cta:active {
   transform: translateY(0.5px);
+}
+
+/* Navy primary (logo plate) — secondary solid actions / selected tabs */
+.btn-navy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy-900);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 9999px;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.btn-navy:hover {
+  background: var(--navy-800);
+  box-shadow: 0 4px 14px rgb(5 10 20 / 0.25);
+}
+
+/* Teal accent outline — logo cyan */
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  border: 1.5px solid var(--accent);
+  border-radius: 9999px;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.btn-accent:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .offer-card {
@@ -136,7 +173,7 @@ a {
 @media (prefers-reduced-motion: no-preference) {
   .offer-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 18px rgb(11 42 98 / 0.1);
+    box-shadow: 0 4px 18px rgb(5 10 20 / 0.12);
   }
 
   .fade-up {

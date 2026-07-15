@@ -1,7 +1,7 @@
 /** Stable image paths for seeded / demo products and categories. */
 
-/** Footer / primary brand mark used as a compact placeholder (keep visually small in cards). */
-export const BRAND_FALLBACK_IMAGE = "/brand/logo9-icon.png";
+/** Compact brand mark used as a product-card placeholder. */
+export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
 
 export const productImages: Record<string, string> = {
   "cp-apex-ah4200": "/products/dishwasher.png",
@@ -24,10 +24,12 @@ export function productImageFor(productId: string) {
 export function isBrandFallbackImage(src: string) {
   return (
     src === BRAND_FALLBACK_IMAGE ||
+    src.includes("logo-app-icon") ||
     src.includes("logo9-icon") ||
     src.includes("logo-mark") ||
     src.includes("logo8-mark") ||
-    src.includes("logo8-icon")
+    src.includes("logo8-icon") ||
+    src.includes("logo-circle")
   );
 }
 
@@ -45,6 +47,9 @@ export const sourceImages: Record<string, string> = {
   "src-local-electronics": "/sources/local-electronics.svg",
   "src-authorized-outlet": "/sources/authorized-outlet.svg",
   "src-discount-home": "/sources/discount-home.svg",
+  "src-amazon": "/sources/amazon.svg",
+  "src-idealo": "/sources/idealo.svg",
+  "src-google-shopping": "/sources/google-shopping.svg",
 };
 
 export function sourceImageFor(sourceId: string) {

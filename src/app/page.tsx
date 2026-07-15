@@ -2,14 +2,20 @@ import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { DepartmentGrid } from "@/components/DepartmentCard";
+import { ExampleSearches } from "@/components/ExampleSearches";
+import { FeaturedComparison } from "@/components/FeaturedComparison";
 import { HeroSearch } from "@/components/HeroSearch";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
+import { RecentSearches } from "@/components/RecentSearches";
+import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { getAuthUser } from "@/lib/auth";
 import { categoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
+import { getRecentSearches } from "@/lib/recent-searches";
+import { getUserWatchlist } from "@/lib/saved-data";
 
 const categories = [
   {
@@ -49,13 +55,15 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, sources] = await Promise.all([
+  const [popular, sources, recentSearches, watchlist] = await Promise.all([
     getPopularComparisons(4, savedIds),
     prisma.source.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+    user ? getUserWatchlist(user.id) : Promise.resolve([]),
   ]);
 
   return (
@@ -91,6 +99,11 @@ export default async function HomePage() {
           Estimates are labeled. Sponsored placements never change organic ranking.
         </p>
       </section>
+
+      <ExampleSearches />
+      <RecentSearches items={recentSearches} />
+      <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
+      {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
       <ApprovedSourcesStrip sources={sources} />
 

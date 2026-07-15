@@ -17,7 +17,7 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="border-b border-white/10 bg-navy-900/95 text-white backdrop-blur-md">
+      <div className="border-b border-white/10 bg-navy-900 text-white">
         <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-3 py-3 sm:gap-5 sm:px-4">
           <BrandLink logo="nest" />
 
@@ -55,7 +55,7 @@ export async function Header() {
         <div className="mx-auto flex max-w-[1200px] items-center gap-1 overflow-x-auto px-3 py-2 text-sm sm:px-4">
           <Link
             href="/compare/cp-apex-ah4200"
-            className="shrink-0 rounded-lg bg-white/10 px-2.5 py-1 font-semibold text-cta"
+            className="shrink-0 rounded-lg bg-cta px-2.5 py-1 font-semibold text-navy-900"
           >
             Live demo
           </Link>

@@ -2,12 +2,28 @@ import { describe, expect, it } from "vitest";
 import {
   buildRecommendationPanel,
   FALLBACK_COPY,
+  formatMatchStatus,
   NEUTRAL_RECOMMENDATION_LABEL,
   PRIORITY_LABELS,
   type CompareListingView,
   type CompareRow,
 } from "@/lib/compare-view";
 import { FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
+
+describe("formatMatchStatus — product identity match label", () => {
+  it("reads as an exact match with a confidence score", () => {
+    expect(formatMatchStatus("exact", 96)).toBe("Exact match · 96%");
+  });
+
+  it("reads as a comparable product with a confidence score", () => {
+    expect(formatMatchStatus("comparable", 82)).toBe("Comparable product · 82%");
+  });
+
+  it("reads as pending review when there is no confidence score at all", () => {
+    expect(formatMatchStatus(undefined, null)).toBe("Match pending review");
+    expect(formatMatchStatus("exact", null)).toBe("Match pending review");
+  });
+});
 
 function makeListing(overrides: Partial<CompareListingView> = {}): CompareListingView {
   return {

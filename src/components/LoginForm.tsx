@@ -71,8 +71,8 @@ export function LoginForm() {
             setInfo(null);
           }}
           aria-pressed={mode === "sign-in"}
-          className={`flex-1 rounded-full px-3 py-1.5 transition ${
-            mode === "sign-in" ? "bg-cta text-navy-900" : "text-gray-600 hover:text-foreground"
+          className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${
+            mode === "sign-in" ? "bg-cta text-navy-900" : "text-muted hover:text-foreground"
           }`}
         >
           Sign in
@@ -85,8 +85,8 @@ export function LoginForm() {
             setInfo(null);
           }}
           aria-pressed={mode === "sign-up"}
-          className={`flex-1 rounded-full px-3 py-1.5 transition ${
-            mode === "sign-up" ? "bg-cta text-navy-900" : "text-gray-600 hover:text-foreground"
+          className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${
+            mode === "sign-up" ? "bg-cta text-navy-900" : "text-muted hover:text-foreground"
           }`}
         >
           Create account
@@ -129,7 +129,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-full bg-cta px-4 py-2.5 text-sm font-semibold text-navy-900 hover:bg-cta-hover disabled:opacity-60"
+        className="btn-cta w-full px-4 py-2.5 text-sm disabled:opacity-60"
       >
         {loading
           ? mode === "sign-up"

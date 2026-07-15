@@ -284,7 +284,7 @@ function ResultBadge({
     tone === "exact"
       ? "bg-navy-900 text-white"
       : tone === "comparable"
-        ? "border border-dashed border-navy-800/35 bg-surface text-navy-800"
+        ? "border border-dashed border-accent/40 bg-surface text-navy-800"
         : tone === "highlight"
           ? "bg-cta/30 text-navy-900"
           : "border border-border bg-white text-navy-800";

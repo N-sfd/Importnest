@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="mt-auto border-t border-white/10 bg-navy-900 text-white">
       <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-12 sm:grid-cols-[1.2fr_1fr_1fr] sm:px-6">
         <div>
-          <BrandMark logo="nest" size="lg" showWordmark onDark />
+          <BrandMark logo="nest" size="xl" showWordmark layout="stacked" onDark />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
             AI-powered shopping comparison—transparent total cost, delivery, and protection across
             approved retailers.
