@@ -10,6 +10,7 @@ export default async function ConfirmPage({
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
+  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
@@ -38,6 +39,7 @@ export default async function ConfirmPage({
     categoryId: categoryRecord?.id,
   });
 
+  console.info(`[perf] search.confirmToCompare ${(performance.now() - start).toFixed(1)}ms`);
   if (result.kind === "redirect") {
     const qs = result.searchParams.toString();
     redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);

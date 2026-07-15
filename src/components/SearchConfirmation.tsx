@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Header } from "@/components/Header";
+import { PageShell } from "@/components/PageShell";
 import type { SearchIntent } from "@/lib/search-intent";
 
 type SummaryRow = {
   label: string;
   value: string;
-  /** Param keys to drop when editing this preference (some fields span more than one param). */
   editParams: string[];
 };
 
@@ -70,48 +69,44 @@ export function SearchConfirmation({
   confirmParams.set("confirmed", "1");
 
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
-      <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-bold text-navy-900">Confirm your search</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Here&apos;s what we&apos;ll use to find offers for &ldquo;{intent.query}&rdquo;.
-        </p>
+    <PageShell width="narrow">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">Confirm your search</h1>
+      <p className="mt-1 text-sm text-muted">
+        Here&apos;s what we&apos;ll use to find offers for &ldquo;{intent.query}&rdquo;.
+      </p>
 
-        <div className="mt-6 divide-y divide-gray-200 rounded-lg border border-gray-200">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  {row.label}
-                </p>
-                <p className="text-sm font-medium text-navy-900">{row.value}</p>
-              </div>
-              <Link
-                href={editHref(row.editParams)}
-                className="text-xs font-medium text-navy-800 hover:underline"
-              >
-                Edit
-              </Link>
+      <div className="panel mt-6 divide-y divide-border overflow-hidden">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between px-4 py-3.5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{row.label}</p>
+              <p className="text-sm font-medium text-foreground">{row.value}</p>
             </div>
-          ))}
-        </div>
+            <Link
+              href={editHref(row.editParams)}
+              aria-label={`Edit ${row.label}`}
+              className="text-xs font-semibold text-link hover:underline"
+            >
+              Edit
+            </Link>
+          </div>
+        ))}
+      </div>
 
-        <div className="mt-6 flex gap-3">
-          <Link
-            href="/"
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-navy-800"
-          >
-            Start over
-          </Link>
-          <Link
-            href={`/search/confirm?${confirmParams.toString()}`}
-            className="ml-auto rounded-md bg-navy-900 px-5 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-          >
-            Show comparison
-          </Link>
-        </div>
-      </section>
-    </main>
+      <div className="mt-6 flex gap-3">
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-center rounded-full border border-border bg-panel px-4 py-2 text-sm font-medium hover:border-navy-800"
+        >
+          Start over
+        </Link>
+        <Link
+          href={`/search/confirm?${confirmParams.toString()}`}
+          className="btn-cta ml-auto inline-flex min-h-11 items-center px-5 py-2 text-sm"
+        >
+          Show comparison
+        </Link>
+      </div>
+    </PageShell>
   );
 }

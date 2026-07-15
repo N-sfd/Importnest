@@ -36,13 +36,17 @@ export function PriorityTabs({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+        <span className="mr-1 text-sm font-semibold text-foreground">Sort by</span>
         {priorities.map((p) => (
           <button
             key={p.key}
+            type="button"
             onClick={() => setPriority(p.key)}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              priority === p.key ? "bg-navy-900 text-white" : "text-gray-600 hover:bg-white"
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              priority === p.key
+                ? "bg-navy-900 text-white shadow-sm"
+                : "border border-border bg-surface text-muted hover:border-navy-800 hover:text-foreground"
             }`}
           >
             {p.label}
@@ -50,94 +54,114 @@ export function PriorityTabs({
         ))}
       </div>
 
-      <p className="mt-3 text-xs text-gray-500 sm:hidden">
-        Swipe left to see delivery, protection, and actions →
+      <p className="mt-4 text-sm text-muted">
+        {sorted.length} {sorted.length === 1 ? "offer" : "offers"} from approved sources
       </p>
-      <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200 sm:mt-4">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-navy-900 text-white">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Retailer</th>
-              <th className="px-4 py-3 font-semibold">Condition</th>
-              <th className="px-4 py-3 font-semibold">Total cost</th>
-              <th className="px-4 py-3 font-semibold">Delivery</th>
-              <th className="px-4 py-3 font-semibold">Protection</th>
-              <th className="px-4 py-3 font-semibold">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map(({ listing }) => (
-              <tr key={listing.id} className="border-t border-gray-200">
-                <td className="max-w-[240px] px-4 py-3">
-                  <div className="flex items-start gap-2.5">
-                    <Image
-                      src={listing.hasDistinctSeller ? "/brand/logo-mark.png" : sourceImageFor(listing.sourceId)}
-                      alt=""
-                      width={28}
-                      height={28}
-                      className="mt-0.5 shrink-0 rounded-md"
-                    />
-                    <div className="min-w-0">
-                      <div
-                        className="truncate font-medium text-navy-900"
+
+      <ul className="mt-3 space-y-3">
+        {sorted.map(({ listing }) => {
+          const total = totalKnownCost(listing);
+          const isTop = listing.id === topId;
+          return (
+            <li
+              key={listing.id}
+              className={`offer-card rounded-2xl border bg-panel p-4 shadow-[var(--shadow-panel)] ${
+                isTop ? "border-cta ring-2 ring-cta/25" : "border-border"
+              }`}
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 flex-1 gap-3">
+                  <Image
+                    src={
+                      listing.hasDistinctSeller
+                        ? "/brand/logo-mark.png"
+                        : sourceImageFor(listing.sourceId)
+                    }
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 shrink-0 rounded-xl border border-border bg-white object-contain p-1"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3
+                        className="truncate text-base font-semibold text-foreground"
                         title={listing.sourceName}
                       >
                         {listing.sourceName}
-                      </div>
-                      <p className="mt-0.5 text-xs text-gray-500">
-                        {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
-                        {listing.freshnessMinutesAgo === 0
-                          ? "synced just now"
-                          : `synced ${listing.freshnessMinutesAgo}m ago`}
-                        {process.env.NODE_ENV === "development"
-                          ? ` · ${listing.dataCompletenessPct}% data`
-                          : ""}
-                      </p>
-                      {listing.id === topId && (
-                        <span className="mt-1 inline-block rounded bg-navy-100 px-2 py-0.5 text-xs font-semibold text-navy-900">
+                      </h3>
+                      {isTop && (
+                        <span className="rounded-full bg-cta/30 px-2.5 py-0.5 text-xs font-bold text-navy-900">
                           {badgeForPriority[priority]}
                         </span>
                       )}
+                      {listing.isAuthorizedSource && (
+                        <span className="rounded-full bg-navy-100 px-2.5 py-0.5 text-xs font-medium text-navy-900">
+                          Authorized
+                        </span>
+                      )}
                     </div>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
+                      {listing.freshnessMinutesAgo === 0
+                        ? "synced just now"
+                        : `synced ${listing.freshnessMinutesAgo}m ago`}
+                      {process.env.NODE_ENV === "development"
+                        ? ` · ${listing.dataCompletenessPct}% data`
+                        : ""}
+                    </p>
+                    <dl className="mt-2 grid gap-1 text-sm text-foreground/80 sm:grid-cols-2">
+                      <div>
+                        <dt className="inline text-muted">Condition: </dt>
+                        <dd className="inline capitalize">
+                          {listing.condition.replace(/-/g, " ")}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="inline text-muted">Delivery: </dt>
+                        <dd className="inline">{listing.deliveryLabel}</dd>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <dt className="inline text-muted">Protection: </dt>
+                        <dd className="inline">
+                          {listing.warrantyLabel} · {listing.returnPolicyLabel}
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
-                </td>
-                <td className="px-4 py-3 capitalize text-gray-600">
-                  {listing.condition.replace(/-/g, " ")}
-                </td>
-                <td className="px-4 py-3 font-semibold text-navy-900">
-                  ${totalKnownCost(listing).toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-gray-600">{listing.deliveryLabel}</td>
-                <td className="px-4 py-3 text-gray-600">
-                  {listing.warrantyLabel} · {listing.returnPolicyLabel}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/compare/${productId}/why/${listing.id}`}
-                      className="rounded-md border border-navy-800 px-3 py-1.5 text-xs font-semibold text-navy-900 hover:bg-navy-100"
-                    >
-                      Why this option
-                    </Link>
-                    {listing.url && (
-                      <a
-                        href={`/go/${listing.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer sponsored"
-                        className="rounded-md bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy-800"
-                      >
-                        View offer
-                      </a>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
 
-      <p className="mt-3 rounded-md bg-amber-50 px-4 py-2 text-xs text-amber-800">
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:w-44 sm:items-end">
+                  <p className="text-2xl font-bold tabular-nums text-price">${total.toFixed(2)}</p>
+                  <p className="text-xs text-muted sm:text-right">Total known cost</p>
+                  {listing.url ? (
+                    <a
+                      href={`/go/${listing.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="btn-cta px-4 py-2.5 text-center text-sm"
+                    >
+                      View offer
+                    </a>
+                  ) : (
+                    <span className="rounded-full border border-border px-4 py-2 text-center text-sm text-muted">
+                      Link unavailable
+                    </span>
+                  )}
+                  <Link
+                    href={`/compare/${productId}/why/${listing.id}`}
+                    className="text-center text-sm font-semibold text-link hover:underline sm:text-right"
+                  >
+                    Why this option
+                  </Link>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
         Sponsored offers are shown separately and do not influence organic ranking.
       </p>
     </div>

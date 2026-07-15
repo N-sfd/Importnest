@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/Header";
+import { PageShell } from "@/components/PageShell";
 import { getListingExplanation, totalKnownCost } from "@/lib/compare-data";
 import { sourceImageFor } from "@/lib/images";
 
@@ -15,121 +15,136 @@ export default async function WhyPage({
   if (!data) notFound();
 
   const { listing, recommendation } = data;
+  const total = totalKnownCost(listing);
 
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-bold text-navy-900">Why this offer is recommended</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          A transparent explanation of the recommendation and trade-offs.
-        </p>
+    <PageShell>
+      <nav className="mb-3 text-xs text-muted">
+        <Link href={`/compare/${productId}`} className="text-link hover:underline">
+          Back to comparison
+        </Link>
+        <span className="mx-1.5">›</span>
+        <span className="text-foreground">Why this offer</span>
+      </nav>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 p-5 lg:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
-              {recommendation.label}
-            </p>
-            <div className="mt-1 flex items-center gap-2.5">
-              <Image
-                src={listing.hasDistinctSeller ? "/brand/logo-mark.png" : sourceImageFor(listing.sourceId)}
-                alt=""
-                width={32}
-                height={32}
-                className="rounded-md"
-              />
-              <div>
-                <h2 className="text-lg font-bold text-navy-900">{listing.sourceName}</h2>
-                <p className="text-xs text-gray-500">
-                  {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
-                  {listing.freshnessMinutesAgo === 0
-                    ? "synced just now"
-                    : `synced ${listing.freshnessMinutesAgo}m ago`}
-                </p>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-gray-600">
-              ${totalKnownCost(listing).toFixed(2)} total known cost
-            </p>
+      <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        Why this offer is recommended
+      </h1>
+      <p className="mt-1 text-sm text-muted">
+        Transparent explanation of ranking factors and trade-offs.
+      </p>
 
-            <p className="mt-4 text-sm font-semibold text-gray-700">Why it fits your priorities</p>
-            <ul className="mt-2 space-y-1.5 text-sm text-gray-700">
-              {recommendation.factors
-                .filter((f) => f.positive)
-                .map((f) => (
-                  <li key={f.label}>✓ {f.label}</li>
-                ))}
-            </ul>
-
-            {recommendation.tradeOff && (
-              <div className="mt-4">
-                <p className="text-sm font-semibold text-amber-700">Trade-off</p>
-                <p className="mt-1 text-sm text-gray-600">{recommendation.tradeOff}</p>
-              </div>
-            )}
-
-            <div className="mt-4">
-              <p className="text-sm font-semibold text-gray-700">Assumptions</p>
-              <ul className="mt-1 list-inside list-disc text-xs text-gray-500">
-                {recommendation.assumptions.map((a) => (
-                  <li key={a}>{a}</li>
-                ))}
-              </ul>
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        <div className="panel fade-up p-5 lg:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-accent">
+            {recommendation.label}
+          </p>
+          <div className="mt-2 flex items-center gap-2.5">
+            <Image
+              src={
+                listing.hasDistinctSeller
+                  ? "/brand/logo-mark.png"
+                  : sourceImageFor(listing.sourceId)
+              }
+              alt=""
+              width={40}
+              height={40}
+              className="rounded-xl border border-border bg-white object-contain p-1"
+            />
+            <div>
+              <h2 className="text-lg font-bold text-foreground">{listing.sourceName}</h2>
+              <p className="text-xs text-muted">
+                {listing.sourceTypeLabel && `${listing.sourceTypeLabel} · `}
+                {listing.freshnessMinutesAgo === 0
+                  ? "synced just now"
+                  : `synced ${listing.freshnessMinutesAgo}m ago`}
+              </p>
             </div>
           </div>
 
-          <aside className="rounded-lg border border-gray-200 p-5">
-            <p className="text-sm font-semibold text-navy-900">Cost breakdown</p>
-            <dl className="mt-3 space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <dt>Product price</dt>
-                <dd>${listing.price.toFixed(2)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>Verified discount</dt>
-                <dd>-${listing.verifiedDiscount.toFixed(2)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>Shipping</dt>
-                <dd>${listing.shipping.toFixed(2)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>Mandatory fees</dt>
-                <dd>${listing.mandatoryFees.toFixed(2)}</dd>
-              </div>
-              <div className="flex justify-between border-t border-gray-200 pt-2 font-semibold text-navy-900">
-                <dt>Total</dt>
-                <dd>${totalKnownCost(listing).toFixed(2)}</dd>
-              </div>
-            </dl>
+          <p className="mt-5 text-sm font-semibold text-foreground">Why it fits your priorities</p>
+          <ul className="mt-2 space-y-1.5 text-sm text-foreground/80">
+            {recommendation.factors
+              .filter((f) => f.positive)
+              .map((f) => (
+                <li key={f.label} className="flex gap-2">
+                  <span className="font-bold text-navy-900">✓</span>
+                  <span>{f.label}</span>
+                </li>
+              ))}
+          </ul>
 
-            {listing.url ? (
-              <a
-                href={`/go/${listingId}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="mt-6 block w-full rounded-md bg-navy-900 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-navy-800"
-              >
-                Continue to retailer
-              </a>
-            ) : (
-              <p className="mt-6 rounded-md bg-gray-50 px-4 py-2 text-center text-sm text-gray-500">
-                Retailer link not available for this offer.
-              </p>
-            )}
-            <p className="mt-2 text-center text-xs text-gray-400">
-              Checkout happens on the retailer&apos;s site. Importnest may earn a referral fee;
-              this does not affect the ranking.
-            </p>
-            <Link
-              href={`/compare/${productId}`}
-              className="mt-3 block text-center text-xs font-medium text-navy-800 hover:underline"
-            >
-              Compare another offer
-            </Link>
-          </aside>
+          {recommendation.tradeOff && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-semibold text-amber-900">Trade-off</p>
+              <p className="mt-1 text-sm text-amber-900/90">{recommendation.tradeOff}</p>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground">Assumptions</p>
+            <ul className="mt-1 list-inside list-disc text-xs text-muted">
+              {recommendation.assumptions.map((a) => (
+                <li key={a}>{a}</li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </section>
-    </main>
+
+        <aside className="panel h-fit p-5">
+          <p className="text-sm font-semibold text-foreground">Cost breakdown</p>
+          <p className="mt-2 text-3xl font-bold tabular-nums text-price">${total.toFixed(2)}</p>
+          <p className="text-xs text-muted">Total known cost</p>
+
+          <dl className="mt-4 space-y-2 border-t border-border pt-3 text-sm text-muted">
+            <div className="flex justify-between">
+              <dt>Product price</dt>
+              <dd>${listing.price.toFixed(2)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Verified discount</dt>
+              <dd>-${listing.verifiedDiscount.toFixed(2)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Shipping</dt>
+              <dd>${listing.shipping.toFixed(2)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Mandatory fees</dt>
+              <dd>${listing.mandatoryFees.toFixed(2)}</dd>
+            </div>
+            <div className="flex justify-between border-t border-border pt-2 font-semibold text-foreground">
+              <dt>Total</dt>
+              <dd className="text-price">${total.toFixed(2)}</dd>
+            </div>
+          </dl>
+
+          {listing.url ? (
+            <a
+              href={`/go/${listingId}`}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="btn-cta mt-5 block w-full px-4 py-2.5 text-center text-sm"
+            >
+              Continue to retailer
+            </a>
+          ) : (
+            <p className="mt-5 rounded-xl bg-surface px-4 py-2 text-center text-sm text-muted">
+              Retailer link not available for this offer.
+            </p>
+          )}
+          <p className="mt-2 text-center text-xs text-muted">
+            Checkout happens on the retailer&apos;s site. Importnest may earn a referral fee; this
+            does not affect ranking.
+          </p>
+          <Link
+            href={`/compare/${productId}`}
+            className="mt-3 block text-center text-sm font-semibold text-link hover:underline"
+          >
+            Compare another offer
+          </Link>
+        </aside>
+      </div>
+    </PageShell>
   );
 }

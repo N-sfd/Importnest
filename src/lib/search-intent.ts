@@ -17,15 +17,6 @@ export const searchIntentSchema = z.object({
 
 export type SearchIntent = z.infer<typeof searchIntentSchema>;
 
-/** True for queries specific enough that clarification would only slow the shopper down. */
-export function isExplicitIdentifierQuery(query: string): boolean {
-  const trimmed = query.trim();
-  if (!trimmed) return false;
-  if (/^\d{8,14}$/.test(trimmed)) return true; // UPC/EAN
-  if (/^https?:\/\//i.test(trimmed)) return true; // product URL
-  return false;
-}
-
 const BUDGET_PATTERNS: RegExp[] = [
   /(?:under|below|less than|no more than|max(?:imum)?(?:\s*(?:of|budget))?)\s*\$?\s*(\d+(?:\.\d+)?)/i,
   /\$\s*(\d+(?:\.\d+)?)\s*(?:or less|and under|budget)/i,
@@ -187,11 +178,6 @@ export function getClarifyingQuestions(
 ): ClarifyingQuestion[] {
   const missing = QUESTION_PRIORITY.filter((id) => !answered.has(id));
   return missing.slice(0, 3).map((id) => buildQuestion(id, options.availableBrands ?? []));
-}
-
-export function needsClarification(query: string, answered: Set<ClarifyingQuestionId>): boolean {
-  if (isExplicitIdentifierQuery(query)) return false;
-  return getClarifyingQuestions(answered).length > 0;
 }
 
 /** Reads previously-answered clarification fields back out of URL search params. */

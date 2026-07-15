@@ -1,42 +1,44 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Header } from "@/components/Header";
+import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { prisma } from "@/lib/prisma";
-import { finalizeSearch, matchProduct } from "@/lib/search-data";
-import { buildIntent, isExplicitIdentifierQuery, paramsToRecord, type SearchFlowParams } from "@/lib/search-intent";
+import { classifyAndResolve, finalizeSearch } from "@/lib/search-data";
+import { buildIntent, paramsToRecord, type SearchFlowParams } from "@/lib/search-intent";
 
 export default async function SearchEntryPage({
   searchParams,
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
+  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
   if (!query) {
     return (
-      <main className="min-h-screen bg-white">
-        <Header />
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <h1 className="text-2xl font-bold text-navy-900">What are you shopping for?</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Enter a product name, model number, or UPC to compare offers.
+      <PageShell>
+        <div className="panel px-6 py-12 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            What are you shopping for?
+          </h1>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+            Enter a product name, model number, or UPC to compare offers from approved retailers.
           </p>
-          <Link
-            href="/"
-            className="mt-6 inline-block rounded-md bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-          >
-            Back to search
+          <Link href="/" className="btn-cta mt-6 inline-block px-5 py-2.5 text-sm">
+            Back to home search
           </Link>
-        </section>
-      </main>
+        </div>
+      </PageShell>
     );
   }
 
-  // Exact model/UPC/URL searches go straight to a result — no clarification detour.
-  const directMatch = await matchProduct(query);
-  const skipClarification = isExplicitIdentifierQuery(query) || directMatch !== null;
+  // Only a query the classifier is confident is a specific product (exact
+  // name/model, brand+model, or a validated UPC/EAN/GTIN/ISBN/ASIN) skips
+  // clarification. A generic category word like "dishwasher" must not — even
+  // if it happens to be a substring of some catalog product's name.
+  const { classification, directMatch } = await classifyAndResolve(query);
+  const skipClarification = classification.classification === "exact_product";
 
   if (skipClarification) {
     const categoryRecord = params.category
@@ -48,6 +50,7 @@ export default async function SearchEntryPage({
       categoryId: categoryRecord?.id,
     });
 
+    console.info(`[perf] search.redirect(fast-path) ${(performance.now() - start).toFixed(1)}ms`);
     if (result.kind === "redirect") {
       const qs = result.searchParams.toString();
       redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
@@ -58,5 +61,6 @@ export default async function SearchEntryPage({
 
   // Ambiguous query — hand off to the clarification flow.
   const qs = new URLSearchParams(paramsToRecord(params));
+  console.info(`[perf] search.redirect(to-clarify) ${(performance.now() - start).toFixed(1)}ms`);
   redirect(`/search/clarify?${qs.toString()}`);
 }
