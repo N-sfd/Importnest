@@ -197,8 +197,33 @@ async function getMatchedListings(productId: string): Promise<ListingRecord[]> {
   });
 }
 
-export async function getCompareRows(productId: string): Promise<CompareRow[]> {
-  const listings = (await getMatchedListings(productId)).map(enrichListing);
+export type CompareFilters = {
+  maxBudget?: number;
+  /** Uses SearchIntent's condition vocabulary (open_box, not open-box); "any" should be omitted by callers rather than passed through. */
+  condition?: "new" | "open_box" | "refurbished" | "used";
+};
+
+function conditionMatchesFilter(listingCondition: string, filter: CompareFilters["condition"]): boolean {
+  if (!filter) return true;
+  if (filter === "open_box") return listingCondition === "open-box";
+  if (filter === "refurbished") {
+    return listingCondition === "refurbished" || listingCondition === "certified-refurbished";
+  }
+  return listingCondition === filter;
+}
+
+export async function getCompareRows(productId: string, filters?: CompareFilters): Promise<CompareRow[]> {
+  const allListings = (await getMatchedListings(productId)).map(enrichListing);
+  const listings = filters
+    ? allListings.filter(
+        (l) =>
+          (filters.maxBudget == null || totalKnownCost(l) <= filters.maxBudget) &&
+          conditionMatchesFilter(l.condition, filters.condition),
+      )
+    : allListings;
+
+  // Recomputed over the filtered set so "lowest cost"/"best overall" reflect
+  // what's actually shown, not an option the shopper's own filters excluded.
   const recommendations = computeRecommendations(listings);
 
   return listings

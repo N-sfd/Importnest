@@ -159,11 +159,24 @@ model SearchSession {
   query      String
   inputType  String // keyword | url | model-number | natural-language | image
   status     String @default("open")
+  criteria   String? // JSON-serialized SearchIntent captured via clarifying questions
   createdAt  DateTime @default(now())
 
   user            AppUser?         @relation(fields: [userId], references: [id])
   recommendations Recommendation[]
   outboundReferrals OutboundReferral[]
+  clarifications  SearchClarification[]
+}
+
+model SearchClarification {
+  id                String   @id @default(cuid())
+  searchSessionId   String
+  question          String
+  answer            String
+  resolvedAttribute String // e.g. budgetMax | condition | deliveryBy | allowComparableAlternatives | preferredBrands | sortPriority
+  createdAt         DateTime @default(now())
+
+  searchSession SearchSession @relation(fields: [searchSessionId], references: [id])
 }
 
 model Recommendation {

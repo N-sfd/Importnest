@@ -8,25 +8,25 @@ const categories = [
   {
     name: "Electronics",
     desc: "Phones, audio, computers",
-    href: "/search/clarify?category=electronics",
+    href: "/search?category=electronics",
     image: categoryImages.electronics,
   },
   {
     name: "Appliances",
     desc: "Kitchen and laundry",
-    href: "/search/clarify?category=appliances",
+    href: "/search?category=appliances",
     image: categoryImages.appliances,
   },
   {
     name: "Footwear",
     desc: "New and resale options",
-    href: "/search/clarify?category=footwear",
+    href: "/search?category=footwear",
     image: categoryImages.footwear,
   },
   {
     name: "Home",
     desc: "Furniture and smart home",
-    href: "/search/clarify?category=home",
+    href: "/search?category=home",
     image: categoryImages.home,
   },
 ];
@@ -62,7 +62,7 @@ export default function HomePage() {
         </div>
 
         <form
-          action="/search/clarify"
+          action="/search"
           className="mt-6 flex flex-col gap-3 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center"
         >
           <label htmlFor="q" className="sr-only">

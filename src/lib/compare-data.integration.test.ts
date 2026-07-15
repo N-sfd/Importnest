@@ -62,4 +62,34 @@ describe("live-synced product comparison (no seeded display copy)", () => {
     const ranks = rows.map((r) => r.recommendation.rank);
     expect(new Set(ranks).size).toBe(ranks.length); // ranks are unique, not duplicated
   });
+
+  it("applies a budget filter and re-ranks 'best overall' relative to what's shown", async () => {
+    const unfiltered = await getCompareRows(PRODUCT_ID);
+    expect(unfiltered.length).toBeGreaterThan(1);
+
+    // Real synced prices range ~$65-$750; $100 should exclude all but the cheapest.
+    const filtered = await getCompareRows(PRODUCT_ID, { maxBudget: 100 });
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(filtered.length).toBeLessThan(unfiltered.length);
+    for (const { listing } of filtered) {
+      expect(listing.price + listing.shipping + listing.mandatoryFees).toBeLessThanOrEqual(100);
+    }
+    // The cheapest listing among the filtered set is still ranked #1.
+    expect(filtered.find((r) => r.recommendation.rank === 1)).toBeDefined();
+  });
+
+  it("a budget filter below every listing's price returns zero rows rather than throwing", async () => {
+    const filtered = await getCompareRows(PRODUCT_ID, { maxBudget: 1 });
+    expect(filtered).toEqual([]);
+  });
+
+  it("condition filter excludes listings that don't match", async () => {
+    // All synced iPhone listings are condition "new".
+    const usedOnly = await getCompareRows(PRODUCT_ID, { condition: "used" });
+    expect(usedOnly).toEqual([]);
+
+    const newOnly = await getCompareRows(PRODUCT_ID, { condition: "new" });
+    const unfiltered = await getCompareRows(PRODUCT_ID);
+    expect(newOnly.length).toBe(unfiltered.length);
+  });
 });

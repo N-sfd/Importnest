@@ -24,11 +24,13 @@ const badgeForPriority: Record<Priority, string> = {
 export function PriorityTabs({
   productId,
   rows,
+  initialPriority,
 }: {
   productId: string;
   rows: CompareRow[];
+  initialPriority?: Priority;
 }) {
-  const [priority, setPriority] = useState<Priority>("best-overall");
+  const [priority, setPriority] = useState<Priority>(initialPriority ?? "best-overall");
   const sorted = sortCompareRows(rows, priority);
   const topId = sorted[0]?.listing.id;
 
