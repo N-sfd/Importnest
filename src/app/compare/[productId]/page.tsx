@@ -1,13 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
+import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
 import { PageShell } from "@/components/PageShell";
+import { PriceHistorySection } from "@/components/PriceHistorySection";
 import { PriorityTabs } from "@/components/PriorityTabs";
 import {
   getCompareProduct,
   getCompareRows,
+  getProductPriceHistory,
   getProductSourceSummaries,
   minutesSince,
+  totalKnownCost,
   type CompareFilters,
 } from "@/lib/compare-data";
 import type { Priority } from "@/lib/types";
@@ -28,8 +32,17 @@ const VALID_PRIORITIES: Priority[] = [
   "best-overall",
   "lowest-cost",
   "fastest-delivery",
-  "best-returns",
+  "best-condition",
+  "best-protection",
 ];
+
+function parsePriority(raw: string | undefined): Priority | undefined {
+  if (!raw) return undefined;
+  if (raw === "best-returns") return "best-protection";
+  if (VALID_PRIORITIES.includes(raw as Priority)) return raw as Priority;
+  return undefined;
+}
+
 const VALID_CONDITIONS: NonNullable<CompareFilters["condition"]>[] = [
   "new",
   "open_box",
@@ -55,7 +68,19 @@ export default async function ComparePage({
   const product = await getCompareProduct(productId);
   if (!product) notFound();
 
-  const redirectTo = `/compare/${productId}`;
+  const redirectTo = `/compare/${productId}${
+    priority || maxBudget || condition || comparable || fastDelivery
+      ? `?${new URLSearchParams(
+          Object.entries({
+            priority,
+            maxBudget,
+            condition,
+            comparable,
+            fastDelivery,
+          }).filter(([, v]) => v) as [string, string][],
+        ).toString()}`
+      : ""
+  }`;
   const authUser = await getAuthUser();
   const saveState = authUser ? await getSaveAndAlertState(authUser.id, productId) : null;
 
@@ -68,10 +93,7 @@ export default async function ComparePage({
   if (fastDelivery === "1") filters.requireFastDelivery = true;
   const hasFilters =
     filters.maxBudget != null || filters.condition != null || filters.requireFastDelivery === true;
-  const initialPriority =
-    priority && VALID_PRIORITIES.includes(priority as Priority)
-      ? (priority as Priority)
-      : undefined;
+  const initialPriority = parsePriority(priority);
 
   const rows = await getCompareRows(
     productId,
@@ -86,6 +108,18 @@ export default async function ComparePage({
   });
   const freshnessMinutes = freshest ? minutesSince(freshest.freshnessCapturedAt) : null;
   const confidencePct = bestMatch ? Math.round(bestMatch.confidence * 100) : null;
+  const matchTypeLabel =
+    bestMatch?.type === "comparable"
+      ? "Comparable product"
+      : bestMatch?.type === "exact"
+        ? "Exact match"
+        : null;
+  const lowestKnown =
+    rows.length > 0 ? Math.min(...rows.map((r) => totalKnownCost(r.listing))) : null;
+  const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
+  const suggestedAlert =
+    lowestKnown != null ? Math.max(1, Math.floor(lowestKnown * 0.95)).toFixed(2) : "";
+  const priceHistory = await getProductPriceHistory(productId, lowestKnown);
 
   return (
     <PageShell>
@@ -121,27 +155,47 @@ export default async function ComparePage({
             <h1 className="mt-1 text-xl font-bold leading-snug tracking-tight text-foreground sm:text-2xl">
               {product.modelName}
             </h1>
-            {product.modelNumber && (
+            {product.modelNumber ? (
               <p className="mt-1 text-sm text-muted">Model: {product.modelNumber}</p>
-            )}
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full bg-navy-100 px-3 py-1 text-xs font-semibold text-navy-900">
-                {confidencePct != null
-                  ? `Exact match · ${confidencePct}%`
-                  : "Match pending review"}
+                {matchTypeLabel && confidencePct != null
+                  ? `${matchTypeLabel} · ${confidencePct}%`
+                  : confidencePct != null
+                    ? `Exact match · ${confidencePct}%`
+                    : "Match pending review"}
               </span>
-              {freshnessMinutes != null && (
+              {freshnessMinutes != null ? (
                 <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted ring-1 ring-border">
-                  Refreshed {freshnessMinutes}m ago
+                  {freshnessMinutes === 0
+                    ? "Checked just now"
+                    : freshnessMinutes < 60
+                      ? `Checked ${freshnessMinutes}m ago`
+                      : `Checked ${Math.round(freshnessMinutes / 60)}h ago`}
                 </span>
-              )}
+              ) : null}
+              {freshnessMinutes != null && freshnessMinutes < 60 ? (
+                <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted ring-1 ring-border">
+                  Price checked recently
+                </span>
+              ) : null}
             </div>
-            {product.configuration && (
+            {product.configuration ? (
               <p className="mt-3 text-sm text-muted">Configuration: {product.configuration}</p>
-            )}
+            ) : null}
             <p className="mt-4 text-sm text-foreground/80">
-              {rows.length} buying {rows.length === 1 ? "option" : "options"} across approved
-              retailers.
+              {rows.length} {rows.length === 1 ? "offer" : "offers"} from {sourceCount}{" "}
+              {sourceCount === 1 ? "source" : "sources"}
+              {lowestKnown != null ? (
+                <>
+                  {" "}
+                  · From{" "}
+                  <span className="font-bold tabular-nums text-price">
+                    ${lowestKnown.toFixed(2)}
+                  </span>
+                </>
+              ) : null}
             </p>
 
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
@@ -180,9 +234,25 @@ export default async function ComparePage({
                         <span className="font-semibold text-foreground">
                           ${saveState.alert.threshold}
                         </span>
-                        {!saveState.alert.isActive && " (paused)"}
+                        {lowestKnown != null ? (
+                          <>
+                            {" "}
+                            · current{" "}
+                            <span className="font-semibold text-foreground">
+                              ${lowestKnown.toFixed(2)}
+                            </span>
+                          </>
+                        ) : null}
+                        {!saveState.alert.isActive ? " (paused)" : null}
                       </span>
-                      <form action={toggleAlertActiveAction.bind(null, productId, "price-drop", redirectTo)}>
+                      <form
+                        action={toggleAlertActiveAction.bind(
+                          null,
+                          productId,
+                          "price-drop",
+                          redirectTo,
+                        )}
+                      >
                         <button
                           type="submit"
                           className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
@@ -190,7 +260,9 @@ export default async function ComparePage({
                           {saveState.alert.isActive ? "Pause" : "Resume"}
                         </button>
                       </form>
-                      <form action={removeAlertAction.bind(null, productId, "price-drop", redirectTo)}>
+                      <form
+                        action={removeAlertAction.bind(null, productId, "price-drop", redirectTo)}
+                      >
                         <button
                           type="submit"
                           className="min-h-11 rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy-800"
@@ -214,6 +286,7 @@ export default async function ComparePage({
                         min="0.01"
                         step="0.01"
                         required
+                        defaultValue={suggestedAlert}
                         placeholder="0.00"
                         className="min-h-11 w-24 rounded-md border border-border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent"
                       />
@@ -232,11 +305,13 @@ export default async function ComparePage({
         </div>
       </section>
 
-      {comparable === "1" && (
+      {comparable === "1" ? (
         <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          Comparable alternative — not an exact match for your search.
+          Comparable product — not an exact match for your search.
         </p>
-      )}
+      ) : null}
+
+      <PriceHistorySection summary={priceHistory} />
 
       <section className="panel mt-4 p-4 sm:p-6">
         <h2 className="text-lg font-bold tracking-tight text-foreground">Buying options</h2>
@@ -257,6 +332,16 @@ export default async function ComparePage({
       </section>
 
       <BackendSourcesPanel sources={sources} />
+
+      <CompareMobileStickyActions
+        productId={productId}
+        signedIn={Boolean(authUser)}
+        isSaved={Boolean(saveState?.isSaved)}
+        hasAlert={Boolean(saveState?.alert)}
+        redirectTo={redirectTo}
+        viewOfferHref={rows[0]?.listing.url ? `/go/${rows[0].listing.id}` : null}
+        suggestedAlert={suggestedAlert}
+      />
     </PageShell>
   );
 }

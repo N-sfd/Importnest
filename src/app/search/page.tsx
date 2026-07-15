@@ -16,6 +16,11 @@ export default async function SearchEntryPage({
   const query = params.q?.trim() ?? "";
 
   if (!query) {
+    if (params.category) {
+      const qs = new URLSearchParams({ category: params.category });
+      redirect(`/search/results?${qs.toString()}`);
+    }
+
     return (
       <PageShell>
         <div className="panel px-6 py-12 text-center">
@@ -54,6 +59,10 @@ export default async function SearchEntryPage({
     if (result.kind === "redirect") {
       const qs = result.searchParams.toString();
       redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
+    }
+
+    if (result.kind === "results") {
+      redirect(`/search/results?${result.searchParams.toString()}`);
     }
 
     return <SearchNoMatch query={query} comparableCandidates={result.comparableCandidates} />;

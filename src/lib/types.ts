@@ -3,7 +3,12 @@
 
 export type Condition = "new" | "open-box" | "used" | "refurbished" | "certified-refurbished";
 
-export type Priority = "best-overall" | "lowest-cost" | "fastest-delivery" | "best-returns";
+export type Priority =
+  | "best-overall"
+  | "lowest-cost"
+  | "fastest-delivery"
+  | "best-condition"
+  | "best-protection";
 
 export interface Brand {
   id: string;

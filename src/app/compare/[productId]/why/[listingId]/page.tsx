@@ -62,24 +62,51 @@ export default async function WhyPage({
             </div>
           </div>
 
-          <p className="mt-5 text-sm font-semibold text-foreground">Why it fits your priorities</p>
+          <p className="mt-5 text-sm leading-relaxed text-foreground/85">{recommendation.rationale}</p>
+
+          <p className="mt-5 text-sm font-semibold text-foreground">Positive factors</p>
           <ul className="mt-2 space-y-1.5 text-sm text-foreground/80">
             {recommendation.factors
               .filter((f) => f.positive)
               .map((f) => (
                 <li key={f.label} className="flex gap-2">
                   <span className="font-bold text-navy-900">✓</span>
-                  <span>{f.label}</span>
+                  <span>
+                    <span className="font-medium">{f.label}</span>
+                    <span className="block text-xs text-muted">{f.detail}</span>
+                  </span>
                 </li>
               ))}
           </ul>
 
-          {recommendation.tradeOff && (
+          {(recommendation.tradeOffs?.length ?? 0) > 0 || recommendation.tradeOff ? (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-              <p className="text-sm font-semibold text-amber-900">Trade-off</p>
-              <p className="mt-1 text-sm text-amber-900/90">{recommendation.tradeOff}</p>
+              <p className="text-sm font-semibold text-amber-900">Trade-offs</p>
+              {recommendation.tradeOffs?.length ? (
+                <ul className="mt-2 space-y-1.5 text-sm text-amber-900/90">
+                  {recommendation.tradeOffs.map((f) => (
+                    <li key={f.label}>
+                      <span className="font-medium">{f.label}</span>
+                      <span className="block text-xs">{f.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-sm text-amber-900/90">{recommendation.tradeOff}</p>
+              )}
             </div>
-          )}
+          ) : null}
+
+          {recommendation.missingInformation?.length ? (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-foreground">Missing information</p>
+              <ul className="mt-1 list-inside list-disc text-xs text-muted">
+                {recommendation.missingInformation.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="mt-4">
             <p className="text-sm font-semibold text-foreground">Assumptions</p>
@@ -89,6 +116,11 @@ export default async function WhyPage({
               ))}
             </ul>
           </div>
+
+          <p className="mt-4 text-xs text-muted">
+            Affiliate disclosure: Importnest may earn a commission when you buy through retailer
+            links. This does not change ranking.
+          </p>
         </div>
 
         <aside className="panel h-fit p-5">
@@ -126,13 +158,9 @@ export default async function WhyPage({
               rel="noopener noreferrer sponsored"
               className="btn-cta mt-5 block w-full px-4 py-2.5 text-center text-sm"
             >
-              Continue to retailer
+              View offer
             </a>
-          ) : (
-            <p className="mt-5 rounded-xl bg-surface px-4 py-2 text-center text-sm text-muted">
-              Retailer link not available for this offer.
-            </p>
-          )}
+          ) : null}
           <p className="mt-2 text-center text-xs text-muted">
             Checkout happens on the retailer&apos;s site. Importnest may earn a referral fee; this
             does not affect ranking.

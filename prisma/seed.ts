@@ -49,6 +49,26 @@ async function main() {
     },
   });
 
+  const extraCategories = [
+    { id: "cat-electronics", name: "Electronics", slug: "electronics" },
+    { id: "cat-footwear", name: "Footwear", slug: "footwear" },
+    { id: "cat-home", name: "Home", slug: "home" },
+    { id: "cat-beauty-devices", name: "Beauty Devices", slug: "beauty-devices" },
+    { id: "cat-accessories", name: "Accessories", slug: "accessories" },
+  ];
+  for (const c of extraCategories) {
+    await prisma.category.create({ data: c });
+  }
+
+  const categoryBySlug: Record<string, string> = {
+    appliances: category.id,
+    electronics: "cat-electronics",
+    footwear: "cat-footwear",
+    home: "cat-home",
+    "beauty-devices": "cat-beauty-devices",
+    accessories: "cat-accessories",
+  };
+
   const product = await prisma.canonicalProduct.create({
     data: {
       id: "cp-apex-ah4200",
@@ -75,16 +95,16 @@ async function main() {
 
   // Stub products referenced by Saved / Alerts screens in mock data.
   const stubProducts = [
-    { id: "cp-air-purifier", modelName: "Air purifier for large room" },
-    { id: "cp-running-shoe", modelName: "Running shoe, size 9" },
-    { id: "cp-cordless-vacuum", modelName: "Cordless vacuum" },
+    { id: "cp-air-purifier", modelName: "Air purifier for large room", categorySlug: "home" },
+    { id: "cp-running-shoe", modelName: "Running shoe, size 9", categorySlug: "footwear" },
+    { id: "cp-cordless-vacuum", modelName: "Cordless vacuum", categorySlug: "appliances" },
   ];
   for (const stub of stubProducts) {
     await prisma.canonicalProduct.create({
       data: {
         id: stub.id,
         brandId: brand.id,
-        categoryId: category.id,
+        categoryId: categoryBySlug[stub.categorySlug] ?? category.id,
         modelName: stub.modelName,
       },
     });

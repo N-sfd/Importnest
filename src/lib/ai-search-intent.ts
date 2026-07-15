@@ -51,15 +51,18 @@ under 140 characters and do not change what the question is actually asking.
 
 Respond with JSON matching the provided schema only.`;
 
+export type AiExtractionOutcome =
+  | { status: "ok"; result: AiExtractionResult }
+  | { status: "unavailable"; reason: "missing_key" | "service_error" };
+
 /**
- * Best-effort structured-intent extraction. Returns null on ANY failure —
- * missing API key, network error, timeout, refusal, or a response that
- * doesn't validate — so callers always have a safe path: fall back to
- * parseQueryHeuristics (search-intent.ts) and the static question prompts.
- * This function never throws.
+ * Best-effort structured-intent extraction. Never throws.
+ * Callers should keep the deterministic clarify path when status !== "ok".
  */
-export async function extractIntentWithAI(query: string): Promise<AiExtractionResult | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+export async function extractIntentWithAIOutcome(query: string): Promise<AiExtractionOutcome> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { status: "unavailable", reason: "missing_key" };
+  }
 
   const start = performance.now();
   try {
@@ -80,25 +83,43 @@ export async function extractIntentWithAI(query: string): Promise<AiExtractionRe
       { timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES },
     );
 
-    if (response.stop_reason === "refusal") return null;
+    if (response.stop_reason === "refusal") {
+      return { status: "unavailable", reason: "service_error" };
+    }
 
     const textBlock = response.content.find((b) => b.type === "text");
-    if (!textBlock || textBlock.type !== "text") return null;
+    if (!textBlock || textBlock.type !== "text") {
+      return { status: "unavailable", reason: "service_error" };
+    }
 
     const parsedJson: unknown = JSON.parse(textBlock.text);
     const result = aiResponseSchema.safeParse(parsedJson);
-    if (!result.success) return null;
+    if (!result.success) {
+      return { status: "unavailable", reason: "service_error" };
+    }
 
     const questionWording: Partial<Record<ClarifyingQuestionId, string>> = {};
     for (const q of result.data.questionWording ?? []) {
       questionWording[q.id] = q.prompt;
     }
 
-    return { intent: result.data.intent, questionWording };
+    return { status: "ok", result: { intent: result.data.intent, questionWording } };
   } catch (err) {
     console.warn("[ai-search-intent] extraction failed, using deterministic fallback:", err);
-    return null;
+    return { status: "unavailable", reason: "service_error" };
   } finally {
     console.info(`[perf] search.aiExtraction ${(performance.now() - start).toFixed(1)}ms`);
   }
+}
+
+/**
+ * Best-effort structured-intent extraction. Returns null on ANY failure —
+ * missing API key, network error, timeout, refusal, or a response that
+ * doesn't validate — so callers always have a safe path: fall back to
+ * parseQueryHeuristics (search-intent.ts) and the static question prompts.
+ * This function never throws.
+ */
+export async function extractIntentWithAI(query: string): Promise<AiExtractionResult | null> {
+  const outcome = await extractIntentWithAIOutcome(query);
+  return outcome.status === "ok" ? outcome.result : null;
 }

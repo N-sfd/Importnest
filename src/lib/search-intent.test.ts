@@ -92,7 +92,7 @@ describe("sortPriorityToComparePriority", () => {
   it("maps each sortPriority value to the closest compare-page tab", () => {
     expect(sortPriorityToComparePriority("lowest_cost")).toBe("lowest-cost");
     expect(sortPriorityToComparePriority("fastest_delivery")).toBe("fastest-delivery");
-    expect(sortPriorityToComparePriority("best_warranty")).toBe("best-returns");
+    expect(sortPriorityToComparePriority("best_warranty")).toBe("best-protection");
     expect(sortPriorityToComparePriority("best_overall")).toBe("best-overall");
   });
   it("returns undefined when no priority was captured", () => {

@@ -2,7 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { BackendLinks } from "@/components/BackendLinks";
 import { PageShell } from "@/components/PageShell";
+import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
+import { getAuthUser } from "@/lib/auth";
 import { categoryImages } from "@/lib/images";
+import { getPopularComparisons } from "@/lib/popular-comparisons";
+import { prisma } from "@/lib/prisma";
 
 const categories = [
   {
@@ -37,7 +41,19 @@ const steps = [
   { n: "03", label: "Compare with clarity", detail: "Total cost, delivery, protection" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getAuthUser();
+  let savedIds = new Set<string>();
+  if (user) {
+    const saved = await prisma.savedProduct.findMany({
+      where: { userId: user.id },
+      select: { canonicalProductId: true },
+      take: 50,
+    });
+    savedIds = new Set(saved.map((s) => s.canonicalProductId));
+  }
+  const popular = await getPopularComparisons(4, savedIds);
+
   return (
     <PageShell>
       <section className="relative overflow-hidden rounded-2xl border border-border bg-navy-900 px-5 py-8 text-white shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
@@ -113,6 +129,8 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
+
+      <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
       <section className="panel mt-8 p-6 sm:p-7">
         <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>

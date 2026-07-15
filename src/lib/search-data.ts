@@ -229,6 +229,7 @@ export async function findComparableProducts(
 
 export type FinalizeSearchResult =
   | { kind: "redirect"; productId: string; searchParams: URLSearchParams }
+  | { kind: "results"; searchParams: URLSearchParams }
   | { kind: "no-match"; comparableCandidates: string[] };
 
 /**
@@ -296,6 +297,21 @@ export async function finalizeSearch(
     if (isUrgentDeliveryPhrase(intent.deliveryBy)) searchParams.set("fastDelivery", "1");
     if (isComparable) searchParams.set("comparable", "1");
     return { kind: "redirect", productId: finalMatch, searchParams };
+  }
+
+  if (comparableCandidates.length > 1) {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q", query);
+    if (intent.budgetMax != null) searchParams.set("budgetMax", String(intent.budgetMax));
+    if (intent.condition && intent.condition !== "any") searchParams.set("condition", intent.condition);
+    if (intent.deliveryBy) searchParams.set("deliveryBy", intent.deliveryBy);
+    if (intent.preferredBrands?.length) searchParams.set("brands", intent.preferredBrands.join(","));
+    if (intent.allowComparableAlternatives === false) searchParams.set("comparable", "0");
+    if (intent.sortPriority === "lowest_cost") searchParams.set("sort", "lowest_cost");
+    else if (intent.sortPriority === "fastest_delivery") searchParams.set("sort", "fastest");
+    else if (intent.sortPriority === "best_warranty") searchParams.set("sort", "best_value");
+    else searchParams.set("sort", "best_overall");
+    return { kind: "results", searchParams };
   }
 
   return { kind: "no-match", comparableCandidates };

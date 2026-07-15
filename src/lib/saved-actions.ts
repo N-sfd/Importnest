@@ -19,6 +19,8 @@ export async function saveProductAction(canonicalProductId: string, redirectTo: 
     create: { userId: user.id, canonicalProductId },
   });
   revalidatePath(redirectTo);
+  revalidatePath("/");
+  revalidatePath("/search/results");
   revalidatePath("/saved");
 }
 
@@ -26,6 +28,8 @@ export async function unsaveProductAction(canonicalProductId: string, redirectTo
   const user = await requireUser(redirectTo);
   await prisma.savedProduct.deleteMany({ where: { userId: user.id, canonicalProductId } });
   revalidatePath(redirectTo);
+  revalidatePath("/");
+  revalidatePath("/search/results");
   revalidatePath("/saved");
 }
 
@@ -77,5 +81,18 @@ export async function toggleAlertActiveAction(
 
   await prisma.alert.update({ where: { id: alert.id }, data: { isActive: !alert.isActive } });
   revalidatePath(redirectTo);
+  revalidatePath("/saved");
+}
+
+/** Removes saved product and any alerts for that product from the watchlist. */
+export async function deleteWatchlistItemAction(canonicalProductId: string, redirectTo: string) {
+  const user = await requireUser(redirectTo);
+  await Promise.all([
+    prisma.savedProduct.deleteMany({ where: { userId: user.id, canonicalProductId } }),
+    prisma.alert.deleteMany({ where: { userId: user.id, canonicalProductId } }),
+  ]);
+  revalidatePath(redirectTo);
+  revalidatePath("/");
+  revalidatePath("/search/results");
   revalidatePath("/saved");
 }

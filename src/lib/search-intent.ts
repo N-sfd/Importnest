@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Priority } from "@/lib/types";
 
 export const searchIntentSchema = z.object({
   query: z.string(),
@@ -214,20 +215,19 @@ export function intentFromSearchParams(params: Record<string, string | undefined
 }
 
 /**
- * The compare page's existing sort tabs use hyphenated values with no direct
- * "best warranty" concept — mapped to "best-returns" as the closest existing
- * buyer-protection tab rather than inventing a new one.
+ * The compare page's sort tabs use hyphenated Priority values.
+ * Clarification "best warranty" maps to buyer-protection ranking.
  */
 export function sortPriorityToComparePriority(
   priority: SearchIntent["sortPriority"],
-): "best-overall" | "lowest-cost" | "fastest-delivery" | "best-returns" | undefined {
+): Priority | undefined {
   switch (priority) {
     case "lowest_cost":
       return "lowest-cost";
     case "fastest_delivery":
       return "fastest-delivery";
     case "best_warranty":
-      return "best-returns";
+      return "best-protection";
     case "best_overall":
       return "best-overall";
     default:

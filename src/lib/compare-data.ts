@@ -5,19 +5,31 @@ import type {
   CompareRow,
   CompareSourceSummary,
 } from "@/lib/compare-view";
-import { minutesSince, totalKnownCost } from "@/lib/compare-view";
+import {
+  FALLBACK_COPY,
+  buildRecommendationPanel,
+  conditionRank,
+  isSafeRetailerUrl,
+  minutesSince,
+  overallScore,
+  protectionScore,
+  rankingFactorsForListing,
+  totalKnownCost,
+} from "@/lib/compare-view";
 import type { Priority } from "@/lib/types";
 
 export type { CompareListingView, CompareRecommendationView, CompareRow, CompareSourceSummary };
-export { totalKnownCost, sortCompareRows, minutesSince } from "@/lib/compare-view";
-
-export const FALLBACK_COPY = {
-  warranty: "Warranty information not provided",
-  returns: "Return policy not provided",
-  delivery: "Delivery estimate unavailable",
-  condition: "Condition not specified",
-  retailer: "Unknown retailer",
-} as const;
+export {
+  FALLBACK_COPY,
+  totalKnownCost,
+  sortCompareRows,
+  minutesSince,
+  isSafeRetailerUrl,
+  formatFreshness,
+  formatConditionLabel,
+  PRIORITY_LABELS,
+  buildRecommendationPanel,
+} from "@/lib/compare-view";
 
 const AUTHORIZED_SOURCE_TYPES = new Set(["manufacturer-feed", "official-api"]);
 
@@ -52,12 +64,9 @@ function sourceTypeLabel(sourceType: string) {
 function enrichListing(l: ListingRecord): CompareListingView {
   const deliveryLabel = l.deliveryLabel?.trim() || FALLBACK_COPY.delivery;
   const sellerName = l.sellerName?.trim();
-  // A connector like the UPC-lookup one syncs offers from many real merchants
-  // under one Source row. When sellerName names a merchant different from
-  // that Source, the feed's own sourceType/icon describes the connector, not
-  // the merchant, and must not be presented (or trusted for "authorized
-  // source" claims) as if it described that merchant.
   const hasDistinctSeller = Boolean(sellerName) && sellerName !== l.source.name;
+  const pickupAvailable = /pickup/i.test(deliveryLabel);
+  const safeUrl = isSafeRetailerUrl(l.url) ? (l.url as string) : undefined;
 
   const view: CompareListingView = {
     id: l.id,
@@ -68,7 +77,7 @@ function enrichListing(l: ListingRecord): CompareListingView {
     hasDistinctSeller,
     freshnessMinutesAgo: minutesSince(l.freshnessCapturedAt),
     dataCompletenessPct: 0,
-    url: l.url ?? undefined,
+    url: safeUrl,
     isAuthorizedSource: !hasDistinctSeller && AUTHORIZED_SOURCE_TYPES.has(l.source.sourceType),
     condition: l.condition || FALLBACK_COPY.condition,
     price: l.price,
@@ -76,7 +85,12 @@ function enrichListing(l: ListingRecord): CompareListingView {
     shipping: l.shipping,
     mandatoryFees: l.fees,
     deliveryLabel,
-    pickupAvailable: /pickup/i.test(deliveryLabel),
+    pickupAvailable,
+    availabilityLabel: pickupAvailable
+      ? "Pickup available"
+      : deliveryLabel !== FALLBACK_COPY.delivery
+        ? "Listed for shipping"
+        : FALLBACK_COPY.availability,
     warrantyLabel: FALLBACK_COPY.warranty,
     returnPolicyLabel: FALLBACK_COPY.returns,
   };
@@ -85,101 +99,90 @@ function enrichListing(l: ListingRecord): CompareListingView {
   return view;
 }
 
-/**
- * Computes recommendation rank/label/rationale/factors from the actual set of
- * listings for a product, instead of reading a hand-authored per-listing-id
- * table. This is what lets any newly synced product render a comparison
- * without needing manual copy written for it.
- *
- * `priority` is the shopper's confirmed ranking preference. "fastest-delivery"
- * only has a real signal to rank on when a listing offers pickup — there's no
- * structured delivery-date data anywhere in the schema, so absent that it
- * degrades to cost ranking rather than fabricating a delivery-speed order.
- * "best-returns" has no real per-listing data at all yet (every listing shows
- * the same FALLBACK_COPY.returns placeholder) and always degrades to cost.
- */
 function computeRecommendations(
   listings: CompareListingView[],
   priority: Priority = "best-overall",
 ): Map<string, CompareRecommendationView> {
-  const withCost = listings.map((listing) => ({ listing, cost: totalKnownCost(listing) }));
-
-  const ranked = [...withCost].sort((a, b) => {
+  const ranked = [...listings].sort((a, b) => {
+    if (priority === "lowest-cost") return totalKnownCost(a) - totalKnownCost(b);
     if (priority === "fastest-delivery") {
-      const pickupDiff = Number(b.listing.pickupAvailable) - Number(a.listing.pickupAvailable);
-      if (pickupDiff !== 0) return pickupDiff;
+      const p = Number(b.pickupAvailable) - Number(a.pickupAvailable);
+      return p !== 0 ? p : totalKnownCost(a) - totalKnownCost(b);
     }
-    return a.cost - b.cost;
+    if (priority === "best-condition") {
+      const c = conditionRank(a.condition) - conditionRank(b.condition);
+      return c !== 0 ? c : totalKnownCost(a) - totalKnownCost(b);
+    }
+    if (priority === "best-protection") {
+      const p = protectionScore(b) - protectionScore(a);
+      return p !== 0 ? p : totalKnownCost(a) - totalKnownCost(b);
+    }
+    return overallScore(b) - overallScore(a);
   });
-  const best = ranked[0];
-  const bestIsFastest = priority === "fastest-delivery" && best.listing.pickupAvailable;
 
   const map = new Map<string, CompareRecommendationView>();
+  const draftRows: CompareRow[] = ranked.map((listing, index) => ({
+    listing,
+    recommendation: {
+      listingId: listing.id,
+      rank: index + 1,
+      label: "Alternative option",
+      rationale: "",
+      factors: [],
+      tradeOffs: [],
+      missingInformation: [],
+      assumptions: [],
+    },
+  }));
 
-  ranked.forEach(({ listing, cost }, index) => {
+  const panel = buildRecommendationPanel(draftRows, priority);
+
+  ranked.forEach((listing, index) => {
     const isBest = index === 0;
-    const costDelta = cost - best.cost;
-
-    const factors: CompareRecommendationView["factors"] = [];
-    if (isBest && !bestIsFastest) {
-      factors.push({
-        label: "Lowest total cost",
-        detail: `$${cost.toFixed(2)} total, the lowest among compared offers.`,
-        positive: true,
-      });
-    }
-    if (listing.pickupAvailable) {
-      factors.push({
-        label: "Pickup available",
-        detail: "Local pickup can be faster than waiting for shipping.",
-        positive: true,
-      });
-    }
-    if (listing.isAuthorizedSource) {
-      factors.push({
-        label: "Official or authorized source",
-        detail: "Sold directly by the manufacturer or an authorized channel.",
-        positive: true,
-      });
-    }
-    if (listing.condition !== "new") {
-      factors.push({
-        label: `${listing.condition.replace(/-/g, " ")} condition`,
-        detail: "Lower price reflects non-new condition rather than a discount.",
-        positive: false,
-      });
-    }
-
-    const assumptions = [
-      "Price excludes local sales tax.",
-      ...(listing.pickupAvailable ? ["Pickup availability confirmed at last sync."] : []),
+    const { positive, tradeOffs } = rankingFactorsForListing(listing, ranked, priority);
+    const cost = totalKnownCost(listing);
+    const bestCost = ranked[0] ? totalKnownCost(ranked[0]) : cost;
+    const costDelta = cost - bestCost;
+    const missingInformation = [
+      ...(listing.warrantyLabel === FALLBACK_COPY.warranty
+        ? ["Warranty details not provided by this source"]
+        : []),
+      ...(listing.returnPolicyLabel === FALLBACK_COPY.returns
+        ? ["Return period not provided by this source"]
+        : []),
+      ...(listing.deliveryLabel === FALLBACK_COPY.delivery
+        ? ["Delivery estimate not available"]
+        : []),
+      ...(listing.availabilityLabel === FALLBACK_COPY.availability
+        ? ["Stock status not confirmed"]
+        : []),
+      ...(!listing.url ? ["Direct retailer link not available"] : []),
     ];
 
     map.set(listing.id, {
       listingId: listing.id,
       rank: index + 1,
-      label: isBest ? (bestIsFastest ? "Fastest delivery" : "Best overall") : "Alternative option",
-      rationale: isBest
-        ? bestIsFastest
-          ? `Recommended because local pickup is available, avoiding the wait for shipping ($${cost.toFixed(2)} total).`
-          : `Recommended because it has the lowest total known cost ($${cost.toFixed(2)}) among compared offers.`
-        : `$${costDelta.toFixed(2)} more than the ${bestIsFastest ? "fastest pickup" : "lowest total cost"} option.`,
+      label: isBest && panel ? panel.label : "Alternative option",
+      rationale:
+        isBest && panel
+          ? panel.rationale
+          : `$${costDelta.toFixed(2)} more than the top-ranked option for this priority.`,
       tradeOff: isBest
-        ? undefined
-        : `This option costs $${costDelta.toFixed(2)} more than the ${bestIsFastest ? "fastest-pickup" : "lowest-priced"} listing compared.`,
-      factors,
-      assumptions,
+        ? tradeOffs[0]?.detail
+        : `This option costs $${costDelta.toFixed(2)} more than the top-ranked listing for this priority.`,
+      factors: [...positive, ...tradeOffs],
+      tradeOffs,
+      missingInformation,
+      assumptions: [
+        "Price excludes local sales tax.",
+        ...(listing.pickupAvailable ? ["Pickup availability confirmed at last sync."] : []),
+      ],
     });
   });
 
   return map;
 }
 
-/**
- * Rough internal signal for how much of a listing's display data is present.
- * Not shown to users yet — useful for spotting thin connector data during
- * development/monitoring.
- */
 export function listingCompleteness(listing: CompareListingView): number {
   const checks = [
     listing.sourceName !== FALLBACK_COPY.retailer,
@@ -218,18 +221,14 @@ async function getMatchedListings(productId: string): Promise<ListingRecord[]> {
 
 export type CompareFilters = {
   maxBudget?: number;
-  /** Uses SearchIntent's condition vocabulary (open_box, not open-box); "any" should be omitted by callers rather than passed through. */
   condition?: "new" | "open_box" | "refurbished" | "used";
-  /**
-   * Hard-filters to pickup-available listings only. This is the only real
-   * "fast delivery" signal the schema has (no structured delivery-date data
-   * exists), so it's the honest way to act on an urgent deliveryBy answer
-   * ("ASAP", "today") rather than guessing at ship speed.
-   */
   requireFastDelivery?: boolean;
 };
 
-function conditionMatchesFilter(listingCondition: string, filter: CompareFilters["condition"]): boolean {
+function conditionMatchesFilter(
+  listingCondition: string,
+  filter: CompareFilters["condition"],
+): boolean {
   if (!filter) return true;
   if (filter === "open_box") return listingCondition === "open-box";
   if (filter === "refurbished") {
@@ -253,8 +252,6 @@ export async function getCompareRows(
       )
     : allListings;
 
-  // Recomputed over the filtered set so "lowest cost"/"best overall" reflect
-  // what's actually shown, not an option the shopper's own filters excluded.
   const recommendations = computeRecommendations(listings, priority);
 
   return listings
@@ -322,5 +319,91 @@ export async function getListingExplanation(listingId: string) {
     listing: view,
     recommendation,
     freshnessMinutesAgo: minutesSince(listing.freshnessCapturedAt),
+  };
+}
+
+export type ProductPriceHistoryPoint = {
+  day: string;
+  total: number;
+};
+
+export type ProductPriceHistorySummary = {
+  /** Present only when at least two history points exist */
+  points: ProductPriceHistoryPoint[];
+  currentLowest: number | null;
+  previousPrice: number | null;
+  lowestRecorded: number | null;
+  lastChange: number | null;
+  lastChangeAt: string | null;
+};
+
+/**
+ * Builds a daily price-history summary from real PriceHistory rows.
+ * Chart points are empty unless ≥2 daily buckets exist.
+ */
+export async function getProductPriceHistory(
+  productId: string,
+  currentLowest: number | null,
+): Promise<ProductPriceHistorySummary> {
+  const listings = await prisma.listing.findMany({
+    where: {
+      canonicalProductId: productId,
+      matches: { some: { status: "approved" } },
+    },
+    select: { id: true },
+  });
+  const listingIds = listings.map((l) => l.id);
+  if (listingIds.length === 0) {
+    return {
+      points: [],
+      currentLowest,
+      previousPrice: null,
+      lowestRecorded: null,
+      lastChange: null,
+      lastChangeAt: null,
+    };
+  }
+
+  const rows = await prisma.priceHistory.findMany({
+    where: { listingId: { in: listingIds } },
+    select: { price: true, shipping: true, capturedAt: true },
+    orderBy: { capturedAt: "asc" },
+  });
+
+  const byDay = new Map<string, number>();
+  for (const row of rows) {
+    const day = row.capturedAt.toISOString().slice(0, 10);
+    const total = row.price + row.shipping;
+    const existing = byDay.get(day);
+    if (existing == null || total < existing) byDay.set(day, total);
+  }
+
+  const points = [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, total]) => ({ day, total }));
+
+  if (points.length < 2) {
+    return {
+      points: [],
+      currentLowest,
+      previousPrice: null,
+      lowestRecorded: null,
+      lastChange: null,
+      lastChangeAt: null,
+    };
+  }
+
+  const latest = points[points.length - 1]!;
+  const previous = points[points.length - 2]!;
+  const lowestRecorded = Math.min(...points.map((p) => p.total));
+  const effectiveCurrent = currentLowest ?? latest.total;
+
+  return {
+    points,
+    currentLowest: effectiveCurrent,
+    previousPrice: previous.total,
+    lowestRecorded,
+    lastChange: effectiveCurrent - previous.total,
+    lastChangeAt: latest.day,
   };
 }

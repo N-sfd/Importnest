@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { ClarifyQuestions } from "@/components/ClarifyQuestions";
 import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
-import { extractIntentWithAI } from "@/lib/ai-search-intent";
+import { extractIntentWithAIOutcome } from "@/lib/ai-search-intent";
+import { StatusBanner } from "@/components/StatusPanel";
 import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
 import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
@@ -56,6 +57,9 @@ export default async function ClarifyPage({
       const qs = result.searchParams.toString();
       redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
     }
+    if (result.kind === "results") {
+      redirect(`/search/results?${result.searchParams.toString()}`);
+    }
     return <SearchNoMatch query={query} comparableCandidates={result.comparableCandidates} />;
   }
 
@@ -67,14 +71,18 @@ export default async function ClarifyPage({
   if (heuristics.deliveryBy !== undefined) answered.add("deliveryBy");
 
   let questionWording: Partial<Record<ClarifyingQuestionId, string>> = {};
+  let aiUnavailable = false;
 
   // Only attempt AI extraction once per session, on the very first render
   // for this query (no sid yet). If it yields nothing new — including
   // whenever no API key is configured — this falls through to the exact
   // same deterministic path as before, with no extra redirect.
   if (!params.sid) {
-    const ai = await extractIntentWithAI(query);
-    if (ai) {
+    const aiOutcome = await extractIntentWithAIOutcome(query);
+    if (aiOutcome.status === "unavailable") {
+      aiUnavailable = true;
+    } else {
+      const ai = aiOutcome.result;
       questionWording = ai.questionWording;
 
       const aiParams: Record<string, string> = {};
@@ -116,6 +124,15 @@ export default async function ClarifyPage({
   console.info(`[perf] search.clarify(page-load) ${(performance.now() - start).toFixed(1)}ms`);
   return (
     <PageShell width="narrow">
+      {aiUnavailable ? (
+        <div className="mb-4">
+          <StatusBanner
+            tone="warn"
+            title="AI service unavailable"
+            description="We could not use AI assistance for this search, so we are using our standard clarifying questions instead. Your results stay just as accurate."
+          />
+        </div>
+      ) : null}
       <ClarifyQuestions
         originalQuery={query}
         currentParams={currentParams}

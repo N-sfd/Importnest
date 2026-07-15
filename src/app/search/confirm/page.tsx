@@ -45,5 +45,9 @@ export default async function ConfirmPage({
     redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
   }
 
+  if (result.kind === "results") {
+    redirect(`/search/results?${result.searchParams.toString()}`);
+  }
+
   return <SearchNoMatch query={query} intent={intent} comparableCandidates={result.comparableCandidates} />;
 }
