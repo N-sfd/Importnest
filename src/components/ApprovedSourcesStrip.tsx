@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { isPublicApprovedSource } from "@/lib/approved-sources";
 import { sourceImageFor } from "@/lib/images";
 
 export type ApprovedSourceItem = {
@@ -12,10 +13,11 @@ export type ApprovedSourceItem = {
  * Only renders real active Source rows from the backend — never invents retailers.
  */
 export function ApprovedSourcesStrip({ sources }: { sources: ApprovedSourceItem[] }) {
-  if (sources.length === 0) return null;
+  const visible = sources.filter((s) => isPublicApprovedSource(s.id));
+  if (visible.length === 0) return null;
 
-  const count = sources.length;
-  const loop = [...sources, ...sources];
+  const count = visible.length;
+  const loop = [...visible, ...visible];
 
   return (
     <section className="mt-6 rounded-2xl border border-border bg-panel px-4 py-4 shadow-[var(--shadow-panel)] sm:px-5">
@@ -51,8 +53,8 @@ export function ApprovedSourcesStrip({ sources }: { sources: ApprovedSourceItem[
           {loop.map((source, i) => (
             <li
               key={`${source.id}-${i}`}
-              className="flex w-40 shrink-0 items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5"
-              aria-hidden={i >= sources.length}
+              className="flex w-40 shrink-0 items-center gap-2.5 rounded-xl border border-border bg-panel px-3 py-2.5"
+              aria-hidden={i >= visible.length}
             >
               <Image
                 src={sourceImageFor(source.id)}

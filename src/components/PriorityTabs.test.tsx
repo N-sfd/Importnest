@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PriorityTabs } from "@/components/PriorityTabs";
-import { FALLBACK_COPY, NEUTRAL_RECOMMENDATION_LABEL, type CompareListingView, type CompareRow } from "@/lib/compare-view";
+import {
+  FALLBACK_COPY,
+  NEUTRAL_RECOMMENDATION_LABEL,
+  NO_RECOMMENDATION_TEXT,
+  type CompareListingView,
+  type CompareRow,
+} from "@/lib/compare-view";
 import { FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
 
 function makeListing(overrides: Partial<CompareListingView> = {}): CompareListingView {
@@ -75,5 +81,47 @@ describe("PriorityTabs — stale offers", () => {
     expect(html).not.toContain("Some prices look stale");
     expect(html).not.toContain("Data may be outdated");
     expect(html).not.toContain(NEUTRAL_RECOMMENDATION_LABEL);
+  });
+});
+
+describe("PriorityTabs — recommendation summary content", () => {
+  it("shows the explanation, one trade-off line, missing information, and last-checked time", () => {
+    const rows = [
+      makeRow({
+        id: "cheap-used",
+        price: 40,
+        condition: "used",
+        pickupAvailable: false,
+        freshnessMinutesAgo: 5,
+      }),
+      makeRow({
+        id: "pricier-pickup",
+        price: 55,
+        condition: "used",
+        pickupAvailable: true,
+        freshnessMinutesAgo: 5,
+      }),
+    ];
+    const html = renderToStaticMarkup(
+      <PriorityTabs productId="cp-1" rows={rows} initialPriority="fastest-delivery" />,
+    );
+
+    expect(html).toContain("because it has faster pickup availability");
+    expect(html).toContain("It costs $15.00 more than the cheapest listing but has faster pickup availability.");
+    expect(html).toContain("Missing information");
+    expect(html).toContain("Updated");
+  });
+
+  it("shows 'No clear best option' instead of a badge/highlight when the top spot is tied", () => {
+    const rows = [
+      makeRow({ id: "a", price: 60, freshnessMinutesAgo: 5 }),
+      makeRow({ id: "b", price: 60, freshnessMinutesAgo: 5 }),
+    ];
+    const html = renderToStaticMarkup(
+      <PriorityTabs productId="cp-1" rows={rows} initialPriority="lowest-cost" />,
+    );
+
+    expect(html).toContain(NO_RECOMMENDATION_TEXT);
+    expect(html).not.toContain("Recommended");
   });
 });

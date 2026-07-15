@@ -1,11 +1,13 @@
 import Image from "next/image";
 import { BackendLinks } from "@/components/BackendLinks";
 import { Freshness } from "@/components/Freshness";
+import { isPublicApprovedSource } from "@/lib/approved-sources";
 import type { CompareSourceSummary } from "@/lib/compare-view";
 import { sourceImageFor } from "@/lib/images";
 
 export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary[] }) {
-  if (sources.length === 0) return null;
+  const visible = sources.filter((s) => isPublicApprovedSource(s.sourceId));
+  if (visible.length === 0) return null;
 
   return (
     <div className="panel mt-6 p-4 sm:p-5">
@@ -14,10 +16,10 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
         Live listings from trusted connectors. Freshness updates as sources sync.
       </p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-        {sources.map((source) => (
+        {visible.map((source) => (
           <li
             key={source.sourceId}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
+            className="flex items-center gap-3 rounded-xl border border-border bg-panel p-3"
           >
             <Image
               src={sourceImageFor(source.sourceId)}

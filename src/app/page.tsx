@@ -19,8 +19,14 @@ import { getUserWatchlist } from "@/lib/saved-data";
 
 const categories = [
   {
+    name: "Home",
+    desc: "Furniture and smart home",
+    href: "/search?category=home",
+    image: categoryImages.home,
+  },
+  {
     name: "Electronics",
-    desc: "Phones, audio, computers",
+    desc: "Phones, computers, audio & TVs",
     href: "/search?category=electronics",
     image: categoryImages.electronics,
   },
@@ -37,9 +43,15 @@ const categories = [
     image: categoryImages.footwear,
   },
   {
-    name: "Home",
-    desc: "Furniture and smart home",
-    href: "/search?category=home",
+    name: "Beauty",
+    desc: "Devices and personal care",
+    href: "/search?category=beauty-devices",
+    image: categoryImages.electronics,
+  },
+  {
+    name: "Accessories",
+    desc: "Cases, chargers, bags",
+    href: "/search?category=accessories",
     image: categoryImages.home,
   },
 ];

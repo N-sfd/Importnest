@@ -1,16 +1,10 @@
 import Link from "next/link";
 import { BrandLink } from "@/components/BrandMark";
+import { CategoryNav } from "@/components/CategoryNav";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { LogoutButton } from "@/components/LogoutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthUser } from "@/lib/auth";
-
-const categories = [
-  { name: "Electronics", href: "/search?category=electronics" },
-  { name: "Appliances", href: "/search?category=appliances" },
-  { name: "Footwear", href: "/search?category=footwear" },
-  { name: "Home", href: "/search?category=home" },
-];
 
 export async function Header() {
   const user = await getAuthUser();
@@ -34,6 +28,15 @@ export async function Header() {
               </span>
               <span className="font-semibold leading-tight">Saved</span>
             </Link>
+            <Link
+              href="/compare/cp-apex-ah4200"
+              className="hidden rounded-xl px-2.5 py-1.5 transition hover:bg-white/10 sm:block sm:px-3"
+            >
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
+                Shop
+              </span>
+              <span className="font-semibold leading-tight">Deals</span>
+            </Link>
             {user ? (
               <LogoutButton variant="compact" />
             ) : (
@@ -51,25 +54,7 @@ export async function Header() {
         </div>
       </div>
 
-      <div className="border-b border-border bg-navy-800 text-white/95">
-        <div className="mx-auto flex max-w-[1200px] items-center gap-1 overflow-x-auto px-3 py-2 text-sm sm:px-4">
-          <Link
-            href="/compare/cp-apex-ah4200"
-            className="shrink-0 rounded-lg bg-cta px-2.5 py-1 font-semibold text-navy-900"
-          >
-            Live demo
-          </Link>
-          {categories.map((c) => (
-            <Link
-              key={c.name}
-              href={c.href}
-              className="shrink-0 rounded-lg px-2.5 py-1 text-white/90 transition hover:bg-white/10 hover:text-white"
-            >
-              {c.name}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <CategoryNav />
     </header>
   );
 }

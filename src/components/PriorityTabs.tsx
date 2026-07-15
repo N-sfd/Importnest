@@ -7,6 +7,7 @@ import {
   buildRecommendationPanel,
   formatConditionLabel,
   isStaleFreshness,
+  NO_RECOMMENDATION_TEXT,
   PRIORITY_LABELS,
   sortCompareRows,
   totalKnownCost,
@@ -82,19 +83,10 @@ function RecommendationPanel({
         </div>
 
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-navy-900">Trade-offs</p>
-          {model.tradeOffs.length > 0 ? (
-            <ul className="mt-2 space-y-1.5 text-sm text-foreground/85">
-              {model.tradeOffs.map((f) => (
-                <li key={f.label}>
-                  <span className="font-medium text-foreground">{f.label}</span>
-                  <span className="block text-xs text-muted">{f.detail}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-2 text-sm text-muted">No material trade-offs versus compared offers.</p>
-          )}
+          <p className="text-xs font-bold uppercase tracking-wide text-navy-900">Trade-off</p>
+          <p className="mt-2 text-sm text-foreground/85">
+            {model.tradeOffLine ?? "No material trade-off versus the cheapest compared offer."}
+          </p>
         </div>
 
         <div>
@@ -247,12 +239,14 @@ export function PriorityTabs({
 }) {
   const [priority, setPriority] = useState<Priority>(initialPriority ?? "best-overall");
   const sorted = sortCompareRows(rows, priority);
-  const topId = sorted[0]?.listing.id;
   const panel = buildRecommendationPanel(sorted, priority);
-  // Derived from the panel (not a static PRIORITY_LABELS lookup) so a stale
-  // top-ranked offer never gets badged with a definitive claim like "Best
-  // overall" — buildRecommendationPanel already swaps in a neutral label then.
-  const recommendationLabel = panel?.label ?? PRIORITY_LABELS[priority];
+  // No badge/highlight at all when there's no reliable recommendation (tie,
+  // or nothing to rank) — an arbitrary sort-order pick must never look like
+  // a confident claim. When panel exists, its label is already stale-aware
+  // (swapped to a neutral label rather than e.g. "Best overall") — derive
+  // from it instead of a static PRIORITY_LABELS lookup.
+  const topId = panel ? sorted[0]?.listing.id : undefined;
+  const recommendationLabel = panel?.label ?? "";
   const anyStale = sorted.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
   const sourceCount = new Set(sorted.map((r) => r.listing.sourceId)).size;
 
@@ -287,7 +281,13 @@ export function PriorityTabs({
         <div className={anyStale ? "mt-4" : ""}>
           <RecommendationPanel model={panel} productId={productId} />
         </div>
-      ) : null}
+      ) : (
+        <div className={anyStale ? "mt-4" : ""}>
+          <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-muted">
+            {NO_RECOMMENDATION_TEXT}
+          </p>
+        </div>
+      )}
 
       {/* Priority controls */}
       <div className="mt-4 flex flex-wrap items-center gap-2 border-y border-border py-3">

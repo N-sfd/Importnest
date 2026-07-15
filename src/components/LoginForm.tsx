@@ -72,7 +72,7 @@ export function LoginForm() {
           }}
           aria-pressed={mode === "sign-in"}
           className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${
-            mode === "sign-in" ? "bg-cta text-navy-900" : "text-muted hover:text-foreground"
+            mode === "sign-in" ? "bg-cta text-white" : "text-muted hover:text-foreground"
           }`}
         >
           Sign in
@@ -86,7 +86,7 @@ export function LoginForm() {
           }}
           aria-pressed={mode === "sign-up"}
           className={`flex-1 rounded-full px-3 py-1.5 font-semibold transition ${
-            mode === "sign-up" ? "bg-cta text-navy-900" : "text-muted hover:text-foreground"
+            mode === "sign-up" ? "bg-cta text-white" : "text-muted hover:text-foreground"
           }`}
         >
           Create account

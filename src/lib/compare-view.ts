@@ -80,6 +80,8 @@ export type CompareRow = {
 export type RecommendationPanelModel = {
   label: string;
   rationale: string;
+  /** One short trade-off sentence versus the cheapest compared offer; null when this offer is the cheapest. */
+  tradeOffLine: string | null;
   retailerName: string;
   listingId: string;
   totalKnownCost: number;
@@ -368,9 +370,44 @@ function joinClause(parts: string[]): string {
  */
 export const NEUTRAL_RECOMMENDATION_LABEL = "Available option";
 
+export const NO_RECOMMENDATION_TEXT = "No clear best option based on the available data.";
+
+/** The value a priority actually sorts on — used to detect a genuine tie for the top spot. */
+function priorityComparisonKey(listing: CompareListingView, priority: Priority): string {
+  switch (priority) {
+    case "lowest-cost":
+      return String(totalKnownCost(listing));
+    case "fastest-delivery":
+      return `${listing.pickupAvailable ? 1 : 0}:${totalKnownCost(listing)}`;
+    case "best-condition":
+      return String(conditionRank(listing.condition));
+    case "best-protection":
+      return String(protectionScore(listing));
+    case "best-overall":
+    default:
+      return String(overallScore(listing));
+  }
+}
+
+/**
+ * True when the top two sorted rows are indistinguishable on the metric this
+ * priority actually ranks by — i.e. there's no honest way to call one of them
+ * "the" best, so the caller should show "No clear best option" rather than
+ * an arbitrary pick.
+ */
+export function hasTiedTop(sortedRows: CompareRow[], priority: Priority): boolean {
+  if (sortedRows.length < 2) return false;
+  const [first, second] = sortedRows;
+  return (
+    priorityComparisonKey(first.listing, priority) === priorityComparisonKey(second.listing, priority)
+  );
+}
+
 /**
  * Builds the recommendation panel model for the top listing after a priority sort.
  * Explanation text is assembled only from ranking factors backed by listing data.
+ * Returns null when there's nothing to rank, or the top spot is a genuine tie
+ * (callers should show NO_RECOMMENDATION_TEXT in that case).
  */
 export function buildRecommendationPanel(
   sortedRows: CompareRow[],
@@ -378,9 +415,11 @@ export function buildRecommendationPanel(
 ): RecommendationPanelModel | null {
   const top = sortedRows[0];
   if (!top) return null;
+  if (hasTiedTop(sortedRows, priority)) return null;
 
   const peers = sortedRows.map((r) => r.listing);
   const { positive, tradeOffs } = rankingFactorsForListing(top.listing, peers, priority);
+  const cappedPositive = positive.slice(0, 3);
   const missingInformation = missingInformationForListing(top.listing);
   // Don't claim "Fastest available" when no listing has real pickup/speed signal.
   const anyFulfillmentSignal = peers.some((p) => p.pickupAvailable);
@@ -391,20 +430,33 @@ export function buildRecommendationPanel(
   // Stale/unknown-age data doesn't get to claim a definitive ranking label.
   const dataIsStale = isFreshnessStale(top.listing.freshnessMinutesAgo);
   const label = dataIsStale ? NEUTRAL_RECOMMENDATION_LABEL : definitiveLabel;
-  const clauseParts = positive.map((f) => f.label.toLowerCase());
+  const anyPeerStale = peers.some((p) => isFreshnessStale(p.freshnessMinutesAgo));
+  const freshQualifier = !dataIsStale && anyPeerStale ? " among the fresh offers compared" : "";
+  const reasons = cappedPositive.map((f) => f.label.toLowerCase());
   const rationale = dataIsStale
     ? "This offer currently ranks first for this priority, but its pricing data is outdated — treat the total as an estimate."
-    : clauseParts.length > 0
-      ? `This offer is recommended because it has the ${joinClause(clauseParts)}.`
-      : `This offer ranks first for ${label.toLowerCase()} among the compared options.`;
+    : reasons.length > 0
+      ? `${label} because it has ${joinClause(reasons)}${freshQualifier}.`
+      : `${label} — ranks first among the compared options.`;
+
+  const cheapestCost = Math.min(...peers.map((p) => totalKnownCost(p)));
+  const costDelta = totalKnownCost(top.listing) - cheapestCost;
+  const counterReason = cappedPositive[0]?.label.toLowerCase();
+  const tradeOffLine =
+    costDelta > 0.004
+      ? counterReason
+        ? `It costs $${costDelta.toFixed(2)} more than the cheapest listing but has ${counterReason}.`
+        : `It costs $${costDelta.toFixed(2)} more than the cheapest listing.`
+      : null;
 
   return {
     label,
     rationale,
+    tradeOffLine,
     retailerName: top.listing.sourceName,
     listingId: top.listing.id,
     totalKnownCost: totalKnownCost(top.listing),
-    positiveFactors: positive,
+    positiveFactors: cappedPositive,
     tradeOffs,
     missingInformation,
     lastCheckedMinutesAgo: top.listing.freshnessMinutesAgo,
