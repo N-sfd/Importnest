@@ -21,7 +21,7 @@ export async function Header() {
 
           <form
             action="/search"
-            className="flex min-w-0 flex-1 overflow-hidden rounded-full bg-white focus-within:ring-2 focus-within:ring-ring"
+            className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full bg-white focus-within:ring-2 focus-within:ring-ring"
           >
             <label htmlFor="header-q" className="sr-only">
               Search Importnest
@@ -31,9 +31,12 @@ export async function Header() {
               name="q"
               type="search"
               placeholder="Search products, models, or UPCs"
-              className="min-w-0 flex-1 border-0 bg-transparent px-4 py-2.5 text-sm text-foreground outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-4"
             />
-            <button type="submit" className="btn-cta m-1 shrink-0 px-4 text-sm">
+            <button
+              type="submit"
+              className="btn-cta m-1 h-9 shrink-0 px-3.5 text-sm leading-none sm:px-4"
+            >
               Search
             </button>
           </form>

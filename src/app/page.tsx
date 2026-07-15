@@ -78,7 +78,7 @@ export default async function HomePage() {
 
         <form
           action="/search"
-          className="relative mt-7 flex overflow-hidden rounded-full bg-white shadow-lg focus-within:ring-2 focus-within:ring-ring"
+          className="relative mt-7 flex items-center overflow-hidden rounded-full bg-white shadow-lg focus-within:ring-2 focus-within:ring-ring"
         >
           <label htmlFor="home-q" className="sr-only">
             What are you shopping for?
@@ -89,9 +89,12 @@ export default async function HomePage() {
             type="search"
             placeholder="Try: quiet dishwasher under $900"
             defaultValue="A quiet dishwasher under $900 with delivery this week"
-            className="min-w-0 flex-1 px-5 py-3.5 text-sm text-foreground outline-none placeholder:text-muted"
+            className="min-w-0 flex-1 px-4 py-3.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-5"
           />
-          <button type="submit" className="btn-cta m-1.5 shrink-0 px-6 text-sm">
+          <button
+            type="submit"
+            className="btn-cta m-1.5 h-11 shrink-0 px-5 text-sm leading-none sm:px-6"
+          >
             Search
           </button>
         </form>
