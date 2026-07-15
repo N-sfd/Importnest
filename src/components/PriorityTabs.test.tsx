@@ -263,3 +263,50 @@ describe("PriorityTabs — offer card, no delivery data", () => {
     expect(html).toContain(FALLBACK_COPY.delivery);
   });
 });
+
+describe("PriorityTabs — mobile ranking bottom sheet", () => {
+  it("shows a bottom-sheet trigger naming the active priority, alongside the unchanged desktop tablist", () => {
+    const rows = [makeRow({ id: "a" })];
+    const html = renderPriorityTabs(rows, { priority: "lowest-cost" });
+
+    // The mobile trigger names the current selection...
+    expect(html).toContain(PRIORITY_LABELS["lowest-cost"]);
+    // ...and the desktop segmented tablist (unchanged) still lists every option.
+    expect(html).toContain('role="tablist"');
+    expect(html).toContain("sm:inline-flex");
+  });
+
+  it("keeps the sheet's dialog panel out of the DOM until opened (closed by default)", () => {
+    const rows = [makeRow({ id: "a" })];
+    const html = renderPriorityTabs(rows);
+    expect(html).not.toContain('role="dialog"');
+  });
+});
+
+describe("PriorityTabs — offer card, touch targets and overflow", () => {
+  it("gives View offer and Why this option a 44px minimum touch target", () => {
+    const rows = [makeRow({ id: "a", url: "https://example.com/offer" })];
+    const html = renderPriorityTabs(rows);
+    // Both the CTA link and the text link carry the min-height utility.
+    expect(html.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("never emits a fixed pixel width that could force horizontal overflow on a 320px viewport", () => {
+    const rows = [makeRow({ id: "a" })];
+    const html = renderPriorityTabs(rows);
+    // No inline style or class asserting a fixed width wider than the
+    // narrowest supported viewport (320px minus card padding).
+    expect(html).not.toMatch(/width:\s*(3\d{2}|[4-9]\d{2}|\d{4,})px/);
+  });
+});
+
+describe("PriorityTabs — offer card, collapsed source details on mobile", () => {
+  it("keeps the source-type text available, collapsed behind a details/summary on mobile, always visible on desktop", () => {
+    const rows = [makeRow({ id: "a", sourceTypeLabel: "Affiliate feed" })];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain("Source details");
+    expect(html).toContain("Affiliate feed");
+    expect(html).toContain("<details");
+  });
+});

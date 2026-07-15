@@ -29,7 +29,7 @@ export function HeaderSearch() {
     <div
       className={`overflow-hidden transition-[opacity,transform] duration-300 ease-out ${
         revealed
-          ? "min-w-0 flex-1 translate-y-0 opacity-100"
+          ? "order-3 w-full min-w-0 translate-y-0 opacity-100 sm:order-none sm:w-auto sm:flex-1"
           : "pointer-events-none w-0 max-w-0 shrink -translate-y-1 opacity-0"
       }`}
       aria-hidden={!revealed}

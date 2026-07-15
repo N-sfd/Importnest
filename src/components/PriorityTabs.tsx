@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { BottomSheet } from "@/components/BottomSheet";
 import {
   formatConditionLabel,
   isStaleFreshness,
@@ -188,9 +189,21 @@ function OfferCard({
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
           </div>
           {listing.sourceTypeLabel ? (
-            <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
-              {listing.sourceTypeLabel}
-            </p>
+            <>
+              {/* Desktop/tablet: always visible, unchanged. */}
+              <p className="mt-0.5 hidden text-[11px] uppercase tracking-wide text-muted sm:block">
+                {listing.sourceTypeLabel}
+              </p>
+              {/* Mobile: collapsed by default to keep the card compact. */}
+              <details className="mt-0.5 sm:hidden">
+                <summary className="cursor-pointer text-[11px] font-medium text-muted">
+                  Source details
+                </summary>
+                <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
+                  {listing.sourceTypeLabel}
+                </p>
+              </details>
+            </>
           ) : null}
         </div>
       </div>
@@ -218,7 +231,7 @@ function OfferCard({
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <Link
           href={`/compare/${productId}/why/${listing.id}`}
-          className="text-sm font-semibold text-link hover:underline"
+          className="flex min-h-11 items-center text-sm font-semibold text-link hover:underline"
         >
           Why this option
         </Link>
@@ -227,7 +240,7 @@ function OfferCard({
             href={`/go/${listing.id}`}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="btn-cta px-4 py-2 text-center text-sm"
+            className="btn-cta min-h-11 px-4 py-2 text-center text-sm"
           >
             View offer
           </a>
@@ -302,29 +315,43 @@ export function PriorityTabs({
         </div>
       )}
 
-      {/* Priority controls — segment bar on desktop, select on mobile. Every
-          option is a link to a pre-ranked URL; choosing one never re-sorts
-          in the browser, it navigates and the server returns the new order. */}
+      {/* Priority controls — segment bar on desktop, bottom sheet on mobile.
+          Every option is a link to a pre-ranked URL; choosing one never
+          re-sorts in the browser, it navigates and the server returns the
+          new order. */}
       <div className="mt-4 border-y border-border py-3">
-        <label htmlFor="compare-priority" className="mb-2 block text-sm font-semibold text-foreground sm:mb-0 sm:mr-3 sm:inline">
+        <span className="hidden text-sm font-semibold text-foreground sm:mr-3 sm:inline">
           Sort by
-        </label>
+        </span>
         <div className="sm:hidden">
-          <select
-            id="compare-priority"
-            value={priority}
-            onChange={(e) => {
-              const next = priorityOptions.find((option) => option.key === e.target.value);
-              if (next) window.location.href = next.href;
-            }}
-            className="mt-1 w-full rounded-xl border border-border bg-panel px-3 py-2.5 text-sm font-semibold text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-ring/40"
+          <BottomSheet
+            title="Sort by"
+            description="Choose how offers are ranked. Press Escape to close."
+            label={
+              <span>
+                Sort by
+                <span aria-hidden> · {priorityOptions.find((o) => o.key === priority)?.label}</span>
+              </span>
+            }
           >
-            {priorityOptions.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            <ul className="space-y-1">
+              {priorityOptions.map((option) => (
+                <li key={option.key}>
+                  <Link
+                    href={option.href}
+                    aria-current={priority === option.key ? "true" : undefined}
+                    className={`flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                      priority === option.key
+                        ? "bg-cta text-white"
+                        : "text-navy-900 hover:bg-surface"
+                    }`}
+                  >
+                    {option.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </BottomSheet>
         </div>
         <div
           role="tablist"

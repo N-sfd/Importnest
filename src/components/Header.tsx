@@ -12,12 +12,13 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40">
       <div className="border-b border-white/10 bg-navy-900 text-white">
-        <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-3 py-3 sm:gap-5 sm:px-4">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-3 px-3 py-3 sm:flex-nowrap sm:gap-5 sm:px-4">
           <BrandLink logo="logo9" />
 
           <HeaderSearch />
 
-          <nav className="ml-auto flex shrink-0 items-center gap-0.5 text-sm sm:gap-1">
+          {/* Stays on row 1 with the logo on mobile (search wraps to its own full-width row below); unchanged on tablet/desktop. */}
+          <nav className="order-2 ml-auto flex shrink-0 items-center gap-0.5 text-sm sm:order-none sm:gap-1">
             <ThemeToggle />
             <Link
               href="/saved"

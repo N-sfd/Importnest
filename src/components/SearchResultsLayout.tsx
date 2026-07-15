@@ -226,7 +226,7 @@ function FilterFormFields({
 
       {params.sort ? <input type="hidden" name="sort" value={params.sort} /> : null}
 
-      <button type="submit" className="btn-cta w-full px-3 py-2.5 text-sm">
+      <button type="submit" className="btn-cta min-h-11 w-full px-3 py-2.5 text-sm">
         Apply filters
       </button>
       <Link

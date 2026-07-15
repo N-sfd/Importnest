@@ -48,7 +48,7 @@ export function CompareMobileStickyActions({
           >
             <button
               type="submit"
-              className={`w-full rounded-full border px-3 py-2.5 text-sm font-semibold ${
+              className={`min-h-11 w-full rounded-full border px-3 py-2.5 text-sm font-semibold ${
                 isSaved
                   ? "border-border bg-panel text-gray-700"
                   : "border-border text-navy-900"
@@ -60,7 +60,7 @@ export function CompareMobileStickyActions({
         ) : (
           <Link
             href={loginHref}
-            className="flex-1 rounded-full border border-border px-3 py-2.5 text-center text-sm font-semibold text-navy-900"
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full border border-border px-3 py-2.5 text-center text-sm font-semibold text-navy-900"
           >
             Save
           </Link>
@@ -74,7 +74,7 @@ export function CompareMobileStickyActions({
             >
               <button
                 type="submit"
-                className="w-full rounded-full border border-border px-3 py-2.5 text-sm font-semibold text-navy-900"
+                className="min-h-11 w-full rounded-full border border-border px-3 py-2.5 text-sm font-semibold text-navy-900"
               >
                 Alert on
               </button>
@@ -87,7 +87,7 @@ export function CompareMobileStickyActions({
               <input type="hidden" name="threshold" value={suggestedAlert || "1"} />
               <button
                 type="submit"
-                className="w-full rounded-full border border-border px-3 py-2.5 text-sm font-semibold text-navy-900"
+                className="min-h-11 w-full rounded-full border border-border px-3 py-2.5 text-sm font-semibold text-navy-900"
               >
                 Alert
               </button>
@@ -96,7 +96,7 @@ export function CompareMobileStickyActions({
         ) : (
           <Link
             href={loginHref}
-            className="flex-1 rounded-full border border-border px-3 py-2.5 text-center text-sm font-semibold text-navy-900"
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full border border-border px-3 py-2.5 text-center text-sm font-semibold text-navy-900"
           >
             Alert
           </Link>
@@ -107,7 +107,7 @@ export function CompareMobileStickyActions({
             href={viewOfferHref}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="btn-cta flex-1 px-3 py-2.5 text-center text-sm"
+            className="btn-cta min-h-11 flex-1 px-3 py-2.5 text-center text-sm"
           >
             View offer
           </a>
