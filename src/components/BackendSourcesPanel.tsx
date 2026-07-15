@@ -14,27 +14,27 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
   if (sources.length === 0) return null;
 
   return (
-    <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <h2 className="text-sm font-semibold text-navy-900">Backend data sources</h2>
-      <p className="mt-1 text-xs text-gray-500">
-        Live listings loaded from approved connectors and stored in Postgres.
+    <div className="panel mt-6 p-4 sm:p-5">
+      <h2 className="text-sm font-semibold text-foreground">Approved sources</h2>
+      <p className="mt-1 text-xs text-muted">
+        Live listings from trusted connectors. Freshness updates as sources sync.
       </p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2">
         {sources.map((source) => (
           <li
             key={source.sourceId}
-            className="flex items-center gap-3 rounded-md border border-gray-200 bg-white p-3"
+            className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
           >
             <Image
               src={sourceImageFor(source.sourceId)}
               alt=""
               width={36}
               height={36}
-              className="rounded-md"
+              className="rounded-lg border border-border bg-white object-contain p-0.5"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-navy-900">{source.sourceName}</p>
-              <p className="text-xs text-gray-500">
+              <p className="truncate text-sm font-medium text-foreground">{source.sourceName}</p>
+              <p className="text-xs text-muted">
                 {source.sourceTypeLabel} · {source.listingCount}{" "}
                 {source.listingCount === 1 ? "listing" : "listings"} ·{" "}
                 {freshnessLabel(source.freshnessMinutesAgo)}
@@ -44,7 +44,7 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
         ))}
       </ul>
 
-      <BackendLinks className="mt-4 border-t border-gray-200 pt-4" compact />
+      <BackendLinks className="mt-4 border-t border-border pt-4" compact />
     </div>
   );
 }

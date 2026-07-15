@@ -3,28 +3,11 @@ import {
   answeredQuestionIds,
   getClarifyingQuestions,
   intentFromSearchParams,
-  isExplicitIdentifierQuery,
   isUrgentDeliveryPhrase,
-  needsClarification,
   parseQueryHeuristics,
   searchIntentSchema,
   sortPriorityToComparePriority,
 } from "@/lib/search-intent";
-
-describe("isExplicitIdentifierQuery", () => {
-  it("treats UPC-length numeric strings as explicit", () => {
-    expect(isExplicitIdentifierQuery("885909950805")).toBe(true);
-  });
-  it("treats URLs as explicit", () => {
-    expect(isExplicitIdentifierQuery("https://example.com/product/1")).toBe(true);
-  });
-  it("treats free text as not explicit", () => {
-    expect(isExplicitIdentifierQuery("a backpack for college")).toBe(false);
-  });
-  it("treats empty string as not explicit", () => {
-    expect(isExplicitIdentifierQuery("   ")).toBe(false);
-  });
-});
 
 describe("parseQueryHeuristics", () => {
   it("extracts a budget cap from natural language", () => {
@@ -64,7 +47,7 @@ describe("answeredQuestionIds / intentFromSearchParams", () => {
   });
 });
 
-describe("getClarifyingQuestions / needsClarification", () => {
+describe("getClarifyingQuestions", () => {
   it("asks up to 3 questions, in priority order, for a fully-unanswered intent", () => {
     const questions = getClarifyingQuestions(new Set());
     expect(questions).toHaveLength(3);
@@ -84,11 +67,7 @@ describe("getClarifyingQuestions / needsClarification", () => {
       deliveryBy: "any",
       brands: "any",
     });
-    expect(needsClarification("a backpack", answered)).toBe(false);
-  });
-  it("never asks for an explicit identifier query regardless of answered state", () => {
-    expect(needsClarification("885909950805", new Set())).toBe(false);
-    expect(needsClarification("https://example.com/x", new Set())).toBe(false);
+    expect(getClarifyingQuestions(answered)).toHaveLength(0);
   });
 });
 

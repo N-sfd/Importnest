@@ -2,13 +2,13 @@ import { redirect } from "next/navigation";
 import { ClarifyQuestions } from "@/components/ClarifyQuestions";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { extractIntentWithAI } from "@/lib/ai-search-intent";
+import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
-import { finalizeSearch, matchProduct, startSearchSession } from "@/lib/search-data";
+import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
 import {
   answeredQuestionIds,
   buildIntent,
   getClarifyingQuestions,
-  isExplicitIdentifierQuery,
   paramsToRecord,
   parseQueryHeuristics,
   type ClarifyingQuestionId,
@@ -29,6 +29,7 @@ export default async function ClarifyPage({
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
+  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
@@ -38,9 +39,10 @@ export default async function ClarifyPage({
 
   // Defensive re-check: an exact/explicit query landing here directly (e.g.
   // a stale bookmark, browser back) should still skip straight to a result
-  // rather than asking unnecessary questions.
-  const directMatch = await matchProduct(query);
-  if (isExplicitIdentifierQuery(query) || directMatch !== null) {
+  // rather than asking unnecessary questions. A generic category term must
+  // never take this path, even on a direct hit to this route.
+  const { classification, directMatch } = await classifyAndResolve(query);
+  if (classification.classification === "exact_product") {
     const categoryRecord = params.category
       ? await prisma.category.findUnique({ where: { slug: params.category } })
       : null;
@@ -48,6 +50,7 @@ export default async function ClarifyPage({
       directMatch,
       categoryId: categoryRecord?.id,
     });
+    console.info(`[perf] search.clarify(defensive-fast-path) ${(performance.now() - start).toFixed(1)}ms`);
     if (result.kind === "redirect") {
       const qs = result.searchParams.toString();
       redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
@@ -55,7 +58,7 @@ export default async function ClarifyPage({
     return <SearchNoMatch query={query} comparableCandidates={result.comparableCandidates} />;
   }
 
-  const heuristics = parseQueryHeuristics(query);
+  const heuristics = timeSync("search.parseQueryHeuristics", () => parseQueryHeuristics(query));
   const answered = answeredQuestionIds(params);
   if (heuristics.budgetMax !== undefined) answered.add("budgetMax");
   if (heuristics.condition !== undefined) answered.add("condition");
@@ -105,9 +108,11 @@ export default async function ClarifyPage({
 
   if (readyForConfirmation) {
     const qs = new URLSearchParams(currentParams);
+    console.info(`[perf] search.clarify(to-confirm) ${(performance.now() - start).toFixed(1)}ms`);
     redirect(`/search/confirm?${qs.toString()}`);
   }
 
+  console.info(`[perf] search.clarify(page-load) ${(performance.now() - start).toFixed(1)}ms`);
   return (
     <ClarifyQuestions
       originalQuery={query}

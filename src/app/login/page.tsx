@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-import { Header } from "@/components/Header";
+import { PageShell } from "@/components/PageShell";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
@@ -45,10 +45,10 @@ function LoginForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-8 max-w-md space-y-4 rounded-lg border border-gray-200 p-6"
+      className="mt-6 max-w-md space-y-4 rounded-md border border-border bg-panel p-6 shadow-sm"
     >
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-navy-900">
+        <label htmlFor="email" className="block text-sm font-medium text-foreground">
           Email
         </label>
         <input
@@ -58,11 +58,11 @@ function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-navy-800"
+          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-navy-900">
+        <label htmlFor="password" className="block text-sm font-medium text-foreground">
           Password
         </label>
         <input
@@ -72,7 +72,7 @@ function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-navy-800"
+          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
@@ -83,14 +83,14 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 disabled:opacity-60"
+        className="w-full rounded-full bg-cta px-4 py-2.5 text-sm font-semibold text-navy-900 hover:bg-cta-hover disabled:opacity-60"
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>
 
       <p className="text-center text-xs text-gray-500">
         Admin access only.{" "}
-        <Link href="/" className="font-medium text-navy-800 hover:underline">
+        <Link href="/" className="font-medium text-link hover:underline">
           Back to home
         </Link>
       </p>
@@ -100,17 +100,14 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-bold text-navy-900">Admin sign in</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Sign in to access match review and other operations tools.
-        </p>
-        <Suspense fallback={<p className="mt-8 text-sm text-gray-500">Loading…</p>}>
-          <LoginForm />
-        </Suspense>
-      </section>
-    </main>
+    <PageShell width="narrow">
+      <h1 className="text-2xl font-bold text-foreground">Admin sign in</h1>
+      <p className="mt-1 text-sm text-gray-600">
+        Sign in to access match review and other operations tools.
+      </p>
+      <Suspense fallback={<p className="mt-8 text-sm text-gray-500">Loading…</p>}>
+        <LoginForm />
+      </Suspense>
+    </PageShell>
   );
 }

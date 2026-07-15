@@ -4,7 +4,9 @@ import { z } from "zod";
 import type { ClarifyingQuestionId, SearchIntent } from "@/lib/search-intent";
 
 const MODEL = "claude-haiku-4-5";
-const REQUEST_TIMEOUT_MS = 8000;
+export const REQUEST_TIMEOUT_MS = 8000;
+export const MAX_RETRIES = 2;
+export const MAX_RESPONSE_TOKENS = 400;
 
 const QUESTION_IDS = [
   "budgetMax",
@@ -23,7 +25,7 @@ const aiIntentSchema = z.object({
   sortPriority: z.enum(["best_overall", "lowest_cost", "fastest_delivery", "best_warranty"]).optional(),
 });
 
-const aiResponseSchema = z.object({
+export const aiResponseSchema = z.object({
   intent: aiIntentSchema,
   questionWording: z
     .array(z.object({ id: z.enum(QUESTION_IDS), prompt: z.string().min(5).max(140) }))
@@ -59,12 +61,13 @@ Respond with JSON matching the provided schema only.`;
 export async function extractIntentWithAI(query: string): Promise<AiExtractionResult | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
 
+  const start = performance.now();
   try {
     const client = new Anthropic();
     const response = await client.messages.create(
       {
         model: MODEL,
-        max_tokens: 400,
+        max_tokens: MAX_RESPONSE_TOKENS,
         system: SYSTEM_PROMPT,
         messages: [
           {
@@ -74,7 +77,7 @@ export async function extractIntentWithAI(query: string): Promise<AiExtractionRe
         ],
         output_config: { format: zodOutputFormat(aiResponseSchema) },
       },
-      { timeout: REQUEST_TIMEOUT_MS },
+      { timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES },
     );
 
     if (response.stop_reason === "refusal") return null;
@@ -95,5 +98,7 @@ export async function extractIntentWithAI(query: string): Promise<AiExtractionRe
   } catch (err) {
     console.warn("[ai-search-intent] extraction failed, using deterministic fallback:", err);
     return null;
+  } finally {
+    console.info(`[perf] search.aiExtraction ${(performance.now() - start).toFixed(1)}ms`);
   }
 }
