@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ClarifyQuestions } from "@/components/ClarifyQuestions";
+import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { extractIntentWithAI } from "@/lib/ai-search-intent";
 import { timeSync } from "@/lib/perf";
@@ -114,11 +115,13 @@ export default async function ClarifyPage({
 
   console.info(`[perf] search.clarify(page-load) ${(performance.now() - start).toFixed(1)}ms`);
   return (
-    <ClarifyQuestions
-      originalQuery={query}
-      currentParams={currentParams}
-      questions={questions}
-      sessionId={sessionId}
-    />
+    <PageShell width="narrow">
+      <ClarifyQuestions
+        originalQuery={query}
+        currentParams={currentParams}
+        questions={questions}
+        sessionId={sessionId}
+      />
+    </PageShell>
   );
 }

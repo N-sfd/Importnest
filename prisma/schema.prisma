@@ -204,28 +204,34 @@ model RecommendationFactor {
 }
 
 model SavedProduct {
-  id                 String @id @default(cuid())
+  id                 String   @id @default(cuid())
   userId             String
   canonicalProductId String
   listingId          String?
+  createdAt          DateTime @default(now())
 
   user             AppUser          @relation(fields: [userId], references: [id])
   canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
   listing          Listing?         @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, canonicalProductId])
 }
 
 model Alert {
-  id                 String  @id @default(cuid())
+  id                 String   @id @default(cuid())
   userId             String
   canonicalProductId String
   listingId          String?
   type               String // price-drop | back-in-stock | any-change
   threshold          String?
-  isActive           Boolean @default(true)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
 
   user             AppUser          @relation(fields: [userId], references: [id])
   canonicalProduct CanonicalProduct @relation(fields: [canonicalProductId], references: [id])
   listing          Listing?         @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, canonicalProductId, type])
 }
 
 model OutboundReferral {

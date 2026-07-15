@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { BrandLink } from "@/components/BrandMark";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getAuthUser } from "@/lib/auth";
 
 const categories = [
   { name: "Electronics", href: "/search?category=electronics" },
@@ -8,7 +10,9 @@ const categories = [
   { name: "Home", href: "/search?category=home" },
 ];
 
-export function Header() {
+export async function Header() {
+  const user = await getAuthUser();
+
   return (
     <header className="sticky top-0 z-40">
       <div className="border-b border-white/10 bg-navy-900/95 text-white backdrop-blur-md">
@@ -44,15 +48,19 @@ export function Header() {
               </span>
               <span className="font-semibold leading-tight">Saved</span>
             </Link>
-            <Link
-              href="/login"
-              className="rounded-xl px-2.5 py-1.5 transition hover:bg-white/10 sm:px-3"
-            >
-              <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
-                Account
-              </span>
-              <span className="font-semibold leading-tight">Sign in</span>
-            </Link>
+            {user ? (
+              <LogoutButton variant="compact" />
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-xl px-2.5 py-1.5 transition hover:bg-white/10 sm:px-3"
+              >
+                <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
+                  Account
+                </span>
+                <span className="font-semibold leading-tight">Sign in</span>
+              </Link>
+            )}
           </nav>
         </div>
       </div>

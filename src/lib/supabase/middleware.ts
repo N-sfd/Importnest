@@ -38,9 +38,10 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAdminRoute = pathname.startsWith("/admin");
+  const isSavedRoute = pathname.startsWith("/saved");
   const isLoginRoute = pathname === "/login";
 
-  if (isAdminRoute && !user) {
+  if ((isAdminRoute || isSavedRoute) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
@@ -48,8 +49,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isLoginRoute && user) {
+    const nextPath = request.nextUrl.searchParams.get("next");
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/admin/match-review";
+    redirectUrl.pathname = nextPath?.startsWith("/") ? nextPath : "/saved";
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
