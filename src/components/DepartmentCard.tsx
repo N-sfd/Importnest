@@ -37,7 +37,7 @@ export function DepartmentCard({ category }: { category: DepartmentCardData }) {
 
 export function DepartmentGrid({ categories }: { categories: DepartmentCardData[] }) {
   return (
-    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
       {categories.map((c) => (
         <DepartmentCard key={c.name} category={c} />
       ))}

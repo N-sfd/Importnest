@@ -27,10 +27,22 @@ import { getUserWatchlist } from "@/lib/saved-data";
 
 const categories = [
   {
-    name: "Electronics",
-    desc: "Phones, computers, audio & TVs",
-    href: "/search?category=electronics",
-    image: categoryImages.electronics,
+    name: "Headphones / Audio",
+    desc: "Headphones, speakers & HiFi",
+    href: "/search?q=headphones&category=electronics",
+    image: categoryImages.headphones,
+  },
+  {
+    name: "Leisure & Outdoors",
+    desc: "Gear for travel and outdoor time",
+    href: "/search?q=outdoors&category=footwear",
+    image: categoryImages.outdoors,
+  },
+  {
+    name: "Automotive",
+    desc: "Car accessories and essentials",
+    href: "/search?q=automotive",
+    image: categoryImages.automotive,
   },
   {
     name: "Appliances",
@@ -39,28 +51,10 @@ const categories = [
     image: categoryImages.appliances,
   },
   {
-    name: "Footwear",
-    desc: "New and resale options",
-    href: "/search?category=footwear",
-    image: categoryImages.footwear,
-  },
-  {
-    name: "Home",
-    desc: "Furniture and smart home",
-    href: "/search?category=home",
-    image: categoryImages.home,
-  },
-  {
-    name: "Beauty",
-    desc: "Devices and personal care",
-    href: "/search?category=beauty-devices",
+    name: "Electronics",
+    desc: "Phones, computers, audio & TVs",
+    href: "/search?category=electronics",
     image: categoryImages.electronics,
-  },
-  {
-    name: "Accessories",
-    desc: "Cases, chargers, bags",
-    href: "/search?category=accessories",
-    image: categoryImages.home,
   },
 ];
 
@@ -152,9 +146,12 @@ export default async function HomePage() {
       />
 
       <div className="mt-8 flex items-end justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-navy-900">Shop by department</h2>
+          <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+        </div>
         <Link
-          href="/search?category=home"
+          href="/search?category=electronics"
           className="text-sm font-semibold text-link hover:underline"
         >
           View all

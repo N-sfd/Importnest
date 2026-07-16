@@ -15,6 +15,9 @@ export const categoryImages: Record<string, string> = {
   appliances: "/images/categories/appliances.png",
   footwear: "/images/categories/footwear.png",
   home: "/images/categories/home.png",
+  headphones: "/images/categories/headphones.png",
+  outdoors: "/images/categories/outdoors.png",
+  automotive: "/images/categories/automotive.png",
 };
 
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
