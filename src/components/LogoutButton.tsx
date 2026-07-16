@@ -26,14 +26,9 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "c
         type="button"
         onClick={onLogout}
         disabled={loading}
-        className="rounded-xl px-2.5 py-1.5 text-left text-sm transition hover:bg-white/10 disabled:opacity-60 sm:px-3"
+        className="rounded-xl px-2.5 py-1.5 text-left text-sm font-semibold text-navy-900 transition hover:bg-navy-100 disabled:opacity-60 sm:px-3"
       >
-        <span className="block text-[10px] font-medium uppercase tracking-wider text-white/55">
-          Account
-        </span>
-        <span className="font-semibold leading-tight">
-          {loading ? "Signing out…" : "Sign out"}
-        </span>
+        {loading ? "Signing out…" : "Sign out"}
       </button>
     );
   }

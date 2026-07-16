@@ -120,12 +120,12 @@ export function BrandLink({
   logo?: BrandLogo;
 }) {
   return (
-    <Link href="/" className={`shrink-0 transition hover:opacity-90 ${className}`}>
-      <span className="hidden sm:inline-flex">
-        <BrandMark logo={logo} showWordmark layout="horizontal" onDark={onDark} size="lg" />
+    <Link href="/" className={`inline-flex shrink-0 items-center transition hover:opacity-90 ${className}`}>
+      <span className="hidden sm:inline-flex leading-none">
+        <BrandMark logo={logo} showWordmark layout="horizontal" onDark={onDark} size="md" />
       </span>
       {/* Same horizontal lockup on mobile — scaled smaller, not a different icon */}
-      <span className="inline-flex sm:hidden">
+      <span className="inline-flex leading-none sm:hidden">
         <BrandMark logo={logo} showWordmark layout="horizontal" onDark={onDark} size="sm" />
       </span>
     </Link>

@@ -57,14 +57,14 @@ export function HeaderLocation() {
     return (
       <form
         onSubmit={save}
-        className="flex min-w-0 max-w-[11rem] shrink-0 flex-col gap-1"
+        className="ml-1 flex min-w-0 max-w-[11rem] shrink-0 flex-col gap-1 sm:ml-2"
         aria-label="Update delivery location"
       >
         <input
           value={cityDraft}
           onChange={(e) => setCityDraft(e.target.value)}
           aria-label="City"
-          className="w-full rounded-md border border-white/20 bg-white/10 px-2 py-1 text-xs text-white outline-none placeholder:text-white/40 focus:ring-1 focus:ring-cta"
+          className="w-full rounded-md border border-border bg-panel px-2 py-1 text-xs text-navy-900 outline-none placeholder:text-muted focus:ring-1 focus:ring-cta"
           placeholder="City"
         />
         <div className="flex gap-1">
@@ -72,7 +72,7 @@ export function HeaderLocation() {
             value={zipDraft}
             onChange={(e) => setZipDraft(e.target.value)}
             aria-label="ZIP code"
-            className="w-full rounded-md border border-white/20 bg-white/10 px-2 py-1 text-xs text-white outline-none placeholder:text-white/40 focus:ring-1 focus:ring-cta"
+            className="w-full rounded-md border border-border bg-panel px-2 py-1 text-xs text-navy-900 outline-none placeholder:text-muted focus:ring-1 focus:ring-cta"
             placeholder="ZIP"
             maxLength={10}
           />
@@ -85,7 +85,7 @@ export function HeaderLocation() {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="shrink-0 rounded-md border border-white/20 px-2 text-[11px] font-semibold text-white/80"
+            className="shrink-0 rounded-md border border-border px-2 text-[11px] font-semibold text-muted hover:text-navy-900"
           >
             Cancel
           </button>
@@ -98,15 +98,13 @@ export function HeaderLocation() {
     <button
       type="button"
       onClick={() => setEditing(true)}
-      className="hidden min-w-0 max-w-[10.5rem] shrink-0 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta sm:block"
+      className="ml-1 hidden min-w-0 max-w-[10.5rem] shrink-0 rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta sm:ml-2 sm:block"
     >
-      <span className="block truncate text-[11px] leading-tight text-white/55">
-        Delivering to
-      </span>
-      <span className="block truncate text-sm font-semibold leading-tight text-white">
+      <span className="block truncate text-[11px] leading-tight text-muted">Delivering to</span>
+      <span className="block truncate text-sm font-semibold leading-tight text-navy-900">
         {location.city} {location.zip}
       </span>
-      <span className="block text-[11px] font-medium text-cta">Update location</span>
+      <span className="block text-[11px] font-medium text-link">Update location</span>
     </button>
   );
 }
