@@ -32,8 +32,8 @@ function confirmBeforeSubmit(message: string) {
 }
 
 const statusStyle: Record<string, string> = {
-  watching: "bg-navy-100 text-navy-900",
-  triggered: "bg-amber-100 text-amber-900",
+  watching: "bg-accent/15 text-accent",
+  triggered: "bg-cta/15 text-cta",
   paused: "bg-surface text-muted ring-1 ring-border",
   none: "bg-surface text-muted ring-1 ring-border",
 };
@@ -106,11 +106,11 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
         <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
           <Link
             href={`/compare/${item.canonicalProductId}`}
-            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-white sm:h-24 sm:w-24"
+            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-white sm:h-24 sm:w-24"
           >
             <Image
               src={imageSrc}
-              alt=""
+              alt={item.productName}
               fill
               className={productThumbClass(imageSrc)}
               sizes="96px"
@@ -140,9 +140,9 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Current best
+                  Current total
                 </p>
-                <p className="mt-0.5 text-lg font-extrabold tabular-nums text-price">
+                <p className="mt-0.5 text-lg font-extrabold tabular-nums text-navy-900">
                   {item.currentPrice != null ? `$${item.currentPrice.toFixed(2)}` : "Unavailable"}
                 </p>
               </div>
