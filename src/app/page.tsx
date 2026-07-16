@@ -3,19 +3,15 @@ import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { HeroSearch } from "@/components/HeroSearch";
+import { HomepageCompareDemo } from "@/components/HomepageCompareDemo";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
+import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
-import {
-  TopProductsSection,
-  withTopProductBadges,
-} from "@/components/TopProductsSection";
-import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
-import { getBestDeals } from "@/lib/best-deals";
 import { homeCategoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
@@ -66,24 +62,20 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, topProductsRaw, bestDeals, sources, recentSearches, watchlist] =
-    await Promise.all([
-      getPopularComparisons(4, savedIds),
-      getPopularComparisons(6, savedIds),
-      getBestDeals(6, savedIds),
-      prisma.source.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true },
-        orderBy: { name: "asc" },
-      }),
-      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-      user ? getUserWatchlist(user.id) : Promise.resolve([]),
-    ]);
-  const topProducts = withTopProductBadges(topProductsRaw);
+  const [popular, sources, recentSearches, watchlist] = await Promise.all([
+    getPopularComparisons(4, savedIds),
+    prisma.source.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+    user ? getUserWatchlist(user.id) : Promise.resolve([]),
+  ]);
 
   return (
     <PageShell>
-      {/* 1. Hero */}
+      {/* 1. Hero / main search */}
       <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
@@ -123,7 +115,6 @@ export default async function HomePage() {
       </section>
 
       <RecentSearches items={recentSearches} />
-      {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
       {/* 2. Shop by Category */}
       <section className="mt-10" aria-labelledby="shop-category-heading">
@@ -147,16 +138,20 @@ export default async function HomePage() {
         <CategoryImageGrid items={categories} />
       </section>
 
-      {/* 3. Top Products */}
-      <TopProductsSection items={topProducts} />
+      {/* 3. Comparison preview — before Popular comparisons */}
+      <HomepageCompareDemo />
 
-      {/* 4. Best Deals */}
-      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
-
-      {/* 5. Popular Comparisons */}
+      {/* 4. Popular comparisons */}
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
-      {/* 6. How it works */}
+      {/* 5. Track Total Known Cost / Alerts */}
+      <PriceAlertTeaser
+        signedIn={Boolean(user)}
+        preview={watchlist[0] ?? null}
+      />
+      {user ? <SavedAlertsPreview items={watchlist} /> : null}
+
+      {/* 6. How Importnest works */}
       <HowItWorks />
 
       {/* 7. Approved sources / trust */}
