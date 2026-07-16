@@ -159,6 +159,7 @@ export default async function ComparePage({
         matchStatusLabel={matchStatusLabel}
         offerCount={rows.length}
         lastCheckedMinutesAgo={freshnessMinutes}
+        lowestTotalKnownCost={lowestKnown}
         actions={
           !authUser ? (
             <Link

@@ -160,15 +160,15 @@ function OfferCard({
 
   return (
     <li
-      className={`offer-card rounded-2xl border bg-panel p-4 shadow-[var(--shadow-panel)] ${
-        isTop ? "border-cta ring-2 ring-cta/25" : "border-border"
+      className={`offer-card rounded-2xl border bg-panel p-4 transition shadow-[var(--shadow-panel)] ${
+        isTop ? "border-accent ring-2 ring-accent/20" : "border-border hover:border-accent/40"
       }`}
     >
       {/* Retailer or source, plus recommendation badge(s) */}
       <div className="flex min-w-0 items-start gap-3">
         <Image
           src={logoSrc}
-          alt=""
+          alt={`${listing.sourceName} logo`}
           width={40}
           height={40}
           className="h-10 w-10 shrink-0 rounded-xl border border-border bg-white object-contain p-1"
@@ -176,7 +176,7 @@ function OfferCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3
-              className="truncate text-base font-semibold text-foreground"
+              className="truncate text-base font-semibold text-navy-900"
               title={listing.sourceName}
             >
               {listing.sourceName}
