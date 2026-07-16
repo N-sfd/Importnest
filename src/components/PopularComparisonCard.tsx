@@ -26,7 +26,7 @@ export function PopularComparisonCard({
       >
         <Image
           src={item.imageSrc}
-          alt=""
+          alt={item.productName}
           fill
           className={productThumbClass(item.imageSrc)}
           sizes="80px"

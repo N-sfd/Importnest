@@ -33,7 +33,7 @@ export function ProductSummary({
   return (
     <section className="panel flex flex-wrap items-center gap-3 p-3 sm:p-4">
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-white sm:h-20 sm:w-20">
-        <Image src={imageSrc} alt="" fill className={productThumbClass(imageSrc)} sizes="80px" />
+        <Image src={imageSrc} alt={productName} fill className={productThumbClass(imageSrc)} sizes="80px" />
       </div>
 
       <div className="min-w-0 flex-1">

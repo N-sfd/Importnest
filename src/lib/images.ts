@@ -4,18 +4,20 @@
 export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
 
 export const productImages: Record<string, string> = {
-  "cp-apex-ah4200": "/products/dishwasher.png",
-  "cp-air-purifier": "/products/air-purifier.png",
-  "cp-running-shoe": "/products/running-shoe.png",
-  "cp-cordless-vacuum": "/products/cordless-vacuum.png",
+  "cp-apex-ah4200": "/images/products/dishwasher.png",
+  "cp-air-purifier": "/images/products/air-purifier.png",
+  "cp-running-shoe": "/images/products/running-shoe.png",
+  "cp-cordless-vacuum": "/images/products/cordless-vacuum.png",
 };
 
 export const categoryImages: Record<string, string> = {
-  electronics: "/categories/electronics.png",
-  appliances: "/categories/appliances.png",
-  footwear: "/categories/footwear.png",
-  home: "/categories/home.png",
+  electronics: "/images/categories/electronics.png",
+  appliances: "/images/categories/appliances.png",
+  footwear: "/images/categories/footwear.png",
+  home: "/images/categories/home.png",
 };
+
+export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 
 export function productImageFor(productId: string) {
   return productImages[productId] ?? BRAND_FALLBACK_IMAGE;

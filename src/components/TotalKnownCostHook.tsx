@@ -58,7 +58,7 @@ export function TotalKnownCostHook() {
       <div className="flex items-start gap-3">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-white">
           <Image
-            src="/products/running-shoe.png"
+            src="/images/products/running-shoe.png"
             alt=""
             fill
             className="object-contain p-1"

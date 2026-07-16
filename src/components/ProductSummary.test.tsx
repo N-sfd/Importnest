@@ -4,7 +4,7 @@ import { ProductSummary } from "@/components/ProductSummary";
 import { BRAND_FALLBACK_IMAGE } from "@/lib/images";
 
 const baseProps = {
-  imageSrc: "/products/dishwasher.png",
+  imageSrc: "/images/products/dishwasher.png",
   brandName: "Apex Home",
   productName: "Apex Quiet Dishwasher AH-4200",
   modelNumber: "AH-4200",
@@ -60,7 +60,7 @@ describe("ProductSummary — missing product image", () => {
 
 describe("ProductSummary — real product image present", () => {
   it("renders the real image without the placeholder-only padding", () => {
-    const html = renderToStaticMarkup(<ProductSummary {...baseProps} imageSrc="/products/air-purifier.png" />);
+    const html = renderToStaticMarkup(<ProductSummary {...baseProps} imageSrc="/images/products/air-purifier.png" />);
 
     expect(html).toContain("air-purifier.png");
     expect(html).not.toContain("p-5");
