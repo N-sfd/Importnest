@@ -13,7 +13,7 @@ export async function Header() {
     <header className="sticky top-0 z-40">
       <div className="border-b border-border bg-white text-navy-900">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-3 px-3 py-2.5 sm:flex-nowrap sm:gap-4 sm:px-4 sm:py-3">
-          <BrandLink logo="logo9" onDark={false} className="shrink-0 self-center" />
+          <BrandLink logo="logo9" onDark={false} />
           <HeaderLocation />
 
           <HeaderSearch />

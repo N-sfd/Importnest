@@ -29,6 +29,11 @@ export function PriceAlertTeaser({
   const hasLive = preview != null;
   const imageSrc = productImageFor(hasLive ? preview.canonicalProductId : "cp-apex-ah4200");
   const productHref = `/compare/${hasLive ? preview.canonicalProductId : "cp-apex-ah4200"}`;
+  const hasPriceDrop =
+    hasLive &&
+    preview.priceHistory.length > 0 &&
+    preview.priceChange != null &&
+    preview.priceChange < 0;
 
   return (
     <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)]">
@@ -113,6 +118,11 @@ export function PriceAlertTeaser({
                   ? `$${preview.currentPrice.toFixed(2)}`
                   : "See live compare"}
               </dd>
+              {hasPriceDrop ? (
+                <p className="mt-1 text-[11px] font-bold text-cta">
+                  ↓ ${Math.abs(preview.priceChange!).toFixed(2)} from last check
+                </p>
+              ) : null}
             </div>
             <div className="rounded-xl border border-border bg-panel px-3 py-2.5">
               <dt className="text-[10px] font-bold uppercase tracking-wider text-muted">

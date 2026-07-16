@@ -1,21 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import {
-  DEMO_SEARCH_LABEL,
-  DEMO_SEARCH_QUERY,
-  EXAMPLE_SEARCHES,
-} from "@/lib/search-prompts";
+import { EXAMPLE_SEARCHES } from "@/lib/search-prompts";
 
 export function HeroSearch() {
-  const tryHref = `/search?q=${encodeURIComponent(DEMO_SEARCH_QUERY)}`;
-  const pills = [
-    { label: DEMO_SEARCH_LABEL, href: tryHref },
-    ...EXAMPLE_SEARCHES.slice(0, 3).map((e) => ({
-      label: e.label,
-      href: `/search?q=${encodeURIComponent(e.query)}`,
-    })),
-  ];
+  const pills = EXAMPLE_SEARCHES.map((e) => ({
+    label: e.label,
+    href: `/search?q=${encodeURIComponent(e.query)}`,
+  }));
 
   return (
     <div className="relative mt-7">
@@ -30,7 +22,7 @@ export function HeroSearch() {
           id="home-q"
           name="q"
           type="search"
-          placeholder="Describe what you need — product, budget, or timing"
+          placeholder="Describe what you need — product, budget, delivery, or model number"
           className="min-w-0 flex-1 px-4 py-3.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-5"
           autoComplete="off"
         />
@@ -38,7 +30,7 @@ export function HeroSearch() {
           type="submit"
           className="btn-cta m-1.5 h-11 min-w-[5.25rem] shrink-0 px-5 text-sm leading-none sm:min-w-[5.75rem] sm:px-6"
         >
-          Search
+          Compare offers
         </button>
       </form>
 

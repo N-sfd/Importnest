@@ -12,6 +12,8 @@ type DemoOffer = {
   total: number;
   delivery: string;
   pickup: boolean;
+  /** Lower ranks first when "Fastest shipping" is selected; pickup isn't shipping, so it ranks behind delivery options. */
+  shippingSpeedRank: number;
   image: string;
 };
 
@@ -22,6 +24,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 899,
     delivery: "Thu, free",
     pickup: false,
+    shippingSpeedRank: 2,
     image: "/images/products/dishwasher.png",
   },
   {
@@ -30,6 +33,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 879.99,
     delivery: "Tomorrow",
     pickup: false,
+    shippingSpeedRank: 1,
     image: "/images/products/dishwasher.png",
   },
   {
@@ -38,6 +42,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 842,
     delivery: "Pickup today",
     pickup: true,
+    shippingSpeedRank: 3,
     image: "/images/products/dishwasher.png",
   },
 ];
@@ -45,7 +50,7 @@ const DEMO_OFFERS: DemoOffer[] = [
 function sortOffers(priority: Priority) {
   const copy = [...DEMO_OFFERS];
   if (priority === "fastest") {
-    return copy.sort((a, b) => Number(b.pickup) - Number(a.pickup) || a.total - b.total);
+    return copy.sort((a, b) => a.shippingSpeedRank - b.shippingSpeedRank);
   }
   return copy.sort((a, b) => a.total - b.total);
 }
@@ -102,6 +107,15 @@ export function HomepageCompareDemo() {
           Fastest shipping
         </button>
       </div>
+
+      <p className="mt-3 text-xs text-muted">
+        <span className="font-bold text-foreground">
+          {priority === "fastest" ? "Fastest shipping selected." : "Lowest total cost selected."}
+        </span>{" "}
+        {priority === "fastest"
+          ? `${top.retailer} is first because it offers delivery tomorrow.`
+          : `${top.retailer} is first because pickup today gives the lowest total known cost.`}
+      </p>
 
       <ul className="mt-4 space-y-2.5">
         {sorted.map((offer, index) => {
