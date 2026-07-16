@@ -12,6 +12,10 @@ import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
+import {
+  TopProductsSection,
+  withTopProductBadges,
+} from "@/components/TopProductsSection";
 import { getAuthUser } from "@/lib/auth";
 import { categoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
@@ -20,12 +24,6 @@ import { getRecentSearches } from "@/lib/recent-searches";
 import { getUserWatchlist } from "@/lib/saved-data";
 
 const categories = [
-  {
-    name: "Home",
-    desc: "Furniture and smart home",
-    href: "/search?category=home",
-    image: categoryImages.home,
-  },
   {
     name: "Electronics",
     desc: "Phones, computers, audio & TVs",
@@ -43,6 +41,12 @@ const categories = [
     desc: "New and resale options",
     href: "/search?category=footwear",
     image: categoryImages.footwear,
+  },
+  {
+    name: "Home",
+    desc: "Furniture and smart home",
+    href: "/search?category=home",
+    image: categoryImages.home,
   },
   {
     name: "Beauty",
@@ -69,8 +73,9 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, sources, recentSearches, watchlist] = await Promise.all([
+  const [popular, topProductsRaw, sources, recentSearches, watchlist] = await Promise.all([
     getPopularComparisons(4, savedIds),
+    getPopularComparisons(6, savedIds),
     prisma.source.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
@@ -79,6 +84,7 @@ export default async function HomePage() {
     user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
     user ? getUserWatchlist(user.id) : Promise.resolve([]),
   ]);
+  const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
     <PageShell>
@@ -107,7 +113,13 @@ export default async function HomePage() {
               >
                 approved retailers
               </Link>{" "}
-              only.
+              only.{" "}
+              <Link
+                href="#total-known-cost-preview"
+                className="font-semibold text-link underline-offset-2 hover:underline"
+              >
+                Why total cost matters
+              </Link>
             </p>
 
             <HeroSearch />
@@ -145,6 +157,8 @@ export default async function HomePage() {
         </Link>
       </div>
       <DepartmentGrid categories={categories} />
+
+      <TopProductsSection items={topProducts} />
 
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
