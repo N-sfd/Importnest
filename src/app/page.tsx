@@ -128,7 +128,12 @@ export default async function HomePage() {
 
       <HomepageCompareDemo />
 
-      <PriceAlertTeaser signedIn={Boolean(user)} />
+      <PriceAlertTeaser
+        signedIn={Boolean(user)}
+        preview={
+          watchlist.find((i) => i.alertId != null) ?? watchlist[0] ?? null
+        }
+      />
 
       <div className="mt-8 flex items-end justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
