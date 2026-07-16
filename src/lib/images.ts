@@ -1,5 +1,10 @@
 /** Stable image paths for seeded / demo products and categories. */
 
+import {
+  categoryImageSrc,
+  categoryImages as sharedCategoryImages,
+} from "@/lib/category-visuals";
+
 /** Compact brand mark used as a product-card placeholder. */
 export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
 
@@ -28,18 +33,17 @@ export const homeDealImages: Record<string, string> = Object.fromEntries(
   Object.entries(PRODUCT_FILES).map(([id, file]) => [id, `/images/home/deals/${file}`]),
 );
 
-/** Legacy / shared category paths. */
+/** Shared category paths — single source in category-visuals.ts. */
 export const categoryImages: Record<string, string> = {
-  electronics: "/images/categories/electronics.png",
-  appliances: "/images/categories/appliances.png",
-  footwear: "/images/categories/footwear.png",
-  home: "/images/categories/home.png",
+  ...sharedCategoryImages,
+  /** Extra homepage/nav key kept for audio browsing cards. */
   headphones: "/images/categories/headphones.png",
-  outdoors: "/images/categories/outdoors.png",
-  automotive: "/images/categories/automotive.png",
 };
 
-/** Homepage Shop by Category imagery. */
+/**
+ * Homepage Shop by Category imagery.
+ * Prefer home-specific assets when present; otherwise shared category visuals.
+ */
 export const homeCategoryImages: Record<string, string> = {
   headphones: "/images/home/categories/headphones.png",
   outdoors: "/images/home/categories/outdoors.png",
@@ -47,6 +51,16 @@ export const homeCategoryImages: Record<string, string> = {
   appliances: "/images/home/categories/appliances.png",
   electronics: "/images/home/categories/electronics.png",
 };
+
+/** Resolve a category image for cards/headers — never returns a broken path. */
+export function categoryImageFor(category: string, fallback = BRAND_FALLBACK_IMAGE) {
+  return (
+    homeCategoryImages[category] ??
+    categoryImageSrc(category) ??
+    categoryImages[category] ??
+    fallback
+  );
+}
 
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 

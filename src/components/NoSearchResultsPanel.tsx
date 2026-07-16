@@ -3,6 +3,7 @@ import {
   SecondaryAction,
   StatusPanel,
 } from "@/components/StatusPanel";
+import { CategoryVisualCard } from "@/components/CategoryVisualCard";
 import type { ResultsPageParams } from "@/components/SearchResultsLayout";
 import { browseCategoryHref } from "@/lib/search-intent";
 
@@ -63,7 +64,11 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
     : "/";
 
   return (
-    <StatusPanel
+    <div className="space-y-4">
+      {params.category ? (
+        <CategoryVisualCard category={params.category} compact />
+      ) : null}
+      <StatusPanel
       title="No matching product found"
       description={
         params.q
@@ -87,5 +92,6 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
         </>
       }
     />
+    </div>
   );
 }

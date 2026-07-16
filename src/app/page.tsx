@@ -3,16 +3,21 @@ import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { HeroSearch } from "@/components/HeroSearch";
-import { HomepageCompareDemo } from "@/components/HomepageCompareDemo";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
-import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
+import {
+  TopProductsSection,
+  withTopProductBadges,
+} from "@/components/TopProductsSection";
+import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
-import { homeCategoryImages } from "@/lib/images";
+import { getBestDeals } from "@/lib/best-deals";
+import { categoryDescriptionFor } from "@/lib/category-visuals";
+import { categoryImageFor } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 import { getRecentSearches } from "@/lib/recent-searches";
@@ -21,33 +26,33 @@ import { getUserWatchlist } from "@/lib/saved-data";
 const categories = [
   {
     name: "Headphones / Audio",
-    desc: "Headphones, speakers & HiFi",
+    desc: categoryDescriptionFor("electronics"),
     href: "/search?q=headphones&category=electronics",
-    image: homeCategoryImages.headphones,
+    image: categoryImageFor("headphones"),
   },
   {
     name: "Leisure & Outdoors",
-    desc: "Gear for travel and outdoor time",
+    desc: categoryDescriptionFor("outdoors"),
     href: "/search?q=outdoors&category=footwear",
-    image: homeCategoryImages.outdoors,
+    image: categoryImageFor("outdoors"),
   },
   {
     name: "Automotive",
-    desc: "Car accessories and essentials",
+    desc: categoryDescriptionFor("automotive"),
     href: "/search?q=automotive",
-    image: homeCategoryImages.automotive,
+    image: categoryImageFor("automotive"),
   },
   {
     name: "Appliances",
-    desc: "Kitchen and laundry",
+    desc: categoryDescriptionFor("appliances"),
     href: "/search?category=appliances",
-    image: homeCategoryImages.appliances,
+    image: categoryImageFor("appliances"),
   },
   {
     name: "Electronics",
-    desc: "Phones, computers, audio & TVs",
+    desc: categoryDescriptionFor("electronics"),
     href: "/search?category=electronics",
-    image: homeCategoryImages.electronics,
+    image: categoryImageFor("electronics"),
   },
 ];
 
@@ -62,21 +67,56 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, sources, recentSearches, watchlist] = await Promise.all([
-    getPopularComparisons(4, savedIds),
-    prisma.source.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-    user ? getUserWatchlist(user.id) : Promise.resolve([]),
-  ]);
+  const [popular, topProductsRaw, bestDeals, sources, recentSearches, watchlist] =
+    await Promise.all([
+      getPopularComparisons(4, savedIds),
+      getPopularComparisons(6, savedIds),
+      getBestDeals(6, savedIds),
+      prisma.source.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+      user ? getUserWatchlist(user.id) : Promise.resolve([]),
+    ]);
+  const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
     <PageShell>
-      {/* 1. Hero / main search */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+      <RecentSearches items={recentSearches} />
+      {user ? <SavedAlertsPreview items={watchlist} /> : null}
+
+      {/* 1. Shop by Category */}
+      <section className="mt-10" aria-labelledby="shop-category-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="shop-category-heading"
+              className="text-xl font-bold tracking-tight text-navy-900"
+            >
+              Shop by Category
+            </h2>
+            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+          </div>
+          <Link
+            href="/search?category=electronics"
+            className="text-sm font-semibold text-link hover:underline"
+          >
+            View all
+          </Link>
+        </div>
+        <CategoryImageGrid items={categories} />
+      </section>
+
+      {/* 2. Top Products */}
+      <TopProductsSection items={topProducts} />
+
+      {/* 3. Best Deals */}
+      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
+
+      {/* 4. Compare trusted offers — after Best Deals */}
+      <section className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
@@ -114,44 +154,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <RecentSearches items={recentSearches} />
-
-      {/* 2. Shop by Category */}
-      <section className="mt-10" aria-labelledby="shop-category-heading">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2
-              id="shop-category-heading"
-              className="text-xl font-bold tracking-tight text-navy-900"
-            >
-              Shop by Category
-            </h2>
-            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
-          </div>
-          <Link
-            href="/search?category=electronics"
-            className="text-sm font-semibold text-link hover:underline"
-          >
-            View all
-          </Link>
-        </div>
-        <CategoryImageGrid items={categories} />
-      </section>
-
-      {/* 3. Comparison preview — before Popular comparisons */}
-      <HomepageCompareDemo />
-
-      {/* 4. Popular comparisons */}
+      {/* 5. Popular Comparisons */}
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
-      {/* 5. Track Total Known Cost / Alerts */}
-      <PriceAlertTeaser
-        signedIn={Boolean(user)}
-        preview={watchlist[0] ?? null}
-      />
-      {user ? <SavedAlertsPreview items={watchlist} /> : null}
-
-      {/* 6. How Importnest works */}
+      {/* 6. How it works */}
       <HowItWorks />
 
       {/* 7. Approved sources / trust */}
