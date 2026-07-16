@@ -3,13 +3,32 @@
 /** Compact brand mark used as a product-card placeholder. */
 export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
 
-export const productImages: Record<string, string> = {
-  "cp-apex-ah4200": "/images/products/dishwasher.png",
-  "cp-air-purifier": "/images/products/air-purifier.png",
-  "cp-running-shoe": "/images/products/running-shoe.png",
-  "cp-cordless-vacuum": "/images/products/cordless-vacuum.png",
+const PRODUCT_FILES: Record<string, string> = {
+  "cp-apex-ah4200": "dishwasher.png",
+  "cp-air-purifier": "air-purifier.png",
+  "cp-running-shoe": "running-shoe.png",
+  "cp-cordless-vacuum": "cordless-vacuum.png",
 };
 
+/** App-wide product thumbnails (compare, saved, search). */
+export const productImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [id, `/images/products/${file}`]),
+);
+
+/** Homepage Top Products imagery. */
+export const homeTopProductImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [
+    id,
+    `/images/home/top-products/${file}`,
+  ]),
+);
+
+/** Homepage Best Deals imagery. */
+export const homeDealImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [id, `/images/home/deals/${file}`]),
+);
+
+/** Legacy / shared category paths. */
 export const categoryImages: Record<string, string> = {
   electronics: "/images/categories/electronics.png",
   appliances: "/images/categories/appliances.png",
@@ -20,10 +39,27 @@ export const categoryImages: Record<string, string> = {
   automotive: "/images/categories/automotive.png",
 };
 
+/** Homepage Shop by Category imagery. */
+export const homeCategoryImages: Record<string, string> = {
+  headphones: "/images/home/categories/headphones.png",
+  outdoors: "/images/home/categories/outdoors.png",
+  automotive: "/images/home/categories/automotive.png",
+  appliances: "/images/home/categories/appliances.png",
+  electronics: "/images/home/categories/electronics.png",
+};
+
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 
 export function productImageFor(productId: string) {
   return productImages[productId] ?? BRAND_FALLBACK_IMAGE;
+}
+
+export function homeTopProductImageFor(productId: string) {
+  return homeTopProductImages[productId] ?? productImageFor(productId);
+}
+
+export function homeDealImageFor(productId: string) {
+  return homeDealImages[productId] ?? productImageFor(productId);
 }
 
 export function isBrandFallbackImage(src: string) {

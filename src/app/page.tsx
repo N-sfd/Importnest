@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
-import { DepartmentGrid } from "@/components/DepartmentCard";
+import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { FeaturedComparison } from "@/components/FeaturedComparison";
 import { HeroSearch } from "@/components/HeroSearch";
-import { HomepageCompareDemo } from "@/components/HomepageCompareDemo";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
-import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
@@ -19,7 +17,7 @@ import {
 import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
 import { getBestDeals } from "@/lib/best-deals";
-import { categoryImages } from "@/lib/images";
+import { homeCategoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 import { getRecentSearches } from "@/lib/recent-searches";
@@ -30,31 +28,31 @@ const categories = [
     name: "Headphones / Audio",
     desc: "Headphones, speakers & HiFi",
     href: "/search?q=headphones&category=electronics",
-    image: categoryImages.headphones,
+    image: homeCategoryImages.headphones,
   },
   {
     name: "Leisure & Outdoors",
     desc: "Gear for travel and outdoor time",
     href: "/search?q=outdoors&category=footwear",
-    image: categoryImages.outdoors,
+    image: homeCategoryImages.outdoors,
   },
   {
     name: "Automotive",
     desc: "Car accessories and essentials",
     href: "/search?q=automotive",
-    image: categoryImages.automotive,
+    image: homeCategoryImages.automotive,
   },
   {
     name: "Appliances",
     desc: "Kitchen and laundry",
     href: "/search?category=appliances",
-    image: categoryImages.appliances,
+    image: homeCategoryImages.appliances,
   },
   {
     name: "Electronics",
     desc: "Phones, computers, audio & TVs",
     href: "/search?category=electronics",
-    image: categoryImages.electronics,
+    image: homeCategoryImages.electronics,
   },
 ];
 
@@ -86,6 +84,7 @@ export default async function HomePage() {
 
   return (
     <PageShell>
+      {/* 1. Hero */}
       <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
@@ -111,13 +110,7 @@ export default async function HomePage() {
               >
                 approved retailers
               </Link>{" "}
-              only.{" "}
-              <Link
-                href="#total-known-cost-preview"
-                className="font-semibold text-link underline-offset-2 hover:underline"
-              >
-                Why total cost matters
-              </Link>
+              only.
             </p>
 
             <HeroSearch />
@@ -131,41 +124,49 @@ export default async function HomePage() {
       </section>
 
       <RecentSearches items={recentSearches} />
-      <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
       {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
-      <ApprovedSourcesStrip sources={sources} />
-
-      <HomepageCompareDemo />
-
-      <PriceAlertTeaser
-        signedIn={Boolean(user)}
-        preview={
-          watchlist.find((i) => i.alertId != null) ?? watchlist[0] ?? null
-        }
-      />
-
-      <div className="mt-8 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-navy-900">Shop by department</h2>
-          <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+      {/* 2. Shop by Category */}
+      <section className="mt-10" aria-labelledby="shop-category-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="shop-category-heading"
+              className="text-xl font-bold tracking-tight text-navy-900"
+            >
+              Shop by Category
+            </h2>
+            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+          </div>
+          <Link
+            href="/search?category=electronics"
+            className="text-sm font-semibold text-link hover:underline"
+          >
+            View all
+          </Link>
         </div>
-        <Link
-          href="/search?category=electronics"
-          className="text-sm font-semibold text-link hover:underline"
-        >
-          View all
-        </Link>
-      </div>
-      <DepartmentGrid categories={categories} />
+        <CategoryImageGrid items={categories} />
+      </section>
 
+      {/* 3. Top Products */}
       <TopProductsSection items={topProducts} />
 
+      {/* 4. Best Deals */}
       <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
 
+      {/* 5. Popular Comparisons */}
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
+      {/* Featured single comparison (compact, after popular) */}
+      <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
+
+      {/* 6. How it works */}
       <HowItWorks />
+
+      {/* 7. Approved sources / trust */}
+      <div id="approved-sources" className="scroll-mt-24">
+        <ApprovedSourcesStrip sources={sources} />
+      </div>
 
       <BackendLinks className="mt-6" />
     </PageShell>
