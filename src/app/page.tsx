@@ -16,7 +16,9 @@ import {
   TopProductsSection,
   withTopProductBadges,
 } from "@/components/TopProductsSection";
+import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
+import { getBestDeals } from "@/lib/best-deals";
 import { categoryImages } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
@@ -73,17 +75,19 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, topProductsRaw, sources, recentSearches, watchlist] = await Promise.all([
-    getPopularComparisons(4, savedIds),
-    getPopularComparisons(6, savedIds),
-    prisma.source.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-    user ? getUserWatchlist(user.id) : Promise.resolve([]),
-  ]);
+  const [popular, topProductsRaw, bestDeals, sources, recentSearches, watchlist] =
+    await Promise.all([
+      getPopularComparisons(4, savedIds),
+      getPopularComparisons(6, savedIds),
+      getBestDeals(6, savedIds),
+      prisma.source.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+      user ? getUserWatchlist(user.id) : Promise.resolve([]),
+    ]);
   const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
@@ -159,6 +163,8 @@ export default async function HomePage() {
       <DepartmentGrid categories={categories} />
 
       <TopProductsSection items={topProducts} />
+
+      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
 
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
