@@ -54,9 +54,9 @@ export function TotalKnownCostHook() {
   const activeTotal = total(active);
 
   return (
-    <aside className="relative mt-7 w-full rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm sm:mt-0 sm:max-w-md sm:justify-self-end">
+    <aside className="relative mt-7 w-full rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)] sm:mt-0 sm:max-w-md sm:justify-self-end">
       <div className="flex items-start gap-3">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/20 bg-white">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-white">
           <Image
             src="/products/running-shoe.png"
             alt=""
@@ -66,9 +66,13 @@ export function TotalKnownCostHook() {
           />
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-cta">Total known cost</p>
-          <p className="mt-0.5 text-sm font-semibold text-white">Stride Velocity Run · Size 9</p>
-          <p className="mt-1 text-xs text-white/65">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-accent">
+            Total known cost
+          </p>
+          <p className="mt-0.5 text-sm font-semibold text-navy-900">
+            Stride Velocity Run · Size 9
+          </p>
+          <p className="mt-1 text-xs text-muted">
             Item + shipping + fees — not just the sticker price.
           </p>
         </div>
@@ -91,30 +95,30 @@ export function TotalKnownCostHook() {
                 onClick={() => setSelected(offer.id)}
                 className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition ${
                   isOn
-                    ? "border-cta bg-cta/15"
-                    : "border-white/10 bg-navy-950/40 hover:border-white/25"
+                    ? "border-accent bg-accent/10"
+                    : "border-border bg-surface hover:border-accent/50"
                 }`}
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-sm font-semibold text-white">{offer.retailer}</span>
+                    <span className="text-sm font-semibold text-navy-900">{offer.retailer}</span>
                     {isWinner ? (
                       <span className="rounded-full bg-cta px-1.5 py-0.5 text-[10px] font-bold text-white">
                         Lowest total
                       </span>
                     ) : null}
                   </span>
-                  <span className="mt-0.5 block text-[11px] text-white/55">
+                  <span className="mt-0.5 block text-[11px] text-muted">
                     ${offer.item.toFixed(2)} item
                     {offer.shipping > 0 ? ` + $${offer.shipping.toFixed(2)} ship` : " + free ship"}
                     {offer.fees > 0 ? ` + $${offer.fees.toFixed(2)} fees` : ""}
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block text-sm font-extrabold tabular-nums text-white">
+                  <span className="block text-sm font-extrabold tabular-nums text-navy-900">
                     ${t.toFixed(2)}
                   </span>
-                  <span className="text-[10px] text-white/50">{offer.delivery}</span>
+                  <span className="text-[10px] text-muted">{offer.delivery}</span>
                 </span>
               </button>
             </li>
@@ -122,24 +126,24 @@ export function TotalKnownCostHook() {
         })}
       </ul>
 
-      <div className="mt-3 rounded-xl border border-white/10 bg-navy-950/50 px-3 py-2.5">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+      <div className="mt-3 rounded-xl border border-border bg-surface px-3 py-2.5">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Why totals matter
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-white/80">
+        <p className="mt-1 text-xs leading-relaxed text-foreground/80">
           {active.retailer} lists at{" "}
-          <span className="font-semibold text-white">${active.item.toFixed(2)}</span>
+          <span className="font-semibold text-navy-900">${active.item.toFixed(2)}</span>
           {active.id === winner.id ? (
             <>
               {" "}
               — and still wins on{" "}
-              <span className="font-semibold text-cta">${activeTotal.toFixed(2)}</span> total known
-              cost.
+              <span className="font-semibold text-accent">${activeTotal.toFixed(2)}</span> total
+              known cost.
             </>
           ) : (
             <>
               , but after shipping/fees the total is{" "}
-              <span className="font-semibold text-white">${activeTotal.toFixed(2)}</span>. The
+              <span className="font-semibold text-navy-900">${activeTotal.toFixed(2)}</span>. The
               lowest sticker is not always the lowest final price.
             </>
           )}
