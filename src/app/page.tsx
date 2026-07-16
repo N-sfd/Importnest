@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
-import { FeaturedComparison } from "@/components/FeaturedComparison";
 import { HeroSearch } from "@/components/HeroSearch";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
@@ -157,14 +156,11 @@ export default async function HomePage() {
       {/* 5. Popular Comparisons */}
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
-      {/* Featured single comparison (compact, after popular) */}
-      <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
-
       {/* 6. How it works */}
       <HowItWorks />
 
       {/* 7. Approved sources / trust */}
-      <div id="approved-sources" className="scroll-mt-24">
+      <div id="approved-sources" className="scroll-mt-24 mt-10">
         <ApprovedSourcesStrip sources={sources} />
       </div>
 

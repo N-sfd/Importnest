@@ -76,26 +76,27 @@ const STEPS = [
   {
     n: "01",
     label: "Describe what you need",
-    detail: "Natural language, model, or UPC",
+    detail: "Search by natural language, model number, UPC, or product URL.",
     Preview: MiniSearchPreview,
   },
   {
     n: "02",
     label: "Match approved listings",
-    detail: "Only trusted source connectors",
+    detail: "Importnest compares listings from reviewed sources and avoids unsafe matches.",
     Preview: MiniApprovedPreview,
   },
   {
     n: "03",
     label: "Compare with clarity",
-    detail: "Total cost, delivery, protection",
+    detail:
+      "See total known cost, delivery, condition, protection, and freshness in one view.",
     Preview: MiniComparePreview,
   },
 ] as const;
 
 export function HowItWorks() {
   return (
-    <section className="panel mt-8 p-6 sm:p-7">
+    <section className="panel mt-10 p-6 sm:p-7">
       <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
       <ol className="mt-5 grid gap-4 sm:grid-cols-3">
         {STEPS.map(({ n, label, detail, Preview }) => (
