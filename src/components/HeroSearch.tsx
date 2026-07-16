@@ -21,7 +21,7 @@ export function HeroSearch() {
     <div className="relative mt-7">
       <form
         action="/search"
-        className="flex items-center overflow-hidden rounded-full bg-white shadow-lg focus-within:ring-2 focus-within:ring-ring"
+        className="flex items-center overflow-hidden rounded-full border border-border bg-white shadow-[0_8px_24px_rgb(4_25_53/0.12)] focus-within:ring-2 focus-within:ring-ring"
       >
         <label htmlFor="home-q" className="sr-only">
           What are you shopping for?
@@ -43,13 +43,13 @@ export function HeroSearch() {
       </form>
 
       <div className="mt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-white/50">Try this</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Try this</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {pills.map((pill) => (
             <Link
               key={pill.href + pill.label}
               href={pill.href}
-              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:border-cta hover:bg-cta/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-full border border-border bg-panel px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:border-accent hover:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {pill.label}
             </Link>

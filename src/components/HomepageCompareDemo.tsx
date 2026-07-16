@@ -22,7 +22,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 899,
     delivery: "Thu, free",
     pickup: false,
-    image: "/products/dishwasher.png",
+    image: "/images/products/dishwasher.png",
   },
   {
     id: "retail",
@@ -30,7 +30,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 879.99,
     delivery: "Tomorrow",
     pickup: false,
-    image: "/products/dishwasher.png",
+    image: "/images/products/dishwasher.png",
   },
   {
     id: "local",
@@ -38,7 +38,7 @@ const DEMO_OFFERS: DemoOffer[] = [
     total: 842,
     delivery: "Pickup today",
     pickup: true,
-    image: "/products/dishwasher.png",
+    image: "/images/products/dishwasher.png",
   },
 ];
 

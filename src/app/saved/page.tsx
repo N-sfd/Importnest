@@ -1,9 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
 import { WatchlistProductCard } from "@/components/WatchlistProductCard";
 import { getOrCreateAppUser } from "@/lib/auth";
+import { productImageFor } from "@/lib/images";
 import { getUserWatchlist } from "@/lib/saved-data";
+
+const EMPTY_SUGGESTIONS = [
+  { id: "cp-apex-ah4200", label: "Apex Quiet Dishwasher" },
+  { id: "cp-running-shoe", label: "Stride Velocity Run" },
+  { id: "cp-air-purifier", label: "Aura Pure HEPA" },
+  { id: "cp-cordless-vacuum", label: "Apex Stick Vacuum" },
+] as const;
 
 export default async function SavedPage() {
   const user = await getOrCreateAppUser();
@@ -61,7 +70,31 @@ export default async function SavedPage() {
                 <SecondaryAction href="/search">Search products</SecondaryAction>
               </>
             }
-          />
+          >
+            <ul className="mx-auto mt-6 flex max-w-lg flex-wrap justify-center gap-3">
+              {EMPTY_SUGGESTIONS.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/compare/${p.id}`}
+                    className="flex w-[6.5rem] flex-col items-center gap-2 rounded-xl border border-border bg-surface p-2 transition hover:border-accent"
+                  >
+                    <span className="relative block h-14 w-14 overflow-hidden rounded-lg bg-white">
+                      <Image
+                        src={productImageFor(p.id)}
+                        alt=""
+                        fill
+                        className="object-contain p-1"
+                        sizes="56px"
+                      />
+                    </span>
+                    <span className="line-clamp-2 text-center text-[11px] font-semibold text-navy-900">
+                      {p.label}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </StatusPanel>
           <StatusBanner
             tone="info"
             title="No alerts yet"

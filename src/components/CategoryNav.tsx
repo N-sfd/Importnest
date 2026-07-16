@@ -113,7 +113,7 @@ export function CategoryNav() {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative border-b border-border bg-navy-800 text-white/95">
+    <div ref={rootRef} className="relative border-b border-border bg-navy-800/95 text-white/95">
       <div className="mx-auto flex max-w-[1200px] items-stretch gap-1 px-2 py-1.5 text-sm sm:px-4">
         <button
           type="button"

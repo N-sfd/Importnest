@@ -82,28 +82,28 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-navy-900 px-5 py-8 text-white shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-ring/20 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/15 blur-3xl"
+          className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/10 blur-3xl"
         />
 
         <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
               Compare trusted offers in one clear view
             </h1>
-            <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">
+            <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
               Search once. See{" "}
-              <span className="font-semibold text-cta">Total Known Cost</span> — item + shipping +
+              <span className="font-semibold text-accent">Total Known Cost</span> — item + shipping +
               fees — from{" "}
               <Link
                 href="#approved-sources"
-                className="font-semibold text-cta underline-offset-2 hover:underline"
+                className="font-semibold text-link underline-offset-2 hover:underline"
               >
                 approved retailers
               </Link>{" "}
@@ -111,7 +111,7 @@ export default async function HomePage() {
             </p>
 
             <HeroSearch />
-            <p className="relative mt-3 text-xs text-white/55">
+            <p className="relative mt-3 text-xs text-muted">
               Estimates are labeled. Sponsored placements never change organic ranking.
             </p>
           </div>
@@ -128,7 +128,12 @@ export default async function HomePage() {
 
       <HomepageCompareDemo />
 
-      <PriceAlertTeaser signedIn={Boolean(user)} />
+      <PriceAlertTeaser
+        signedIn={Boolean(user)}
+        preview={
+          watchlist.find((i) => i.alertId != null) ?? watchlist[0] ?? null
+        }
+      />
 
       <div className="mt-8 flex items-end justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
