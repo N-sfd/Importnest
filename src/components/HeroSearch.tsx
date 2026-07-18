@@ -22,7 +22,7 @@ export function HeroSearch() {
           id="home-q"
           name="q"
           type="search"
-          placeholder="Describe what you need — product, budget, delivery, or model number"
+          placeholder="Search by product, model, UPC — or describe what you need"
           className="min-w-0 flex-1 px-4 py-3.5 text-sm text-foreground outline-none placeholder:text-muted sm:px-5"
           autoComplete="off"
         />

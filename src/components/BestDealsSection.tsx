@@ -47,6 +47,7 @@ export function BestDealsSection({
               currentTotal={item.currentTotal}
               previousTotal={item.previousTotal}
               dealBadge={item.dealBadge}
+              discountPercent={item.discountPercent}
               isSaved={item.isSaved}
               signedIn={signedIn}
             />

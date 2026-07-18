@@ -40,7 +40,7 @@ export function CompareMobileStickyActions({
       aria-label="Product actions"
     >
       <div className="mx-auto flex max-w-[1200px] items-center gap-2">
-        <AddToCompareButton productId={productId} productName={productName} variant="icon" />
+        <AddToCompareButton productId={productId} productName={productName} />
         {signedIn ? (
           <form
             action={

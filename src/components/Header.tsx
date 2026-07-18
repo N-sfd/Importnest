@@ -7,7 +7,7 @@ import { HeaderSearch } from "@/components/HeaderSearch";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getAuthUser } from "@/lib/auth";
 
-export async function Header() {
+export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
   const user = await getAuthUser();
 
   return (
@@ -17,7 +17,7 @@ export async function Header() {
           <BrandLink logo="logo9" onDark={false} />
           <HeaderLocation />
 
-          <HeaderSearch />
+          {hideSearch ? null : <HeaderSearch />}
 
           <nav className="order-2 ml-auto flex shrink-0 items-center gap-1 text-sm sm:order-none">
             <Link

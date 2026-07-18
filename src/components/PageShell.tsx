@@ -5,15 +5,17 @@ import { Header } from "@/components/Header";
 export function PageShell({
   children,
   width = "default",
+  hideHeaderSearch = false,
 }: {
   children: ReactNode;
   width?: "default" | "narrow";
+  hideHeaderSearch?: boolean;
 }) {
   const maxWidth = width === "narrow" ? "max-w-3xl" : "max-w-[1200px]";
 
   return (
     <div className="flex min-h-screen flex-col bg-surface text-foreground">
-      <Header />
+      <Header hideSearch={hideHeaderSearch} />
       <main className={`mx-auto w-full flex-1 px-3 py-6 sm:px-4 sm:py-8 ${maxWidth}`}>
         {children}
       </main>

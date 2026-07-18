@@ -13,6 +13,8 @@ export type DealProductCardProps = {
   currentTotal: number;
   previousTotal: number | null;
   dealBadge: string;
+  /** Real percent drop vs a prior day's total — drives the louder badge treatment when present. */
+  discountPercent: number | null;
   isSaved: boolean;
   signedIn: boolean;
 };
@@ -47,6 +49,7 @@ export function DealProductCard({
   currentTotal,
   previousTotal,
   dealBadge,
+  discountPercent,
   isSaved,
   signedIn,
 }: DealProductCardProps) {
@@ -64,8 +67,12 @@ export function DealProductCard({
             className={`${productThumbClass(imageSrc)} transition duration-300 group-hover:scale-[1.03]`}
             sizes="(max-width:640px) 50vw, (max-width:1280px) 25vw, 16vw"
           />
-          <span className="absolute left-2 top-2 rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-bold text-white">
-            {dealBadge}
+          <span
+            className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              discountPercent != null ? "bg-cta text-white" : "bg-navy-900 text-white"
+            }`}
+          >
+            {discountPercent != null ? `Save ${discountPercent}%` : dealBadge}
           </span>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-1 p-3 pr-10">
@@ -114,7 +121,7 @@ export function DealProductCard({
             <HeartIcon filled={false} />
           </Link>
         )}
-        <AddToCompareButton productId={productId} productName={productName} variant="icon" />
+        <AddToCompareButton productId={productId} productName={productName} />
       </div>
     </div>
   );

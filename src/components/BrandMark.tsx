@@ -11,8 +11,8 @@ const SIZES = {
 
 /** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
 const HEADER_LOCKUP = {
-  sm: { textH: 27, iconH: 20, gap: 5 },
-  md: { textH: 34, iconH: 26, gap: 6 },
+  sm: { textH: 32, iconH: 24, gap: 6 },
+  md: { textH: 40, iconH: 30, gap: 8 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";

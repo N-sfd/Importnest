@@ -18,9 +18,9 @@ function MiniApprovedPreview() {
   return (
     <ul className="space-y-1.5" aria-hidden>
       {[
-        { name: "Best Buy", badge: "National" },
-        { name: "Apex Home Store", badge: "Manufacturer" },
-        { name: "Local Apex Dealer", badge: "Authorized" },
+        { name: "Manufacturer store", badge: "Official" },
+        { name: "Authorized dealer", badge: "Verified" },
+        { name: "Licensed marketplace", badge: "Reviewed" },
       ].map((row) => (
         <li
           key={row.name}
@@ -46,7 +46,7 @@ function MiniComparePreview() {
       aria-hidden
     >
       <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-        Example layout
+        Preview
       </p>
       <div className="flex justify-between text-[11px] text-muted">
         <span>Item price</span>

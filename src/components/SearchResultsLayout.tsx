@@ -430,13 +430,15 @@ export function SearchResultProductCard({
               Save
             </Link>
           )}
-          <AddToCompareButton productId={product.id} productName={product.productName} />
-          <Link
-            href={`/compare/${product.id}`}
-            className="btn-cta w-full px-3 py-2 text-center text-sm"
-          >
-            Compare
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/compare/${product.id}`}
+              className="btn-cta flex-1 px-3 py-2 text-center text-sm"
+            >
+              Compare
+            </Link>
+            <AddToCompareButton productId={product.id} productName={product.productName} />
+          </div>
         </div>
       </div>
     </article>

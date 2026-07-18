@@ -200,13 +200,15 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
 
         <div className="flex shrink-0 flex-col justify-between gap-3 border-t border-border pt-3 lg:w-44 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
           <div className="flex flex-col gap-2">
-            <Link
-              href={`/compare/${item.canonicalProductId}`}
-              className="btn-cta px-3 py-2 text-center text-sm"
-            >
-              View comparison
-            </Link>
-            <AddToCompareButton productId={item.canonicalProductId} productName={item.productName} />
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/compare/${item.canonicalProductId}`}
+                className="btn-cta flex-1 px-3 py-2 text-center text-sm"
+              >
+                View comparison
+              </Link>
+              <AddToCompareButton productId={item.canonicalProductId} productName={item.productName} />
+            </div>
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}
