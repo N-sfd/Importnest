@@ -4,6 +4,6 @@ export type ExampleSearch = { label: string; query: string };
 export const EXAMPLE_SEARCHES: ExampleSearch[] = [
   { label: "Quiet dishwasher under $900", query: "Quiet dishwasher under $900" },
   { label: "College backpack under $100", query: "College backpack under $100" },
-  { label: "Compare iPhone offers", query: "iPhone" },
+  { label: "Compare cordless vacuum offers", query: "cordless vacuum" },
   { label: "Best laptop for university", query: "Best laptop for university" },
 ];

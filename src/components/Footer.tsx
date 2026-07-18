@@ -25,11 +25,6 @@ export function Footer() {
                 Browse appliances
               </Link>
             </li>
-            <li>
-              <Link href="/compare/cp-apex-ah4200" className="transition hover:text-cta">
-                Live demo product
-              </Link>
-            </li>
           </ul>
         </div>
         <div>

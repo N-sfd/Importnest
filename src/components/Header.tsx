@@ -20,7 +20,7 @@ export async function Header() {
 
           <nav className="order-2 ml-auto flex shrink-0 items-center gap-1 text-sm sm:order-none">
             <Link
-              href="/saved"
+              href={user ? "/saved" : "/login?next=/saved"}
               className="rounded-xl px-2.5 py-1.5 font-semibold text-navy-900 transition hover:bg-navy-100 sm:px-3"
             >
               Saved

@@ -28,7 +28,6 @@ export const topNavLinks: NavLink[] = [
   { label: "Beauty", href: "/search?category=beauty-devices" },
   { label: "Accessories", href: "/search?category=accessories" },
   { label: "Today's deals", href: "/search?q=deals", featured: true },
-  { label: "Compare demo", href: "/compare/cp-apex-ah4200", featured: true },
 ];
 
 /** Full "All" department flyout — Home first; Electronics nests phones/computers/audio. */
@@ -117,6 +116,4 @@ export const navDepartments: NavDepartment[] = [
 export const utilityLinks: NavLink[] = [
   { label: "Saved lists", href: "/saved" },
   { label: "Price alerts", href: "/saved" },
-  { label: "Best overall demo", href: "/compare/cp-apex-ah4200" },
-  { label: "Admin review", href: "/admin/match-review" },
 ];

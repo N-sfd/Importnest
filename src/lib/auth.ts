@@ -10,6 +10,15 @@ export async function getAuthUser() {
   return user;
 }
 
+/** Cheap read-only admin check — no upsert/write, safe to call on every admin-route request. */
+export async function isAppUserAdmin(userId: string): Promise<boolean> {
+  const appUser = await prisma.appUser.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
+  return appUser?.isAdmin ?? false;
+}
+
 /**
  * Supabase's own user id is used directly as AppUser.id (no separate link
  * table) — it's already a stable, globally unique identifier, so a shopper's
