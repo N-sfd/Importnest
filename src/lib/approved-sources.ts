@@ -23,10 +23,10 @@ export const APPROVED_RETAILER_TRUST: Record<string, ApprovedRetailerTrust> = {
       "Apex Home Store: sold and fulfilled by the brand with full manufacturer warranty and authorized support.",
   },
   "src-retailer-direct": {
-    label: "Best Buy",
-    badge: "National retailer",
+    label: "Retailer Direct",
+    badge: "Partner retailer",
     trustHint:
-      "Best Buy: authorized national retailer with store pickup and a guaranteed 15-day return window on most new items.",
+      "Retailer Direct: an integrated retailer connector with active listing freshness and standard return handling.",
   },
   "src-local-electronics": {
     label: "Local Apex Dealer",

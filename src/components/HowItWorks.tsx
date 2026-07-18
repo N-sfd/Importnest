@@ -18,9 +18,9 @@ function MiniApprovedPreview() {
   return (
     <ul className="space-y-1.5" aria-hidden>
       {[
-        { name: "Best Buy", badge: "National" },
-        { name: "Apex Home Store", badge: "Manufacturer" },
-        { name: "Local Apex Dealer", badge: "Authorized" },
+        { name: "Manufacturer store", badge: "Official" },
+        { name: "Authorized dealer", badge: "Verified" },
+        { name: "Licensed marketplace", badge: "Reviewed" },
       ].map((row) => (
         <li
           key={row.name}
@@ -46,7 +46,7 @@ function MiniComparePreview() {
       aria-hidden
     >
       <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-        Example layout
+        Preview
       </p>
       <div className="flex justify-between text-[11px] text-muted">
         <span>Item price</span>
@@ -76,26 +76,27 @@ const STEPS = [
   {
     n: "01",
     label: "Describe what you need",
-    detail: "Natural language, model, or UPC",
+    detail: "Search by natural language, model number, UPC, or product URL.",
     Preview: MiniSearchPreview,
   },
   {
     n: "02",
     label: "Match approved listings",
-    detail: "Only trusted source connectors",
+    detail: "Importnest compares listings from reviewed sources and avoids unsafe matches.",
     Preview: MiniApprovedPreview,
   },
   {
     n: "03",
     label: "Compare with clarity",
-    detail: "Total cost, delivery, protection",
+    detail:
+      "See total known cost, delivery, condition, protection, and freshness in one view.",
     Preview: MiniComparePreview,
   },
 ] as const;
 
 export function HowItWorks() {
   return (
-    <section className="panel mt-8 p-6 sm:p-7">
+    <section className="panel mt-10 p-6 sm:p-7">
       <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
       <ol className="mt-5 grid gap-4 sm:grid-cols-3">
         {STEPS.map(({ n, label, detail, Preview }) => (

@@ -226,7 +226,7 @@ describe("buildRecommendationPanel — recommendation summary content", () => {
 
     expect(panel?.listingId).toBe("stale-cheapest");
     expect(panel?.label).toBe(NEUTRAL_RECOMMENDATION_LABEL);
-    expect(panel?.rationale).toContain("refresh live prices");
+    expect(panel?.rationale).toContain("confirm current prices");
     expect(panel?.rationale).not.toContain(`${PRIORITY_LABELS["lowest-cost"]} because`);
   });
 

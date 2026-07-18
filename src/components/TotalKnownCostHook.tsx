@@ -54,7 +54,10 @@ export function TotalKnownCostHook() {
   const activeTotal = total(active);
 
   return (
-    <aside className="relative mt-7 w-full rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)] sm:mt-0 sm:max-w-md sm:justify-self-end">
+    <aside
+      id="total-known-cost-preview"
+      className="relative mt-7 w-full scroll-mt-28 rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)] sm:mt-0 sm:max-w-md sm:justify-self-end"
+    >
       <div className="flex items-start gap-3">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-white">
           <Image

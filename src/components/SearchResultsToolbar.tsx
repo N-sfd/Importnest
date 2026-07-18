@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { RESULTS_SORT_OPTIONS, type ResultsSort } from "@/lib/search-results";
+import { CategoryVisualCard } from "@/components/CategoryVisualCard";
 import type { ResultsPageParams } from "@/components/SearchResultsLayout";
+import { RESULTS_SORT_OPTIONS, type ResultsSort } from "@/lib/search-results";
 
 function prefsChips(params: ResultsPageParams): { label: string; clearKey: string }[] {
   const chips: { label: string; clearKey: string }[] = [];
@@ -70,6 +71,9 @@ export function SearchResultsToolbar({
 
   return (
     <div className="space-y-4 border-b border-border pb-4">
+      {params.category ? (
+        <CategoryVisualCard category={params.category} compact />
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Search</p>

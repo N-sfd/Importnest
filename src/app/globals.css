@@ -141,23 +141,6 @@ a {
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
-.approved-marquee {
-  animation: approved-marquee 32s linear infinite;
-}
-
-.approved-marquee:hover {
-  animation-play-state: paused;
-}
-
-@keyframes approved-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -180,8 +163,3 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .approved-marquee {
-    animation: none;
-  }
-}

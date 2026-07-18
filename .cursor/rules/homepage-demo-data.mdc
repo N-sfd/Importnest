@@ -1,0 +1,25 @@
+---
+description: Homepage demo product data must never be treated as live retailer facts
+globs: src/data/homepage-demo-products.ts,src/app/page.tsx,src/components/TopProductsSection.tsx,src/components/BestDealsSection.tsx
+alwaysApply: false
+---
+
+# Homepage demo data
+
+`src/data/homepage-demo-products.ts` is **homepage demo data only**.
+
+- Do not use it as live retailer data.
+- Do not use these prices for production ranking.
+- Real comparison pages must use stored listings, approved source data, and PriceHistory records.
+- Demo `href`s like `/compare/demo-*` are placeholders unless a real seeded product exists (e.g. QuietWash → `cp-apex-ah4200`).
+
+## Image folders
+
+Place matching assets under:
+
+- `public/images/home/top-products/`
+- `public/images/home/deals/`
+- `public/images/home/categories/`
+- `public/images/home/automotive/`
+- `public/images/home/headphones/`
+- `public/images/home/outdoors/`

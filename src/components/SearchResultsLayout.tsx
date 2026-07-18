@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import {
   conditionBadgeLabels,
   type ResultHighlight,
@@ -429,12 +430,15 @@ export function SearchResultProductCard({
               Save
             </Link>
           )}
-          <Link
-            href={`/compare/${product.id}`}
-            className="btn-cta w-full px-3 py-2 text-center text-sm"
-          >
-            Compare
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/compare/${product.id}`}
+              className="btn-cta flex-1 px-3 py-2 text-center text-sm"
+            >
+              Compare
+            </Link>
+            <AddToCompareButton productId={product.id} productName={product.productName} />
+          </div>
         </div>
       </div>
     </article>

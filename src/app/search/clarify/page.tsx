@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { CategoryVisualCard } from "@/components/CategoryVisualCard";
 import { ClarifyQuestions } from "@/components/ClarifyQuestions";
 import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
@@ -138,11 +139,19 @@ export default async function ClarifyPage({
       {aiUnavailable ? (
         <div className="mb-4">
           <StatusBanner
-            tone="warn"
-            title="AI service unavailable"
-            description="We could not use AI assistance for this search, so we are using our standard clarifying questions instead. Your results stay just as accurate."
+            tone="info"
+            title="Using standard questions"
+            description="AI assistance is not available right now, so Importnest is using the regular guided search. Product facts and results still come from approved source data."
           />
         </div>
+      ) : null}
+      {params.category ? (
+        <CategoryVisualCard
+          category={params.category}
+          title={categoryRecord?.name}
+          className="mb-5"
+          compact
+        />
       ) : null}
       <ClarifyQuestions
         originalQuery={query}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { Freshness } from "@/components/Freshness";
 import { productImageFor, productThumbClass } from "@/lib/images";
 import { formatPriceChange, type PriceChangeTone } from "@/lib/price-change";
@@ -87,11 +88,17 @@ function PriceSparkline({ points }: { points: { day: string; total: number }[] }
   );
 }
 
+const NON_PRICE_ALERT_LABEL: Record<string, string> = {
+  "back-in-stock": "Back in stock alert",
+  "any-change": "Any price change alert",
+};
+
 export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
   const [editing, setEditing] = useState(false);
   const redirectTo = "/saved";
   const change = formatPriceChange(item.priceChange);
   const alertType = item.alertType ?? "price-drop";
+  const isPriceDropAlert = alertType === "price-drop";
   const imageSrc = productImageFor(item.canonicalProductId);
   const defaultThreshold =
     item.targetPrice != null
@@ -193,12 +200,15 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
 
         <div className="flex shrink-0 flex-col justify-between gap-3 border-t border-border pt-3 lg:w-44 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
           <div className="flex flex-col gap-2">
-            <Link
-              href={`/compare/${item.canonicalProductId}`}
-              className="btn-cta px-3 py-2 text-center text-sm"
-            >
-              View comparison
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/compare/${item.canonicalProductId}`}
+                className="btn-cta flex-1 px-3 py-2 text-center text-sm"
+              >
+                View comparison
+              </Link>
+              <AddToCompareButton productId={item.canonicalProductId} productName={item.productName} />
+            </div>
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}
@@ -243,36 +253,49 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
           id={`alert-edit-${item.canonicalProductId}`}
           className="mt-4 rounded-2xl border border-border bg-surface px-4 py-3"
         >
-          <p className="text-sm font-semibold text-navy-900">Edit price alert</p>
-          <p className="mt-0.5 text-xs text-muted">
-            Notify when the best known total cost falls to or below your target.
-          </p>
-          <form
-            action={setPriceAlertAction.bind(null, item.canonicalProductId, redirectTo)}
-            className="mt-3 flex flex-wrap items-end gap-2"
-          >
-            <div>
-              <label htmlFor={`threshold-${item.canonicalProductId}`} className="sr-only">
-                Target price
-              </label>
-              <div className="flex items-center rounded-md border border-border bg-white">
-                <span className="pl-3 text-sm text-muted">$</span>
-                <input
-                  id={`threshold-${item.canonicalProductId}`}
-                  name="threshold"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  required
-                  defaultValue={defaultThreshold}
-                  className="w-28 bg-transparent px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-            </div>
-            <button type="submit" className="btn-cta px-4 py-2 text-sm">
-              Save alert
-            </button>
-          </form>
+          {isPriceDropAlert ? (
+            <>
+              <p className="text-sm font-semibold text-navy-900">Edit price alert</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Notify when the best known total cost falls to or below your target.
+              </p>
+              <form
+                action={setPriceAlertAction.bind(null, item.canonicalProductId, redirectTo)}
+                className="mt-3 flex flex-wrap items-end gap-2"
+              >
+                <div>
+                  <label htmlFor={`threshold-${item.canonicalProductId}`} className="sr-only">
+                    Target price
+                  </label>
+                  <div className="flex items-center rounded-md border border-border bg-white">
+                    <span className="pl-3 text-sm text-muted">$</span>
+                    <input
+                      id={`threshold-${item.canonicalProductId}`}
+                      name="threshold"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      required
+                      defaultValue={defaultThreshold}
+                      className="w-28 bg-transparent px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="btn-cta px-4 py-2 text-sm">
+                  Save alert
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-navy-900">
+                {NON_PRICE_ALERT_LABEL[alertType] ?? "Alert"}
+              </p>
+              <p className="mt-0.5 text-xs text-muted">
+                This alert has no numeric target — pause or remove it below.
+              </p>
+            </>
+          )}
           {item.alertId && item.alertType ? (
             <form
               action={removeAlertAction.bind(null, item.canonicalProductId, alertType, redirectTo)}

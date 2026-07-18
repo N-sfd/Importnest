@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import {
   freshnessLabel,
   type PopularComparison,
@@ -64,6 +65,7 @@ export function PopularComparisonCard({
               </button>
             </form>
           ) : null}
+          <AddToCompareButton productId={item.productId} productName={item.productName} />
           <Link
             href={`/compare/${item.productId}`}
             className="btn-cta px-3 py-1.5 text-xs"
@@ -86,9 +88,12 @@ export function PopularComparisonsSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-8">
+    <section className="mt-10">
       <div className="flex items-end justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Popular comparisons</h2>
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-navy-900">Popular comparisons</h2>
+          <p className="mt-1 text-sm text-muted">Live totals from approved retailers</p>
+        </div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {items.map((item) => (

@@ -1,5 +1,10 @@
 import { LogoutButton } from "@/components/LogoutButton";
 import { PageShell } from "@/components/PageShell";
+import {
+  approveMatchAction,
+  markComparableAction,
+  rejectMatchAction,
+} from "@/lib/match-review-actions";
 import { prisma } from "@/lib/prisma";
 
 const resultStyle: Record<string, string> = {
@@ -17,23 +22,21 @@ type ConflictAttribute = {
 };
 
 export default async function MatchReviewPage() {
-  const review = await prisma.matchReview.findFirst({
+  const productMatch = await prisma.productMatch.findFirst({
+    where: { status: "pending" },
+    orderBy: { id: "asc" },
     include: {
-      productMatch: {
-        include: {
-          canonicalProduct: true,
-          listing: { include: { source: true } },
-        },
-      },
+      canonicalProduct: true,
+      listing: { include: { source: true } },
+      reviews: { orderBy: { createdAt: "desc" }, take: 1 },
     },
-    orderBy: { createdAt: "desc" },
   });
 
   const ranking = await prisma.rankingConfig.findFirst({
     orderBy: { version: "desc" },
   });
 
-  if (!review) {
+  if (!productMatch) {
     return (
       <PageShell>
         <h1 className="text-2xl font-bold text-foreground">Product match review</h1>
@@ -42,11 +45,12 @@ export default async function MatchReviewPage() {
     );
   }
 
-  const attributes = (JSON.parse(review.conflicts ?? "[]") as ConflictAttribute[]) ?? [];
-  const confidence = review.productMatch.confidence;
+  const latestReview = productMatch.reviews[0];
+  const attributes = (JSON.parse(latestReview?.conflicts ?? "[]") as ConflictAttribute[]) ?? [];
+  const confidence = productMatch.confidence;
   const threshold = ranking?.matchThreshold ?? 0.9;
-  const productName = `${review.productMatch.canonicalProduct.modelName}`;
-  const sourceName = review.productMatch.listing.source.name;
+  const productName = `${productMatch.canonicalProduct.modelName}`;
+  const sourceName = productMatch.listing.source.name;
 
   return (
     <PageShell>
@@ -96,15 +100,21 @@ export default async function MatchReviewPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap justify-end gap-3">
-        <button type="button" className="btn-accent px-4 py-2 text-sm text-foreground">
-          Reject match
-        </button>
-        <button type="button" className="btn-accent px-4 py-2 text-sm text-foreground">
-          Mark comparable
-        </button>
-        <button type="button" className="btn-cta px-4 py-2 text-sm">
-          Approve exact match
-        </button>
+        <form action={rejectMatchAction.bind(null, productMatch.id)}>
+          <button type="submit" className="btn-accent px-4 py-2 text-sm text-foreground">
+            Reject match
+          </button>
+        </form>
+        <form action={markComparableAction.bind(null, productMatch.id)}>
+          <button type="submit" className="btn-accent px-4 py-2 text-sm text-foreground">
+            Mark comparable
+          </button>
+        </form>
+        <form action={approveMatchAction.bind(null, productMatch.id)}>
+          <button type="submit" className="btn-cta px-4 py-2 text-sm">
+            Approve exact match
+          </button>
+        </form>
       </div>
     </PageShell>
   );

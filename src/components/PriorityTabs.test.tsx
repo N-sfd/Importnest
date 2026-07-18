@@ -114,7 +114,7 @@ describe("PriorityTabs — stale offers", () => {
     const html = renderPriorityTabs(rows);
 
     expect(html).toContain("Prices last checked");
-    expect(html).toContain("Refresh live prices");
+    expect(html).toContain("Confirm current prices");
     expect(html).toContain(NEUTRAL_RECOMMENDATION_LABEL);
   });
 

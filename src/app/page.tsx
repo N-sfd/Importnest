@@ -1,19 +1,23 @@
 import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
-import { DepartmentGrid } from "@/components/DepartmentCard";
-import { FeaturedComparison } from "@/components/FeaturedComparison";
+import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { HeroSearch } from "@/components/HeroSearch";
-import { HomepageCompareDemo } from "@/components/HomepageCompareDemo";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
-import { PriceAlertTeaser } from "@/components/PriceAlertTeaser";
 import { RecentSearches } from "@/components/RecentSearches";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
+import {
+  TopProductsSection,
+  withTopProductBadges,
+} from "@/components/TopProductsSection";
+import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
-import { categoryImages } from "@/lib/images";
+import { getBestDeals } from "@/lib/best-deals";
+import { categoryDescriptionFor } from "@/lib/category-visuals";
+import { categoryImageFor } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 import { getRecentSearches } from "@/lib/recent-searches";
@@ -21,40 +25,34 @@ import { getUserWatchlist } from "@/lib/saved-data";
 
 const categories = [
   {
-    name: "Home",
-    desc: "Furniture and smart home",
-    href: "/search?category=home",
-    image: categoryImages.home,
+    name: "Headphones / Audio",
+    desc: categoryDescriptionFor("electronics"),
+    href: "/search?q=headphones&category=electronics",
+    image: categoryImageFor("headphones"),
   },
   {
-    name: "Electronics",
-    desc: "Phones, computers, audio & TVs",
-    href: "/search?category=electronics",
-    image: categoryImages.electronics,
+    name: "Leisure & Outdoors",
+    desc: categoryDescriptionFor("outdoors"),
+    href: "/search?q=outdoors&category=footwear",
+    image: categoryImageFor("outdoors"),
+  },
+  {
+    name: "Automotive",
+    desc: categoryDescriptionFor("automotive"),
+    href: "/search?q=automotive",
+    image: categoryImageFor("automotive"),
   },
   {
     name: "Appliances",
-    desc: "Kitchen and laundry",
+    desc: categoryDescriptionFor("appliances"),
     href: "/search?category=appliances",
-    image: categoryImages.appliances,
+    image: categoryImageFor("appliances"),
   },
   {
-    name: "Footwear",
-    desc: "New and resale options",
-    href: "/search?category=footwear",
-    image: categoryImages.footwear,
-  },
-  {
-    name: "Beauty",
-    desc: "Devices and personal care",
-    href: "/search?category=beauty-devices",
-    image: categoryImages.electronics,
-  },
-  {
-    name: "Accessories",
-    desc: "Cases, chargers, bags",
-    href: "/search?category=accessories",
-    image: categoryImages.home,
+    name: "Electronics",
+    desc: categoryDescriptionFor("electronics"),
+    href: "/search?category=electronics",
+    image: categoryImageFor("electronics"),
   },
 ];
 
@@ -69,19 +67,24 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popular, sources, recentSearches, watchlist] = await Promise.all([
-    getPopularComparisons(4, savedIds),
-    prisma.source.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-    user ? getUserWatchlist(user.id) : Promise.resolve([]),
-  ]);
+  const [popular, topProductsRaw, bestDeals, sources, recentSearches, watchlist] =
+    await Promise.all([
+      getPopularComparisons(4, savedIds),
+      getPopularComparisons(6, savedIds),
+      getBestDeals(6, savedIds),
+      prisma.source.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+      user ? getUserWatchlist(user.id) : Promise.resolve([]),
+    ]);
+  const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
-    <PageShell>
+    <PageShell hideHeaderSearch>
+      {/* 1. Hero — headline + the one consolidated search bar + Total Known Cost widget */}
       <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
@@ -95,7 +98,7 @@ export default async function HomePage() {
         <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
-              Compare trusted offers in one clear view
+              See the real total cost before you click buy.
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
               Search once. See{" "}
@@ -121,34 +124,46 @@ export default async function HomePage() {
       </section>
 
       <RecentSearches items={recentSearches} />
-      <FeaturedComparison item={popular[0] ?? null} signedIn={Boolean(user)} />
       {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
-      <ApprovedSourcesStrip sources={sources} />
+      {/* 2. Shop by Category */}
+      <section className="mt-10" aria-labelledby="shop-category-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="shop-category-heading"
+              className="text-xl font-bold tracking-tight text-navy-900"
+            >
+              Shop by Category
+            </h2>
+            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+          </div>
+          <Link
+            href="/search?category=electronics"
+            className="text-sm font-semibold text-link hover:underline"
+          >
+            View all
+          </Link>
+        </div>
+        <CategoryImageGrid items={categories} />
+      </section>
 
-      <HomepageCompareDemo />
+      {/* 3. Top Products — trending / most-compared */}
+      <TopProductsSection items={topProducts} />
 
-      <PriceAlertTeaser
-        signedIn={Boolean(user)}
-        preview={
-          watchlist.find((i) => i.alertId != null) ?? watchlist[0] ?? null
-        }
-      />
+      {/* 4. Best Deals — ranked by real discount, badge emphasized */}
+      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
 
-      <div className="mt-8 flex items-end justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Shop by department</h2>
-        <Link
-          href="/search?category=home"
-          className="text-sm font-semibold text-link hover:underline"
-        >
-          View all
-        </Link>
-      </div>
-      <DepartmentGrid categories={categories} />
-
+      {/* 5. Popular Comparisons */}
       <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
 
+      {/* 6. How it works */}
       <HowItWorks />
+
+      {/* 7. Approved sources / trust */}
+      <div id="approved-sources" className="scroll-mt-24 mt-10">
+        <ApprovedSourcesStrip sources={sources} />
+      </div>
 
       <BackendLinks className="mt-6" />
     </PageShell>

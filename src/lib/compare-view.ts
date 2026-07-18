@@ -513,7 +513,7 @@ export function buildRecommendationPanel(
   const freshQualifier = !dataIsStale && anyPeerStale ? " among the fresh offers compared" : "";
   const reasons = cappedPositive.map((f) => f.label.toLowerCase());
   const rationale = dataIsStale
-    ? "This offer ranks first for this priority. Pricing was last synced a while ago — refresh live prices if you are about to buy."
+    ? "This offer ranks first for this priority. Pricing was last synced a while ago — confirm current prices if you are about to buy."
     : reasons.length > 0
       ? `${label} because it has ${joinClause(reasons)}${freshQualifier}.`
       : `${label} — ranks first among the compared options.`;

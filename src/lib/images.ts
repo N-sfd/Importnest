@@ -1,26 +1,79 @@
 /** Stable image paths for seeded / demo products and categories. */
 
+import {
+  categoryImageSrc,
+  categoryImages as sharedCategoryImages,
+} from "@/lib/category-visuals";
+
 /** Compact brand mark used as a product-card placeholder. */
 export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
 
-export const productImages: Record<string, string> = {
-  "cp-apex-ah4200": "/images/products/dishwasher.png",
-  "cp-air-purifier": "/images/products/air-purifier.png",
-  "cp-running-shoe": "/images/products/running-shoe.png",
-  "cp-cordless-vacuum": "/images/products/cordless-vacuum.png",
+const PRODUCT_FILES: Record<string, string> = {
+  "cp-apex-ah4200": "dishwasher.png",
+  "cp-air-purifier": "air-purifier.png",
+  "cp-running-shoe": "running-shoe.png",
+  "cp-cordless-vacuum": "cordless-vacuum.png",
 };
 
+/** App-wide product thumbnails (compare, saved, search). */
+export const productImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [id, `/images/products/${file}`]),
+);
+
+/** Homepage Top Products imagery. */
+export const homeTopProductImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [
+    id,
+    `/images/home/top-products/${file}`,
+  ]),
+);
+
+/** Homepage Best Deals imagery. */
+export const homeDealImages: Record<string, string> = Object.fromEntries(
+  Object.entries(PRODUCT_FILES).map(([id, file]) => [id, `/images/home/deals/${file}`]),
+);
+
+/** Shared category paths — single source in category-visuals.ts. */
 export const categoryImages: Record<string, string> = {
-  electronics: "/images/categories/electronics.png",
-  appliances: "/images/categories/appliances.png",
-  footwear: "/images/categories/footwear.png",
-  home: "/images/categories/home.png",
+  ...sharedCategoryImages,
+  /** Extra homepage/nav key kept for audio browsing cards. */
+  headphones: "/images/categories/headphones.png",
 };
+
+/**
+ * Homepage Shop by Category imagery.
+ * Prefer home-specific assets when present; otherwise shared category visuals.
+ */
+export const homeCategoryImages: Record<string, string> = {
+  headphones: "/images/home/categories/headphones.png",
+  outdoors: "/images/home/categories/outdoors.png",
+  automotive: "/images/home/categories/automotive.png",
+  appliances: "/images/home/categories/appliances.png",
+  electronics: "/images/home/categories/electronics.png",
+};
+
+/** Resolve a category image for cards/headers — never returns a broken path. */
+export function categoryImageFor(category: string, fallback = BRAND_FALLBACK_IMAGE) {
+  return (
+    homeCategoryImages[category] ??
+    categoryImageSrc(category) ??
+    categoryImages[category] ??
+    fallback
+  );
+}
 
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 
 export function productImageFor(productId: string) {
   return productImages[productId] ?? BRAND_FALLBACK_IMAGE;
+}
+
+export function homeTopProductImageFor(productId: string) {
+  return homeTopProductImages[productId] ?? productImageFor(productId);
+}
+
+export function homeDealImageFor(productId: string) {
+  return homeDealImages[productId] ?? productImageFor(productId);
 }
 
 export function isBrandFallbackImage(src: string) {
