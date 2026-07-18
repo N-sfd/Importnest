@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
 import { PageShell } from "@/components/PageShell";
@@ -161,23 +162,26 @@ export default async function ComparePage({
         lastCheckedMinutesAgo={freshnessMinutes}
         lowestTotalKnownCost={lowestKnown}
         actions={
-          !authUser ? (
-            <Link
-              href={`/login?next=${encodeURIComponent(redirectTo)}`}
-              className="text-sm font-medium text-link hover:underline"
-            >
-              Sign in to save this product or set a price alert
-            </Link>
-          ) : (
-            <ProductActions
-              productId={productId}
-              redirectTo={redirectTo}
-              isSaved={Boolean(saveState?.isSaved)}
-              alert={saveState?.alert ?? null}
-              suggestedAlert={suggestedAlert}
-              currentLowestPrice={lowestKnown}
-            />
-          )
+          <div className="flex flex-wrap items-start gap-3">
+            {!authUser ? (
+              <Link
+                href={`/login?next=${encodeURIComponent(redirectTo)}`}
+                className="text-sm font-medium text-link hover:underline"
+              >
+                Sign in to save this product or set a price alert
+              </Link>
+            ) : (
+              <ProductActions
+                productId={productId}
+                redirectTo={redirectTo}
+                isSaved={Boolean(saveState?.isSaved)}
+                alert={saveState?.alert ?? null}
+                suggestedAlert={suggestedAlert}
+                currentLowestPrice={lowestKnown}
+              />
+            )}
+            <AddToCompareButton productId={productId} productName={product.modelName} />
+          </div>
         }
       />
 
@@ -217,6 +221,7 @@ export default async function ComparePage({
 
       <CompareMobileStickyActions
         productId={productId}
+        productName={product.modelName}
         signedIn={Boolean(authUser)}
         isSaved={Boolean(saveState?.isSaved)}
         hasAlert={Boolean(saveState?.alert)}

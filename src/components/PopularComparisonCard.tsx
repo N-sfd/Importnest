@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import {
   freshnessLabel,
   type PopularComparison,
@@ -64,6 +65,7 @@ export function PopularComparisonCard({
               </button>
             </form>
           ) : null}
+          <AddToCompareButton productId={item.productId} productName={item.productName} />
           <Link
             href={`/compare/${item.productId}`}
             className="btn-cta px-3 py-1.5 text-xs"

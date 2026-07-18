@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { Freshness } from "@/components/Freshness";
 import { productImageFor, productThumbClass } from "@/lib/images";
 import { formatPriceChange, type PriceChangeTone } from "@/lib/price-change";
@@ -205,6 +206,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             >
               View comparison
             </Link>
+            <AddToCompareButton productId={item.canonicalProductId} productName={item.productName} />
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}

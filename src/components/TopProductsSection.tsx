@@ -37,6 +37,7 @@ export function TopProductsSection({ items }: { items: TopProductCardData[] }) {
         {items.map((item) => (
           <li key={item.productId} className="min-w-0">
             <TopProductCard
+              productId={item.productId}
               href={`/compare/${item.productId}`}
               imageSrc={homeTopProductImageFor(item.productId)}
               productName={item.productName}

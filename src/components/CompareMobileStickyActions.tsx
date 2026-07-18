@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import {
   removeAlertAction,
   saveProductAction,
@@ -13,6 +14,7 @@ import {
  */
 export function CompareMobileStickyActions({
   productId,
+  productName,
   signedIn,
   isSaved,
   hasAlert,
@@ -21,6 +23,7 @@ export function CompareMobileStickyActions({
   suggestedAlert,
 }: {
   productId: string;
+  productName: string;
   signedIn: boolean;
   isSaved: boolean;
   hasAlert: boolean;
@@ -36,7 +39,8 @@ export function CompareMobileStickyActions({
       role="region"
       aria-label="Product actions"
     >
-      <div className="mx-auto flex max-w-[1200px] gap-2">
+      <div className="mx-auto flex max-w-[1200px] items-center gap-2">
+        <AddToCompareButton productId={productId} productName={productName} variant="icon" />
         {signedIn ? (
           <form
             action={

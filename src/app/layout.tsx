@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { CompareBasketProvider } from "@/components/CompareBasketProvider";
 import { themeInitScript } from "@/components/ThemeToggle";
 import "./globals.css";
 
@@ -49,7 +50,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full bg-surface font-sans text-foreground antialiased">
-        {children}
+        <CompareBasketProvider>{children}</CompareBasketProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { productThumbClass } from "@/lib/images";
 import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
@@ -85,34 +86,36 @@ export function DealProductCard({
         </div>
       </Link>
 
-      {signedIn ? (
-        <form
-          action={
-            isSaved
-              ? unsaveProductAction.bind(null, productId, "/")
-              : saveProductAction.bind(null, productId, "/")
-          }
-          className="absolute right-2 top-2 z-10"
-        >
-          <button
-            type="submit"
-            aria-label={isSaved ? `Unsave ${productName}` : `Save ${productName}`}
-            className={`flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/95 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              isSaved ? "text-cta" : "text-navy-900"
-            }`}
+      <div className="absolute right-2 top-2 z-10 flex flex-col gap-1.5">
+        {signedIn ? (
+          <form
+            action={
+              isSaved
+                ? unsaveProductAction.bind(null, productId, "/")
+                : saveProductAction.bind(null, productId, "/")
+            }
           >
-            <HeartIcon filled={isSaved} />
-          </button>
-        </form>
-      ) : (
-        <Link
-          href={`/login?next=${encodeURIComponent(href)}`}
-          aria-label={`Sign in to save ${productName}`}
-          className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/95 text-navy-900 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <HeartIcon filled={false} />
-        </Link>
-      )}
+            <button
+              type="submit"
+              aria-label={isSaved ? `Unsave ${productName}` : `Save ${productName}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/95 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                isSaved ? "text-cta" : "text-navy-900"
+              }`}
+            >
+              <HeartIcon filled={isSaved} />
+            </button>
+          </form>
+        ) : (
+          <Link
+            href={`/login?next=${encodeURIComponent(href)}`}
+            aria-label={`Sign in to save ${productName}`}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/95 text-navy-900 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <HeartIcon filled={false} />
+          </Link>
+        )}
+        <AddToCompareButton productId={productId} productName={productName} variant="icon" />
+      </div>
     </div>
   );
 }

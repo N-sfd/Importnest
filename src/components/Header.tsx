@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandLink } from "@/components/BrandMark";
 import { CategoryNav } from "@/components/CategoryNav";
+import { CompareNavLink } from "@/components/CompareNavLink";
 import { HeaderLocation } from "@/components/HeaderLocation";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -31,6 +32,7 @@ export async function Header() {
             >
               Alerts
             </Link>
+            <CompareNavLink />
             {user ? (
               <LogoutButton variant="compact" />
             ) : (
