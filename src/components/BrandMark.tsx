@@ -9,6 +9,12 @@ const SIZES = {
   xl: { fullH: 96, icon: 72 },
 } as const;
 
+/** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
+const HEADER_LOCKUP = {
+  sm: { textH: 27, iconH: 20, gap: 5 },
+  md: { textH: 34, iconH: 26, gap: 6 },
+} as const;
+
 export type BrandLogo = "in" | "nest" | "logo9";
 export type BrandLayout = "horizontal" | "stacked" | "header";
 
@@ -33,6 +39,11 @@ const ASSETS = {
     /** Full transparent lockup with tagline ~1934×337 */
     horizontalAspect: 5.74,
     stackedAspect: 1.43,
+    /** Tightly-cropped icon and wordmark, sized independently for the compact header lockup. */
+    headerIcon: "/brand/logo9-header-icon.png",
+    headerWordmark: "/brand/logo9-header-wordmark.png",
+    headerIconAspect: 1.89,
+    headerWordmarkAspect: 10.82,
   },
   nest: {
     header: "/brand/logo-horizontal.png",
@@ -81,6 +92,37 @@ export function BrandMark({
   const asset = ASSETS[logo];
 
   if (showWordmark) {
+    if (layout === "header" && "headerIcon" in asset) {
+      const lockup = HEADER_LOCKUP[size as keyof typeof HEADER_LOCKUP] ?? HEADER_LOCKUP.md;
+      const iconW = Math.round(lockup.iconH * asset.headerIconAspect);
+      const textW = Math.round(lockup.textH * asset.headerWordmarkAspect);
+      return (
+        <span
+          className="inline-flex items-center leading-none"
+          style={{ gap: lockup.gap }}
+        >
+          <Image
+            src={asset.headerIcon}
+            alt=""
+            width={iconW}
+            height={lockup.iconH}
+            className="object-contain"
+            style={{ height: lockup.iconH, width: "auto" }}
+            priority
+          />
+          <Image
+            src={asset.headerWordmark}
+            alt="Importnest"
+            width={textW}
+            height={lockup.textH}
+            className="object-contain"
+            style={{ height: lockup.textH, width: "auto" }}
+            priority
+          />
+        </span>
+      );
+    }
+
     let src: string;
     let aspect: number;
     if (layout === "header") {
