@@ -118,7 +118,7 @@ export function TotalKnownCostHook() {
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block text-sm font-extrabold tabular-nums text-navy-900">
+                  <span className="block text-base font-extrabold tabular-nums text-accent">
                     ${t.toFixed(2)}
                   </span>
                   <span className="text-[10px] text-muted">{offer.delivery}</span>
@@ -146,7 +146,7 @@ export function TotalKnownCostHook() {
           ) : (
             <>
               , but after shipping/fees the total is{" "}
-              <span className="font-semibold text-navy-900">${activeTotal.toFixed(2)}</span>. The
+              <span className="font-semibold text-accent">${activeTotal.toFixed(2)}</span>. The
               lowest sticker is not always the lowest final price.
             </>
           )}

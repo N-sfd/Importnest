@@ -95,7 +95,7 @@ export default async function HomePage() {
           className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/10 blur-3xl"
         />
 
-        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
+        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
               See the real total cost before you click buy.

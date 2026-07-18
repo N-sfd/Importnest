@@ -11,7 +11,10 @@ const SIZES = {
 
 /** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
 const HEADER_LOCKUP = {
-  sm: { textH: 32, iconH: 24, gap: 6 },
+  /** Mobile: the wordmark's extreme aspect ratio (~10.8:1) means even a
+   * modest height eats most of a narrow viewport — keep this small enough
+   * that the logo alone can't force horizontal scroll on a 320px screen. */
+  sm: { textH: 16, iconH: 12, gap: 4 },
   md: { textH: 40, iconH: 30, gap: 8 },
 } as const;
 
