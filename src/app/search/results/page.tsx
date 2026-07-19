@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/PageShell";
+import { CategoryDemoGrid } from "@/components/CategoryDemoGrid";
 import { MobileFiltersSheet } from "@/components/MobileFiltersSheet";
 import { NoSearchResultsPanel } from "@/components/NoSearchResultsPanel";
 import {
@@ -154,6 +155,8 @@ export default async function SearchResultsPage({
               ))}
             </ul>
           )}
+
+          {params.category ? <CategoryDemoGrid categorySlug={params.category} /> : null}
         </div>
       </div>
     </PageShell>

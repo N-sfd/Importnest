@@ -10,12 +10,17 @@ const SIZES = {
 } as const;
 
 /** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
+/**
+ * The wordmark's ~10.8:1 aspect ratio means a height tall enough to hit a
+ * ~260px total-width cap and a ~36px height cap at the same time is not
+ * achievable simultaneously (36px tall alone would need ~390px of width just
+ * for the text). Width is prioritized here — it's what determines whether
+ * the logo dominates the header — at the cost of a shorter height than a
+ * naive per-property target would suggest.
+ */
 const HEADER_LOCKUP = {
-  /** Mobile: the wordmark's extreme aspect ratio (~10.8:1) means even a
-   * modest height eats most of a narrow viewport — keep this small enough
-   * that the logo alone can't force horizontal scroll on a 320px screen. */
-  sm: { textH: 16, iconH: 12, gap: 4 },
-  md: { textH: 30, iconH: 22, gap: 6 },
+  sm: { textH: 15, iconH: 11, gap: 4 },
+  md: { textH: 22, iconH: 16, gap: 5 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";
