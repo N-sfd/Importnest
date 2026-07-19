@@ -15,7 +15,7 @@ const HEADER_LOCKUP = {
    * modest height eats most of a narrow viewport — keep this small enough
    * that the logo alone can't force horizontal scroll on a 320px screen. */
   sm: { textH: 16, iconH: 12, gap: 4 },
-  md: { textH: 40, iconH: 30, gap: 8 },
+  md: { textH: 30, iconH: 22, gap: 6 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";

@@ -108,9 +108,44 @@ export default async function HomePage() {
   const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
-    <PageShell hideHeaderSearch>
-      {/* 1. Hero — headline + the one consolidated search bar + Total Known Cost widget */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+    <PageShell>
+      <RecentSearches items={recentSearches} />
+      <RecentlyViewedSection />
+      {user ? <SavedAlertsPreview items={watchlist} /> : null}
+
+      {/* 2. Shop by Category */}
+      <section className="mt-10" aria-labelledby="shop-category-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="shop-category-heading"
+              className="text-xl font-bold tracking-tight text-navy-900"
+            >
+              Shop by Category
+            </h2>
+            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+          </div>
+          <Link
+            href="/search?category=electronics"
+            className="text-sm font-semibold text-link hover:underline"
+          >
+            View all
+          </Link>
+        </div>
+        <CategoryImageGrid items={categories} />
+      </section>
+
+      {/* 3. Top Products — trending / most-compared */}
+      <TopProductsSection items={topProducts} />
+
+      {/* 4. Best Deals — ranked by real discount, badge emphasized */}
+      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
+
+      {/* 5. Popular Comparisons */}
+      <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
+
+      {/* 6. See the real total cost before you click buy — headline + Total Known Cost widget */}
+      <section className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
@@ -148,45 +183,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <RecentSearches items={recentSearches} />
-      <RecentlyViewedSection />
-      {user ? <SavedAlertsPreview items={watchlist} /> : null}
-
-      {/* 2. Shop by Category */}
-      <section className="mt-10" aria-labelledby="shop-category-heading">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2
-              id="shop-category-heading"
-              className="text-xl font-bold tracking-tight text-navy-900"
-            >
-              Shop by Category
-            </h2>
-            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
-          </div>
-          <Link
-            href="/search?category=electronics"
-            className="text-sm font-semibold text-link hover:underline"
-          >
-            View all
-          </Link>
-        </div>
-        <CategoryImageGrid items={categories} />
-      </section>
-
-      {/* 3. Top Products — trending / most-compared */}
-      <TopProductsSection items={topProducts} />
-
-      {/* 4. Best Deals — ranked by real discount, badge emphasized */}
-      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
-
-      {/* 5. Popular Comparisons */}
-      <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
-
-      {/* 6. How it works */}
+      {/* 7. How it works */}
       <HowItWorks />
 
-      {/* 7. Approved sources / trust */}
+      {/* 8. Approved sources / trust */}
       <div id="approved-sources" className="scroll-mt-24 mt-10">
         <ApprovedSourcesStrip sources={sources} />
       </div>

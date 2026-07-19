@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CategoryVisualCard } from "@/components/CategoryVisualCard";
 import { ClarifyQuestions } from "@/components/ClarifyQuestions";
@@ -6,6 +8,11 @@ import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { extractIntentWithAIOutcome } from "@/lib/ai-search-intent";
 import { StatusBanner } from "@/components/StatusPanel";
 import { getOrCreateAppUser } from "@/lib/auth";
+import {
+  categoryDisplayTitle,
+  categoryHasImage,
+  categoryImageSrc,
+} from "@/lib/category-visuals";
 import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
 import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
@@ -18,6 +25,16 @@ import {
   type ClarifyingQuestionId,
   type SearchFlowParams,
 } from "@/lib/search-intent";
+
+/** Shown on broad queries with no detected category, to help narrow down where to look. */
+const SUGGESTED_CATEGORIES = [
+  "electronics",
+  "appliances",
+  "kitchen",
+  "footwear",
+  "accessories",
+  "automotive",
+];
 
 const AI_INTENT_TO_PARAM: Record<string, (value: unknown) => [string, string] | null> = {
   budgetMax: (v) => (typeof v === "number" ? ["budgetMax", String(v)] : null),
@@ -152,7 +169,37 @@ export default async function ClarifyPage({
           className="mb-5"
           compact
         />
-      ) : null}
+      ) : (
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Not sure which department?
+          </p>
+          <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">
+            {SUGGESTED_CATEGORIES.map((slug) => (
+              <Link
+                key={slug}
+                href={`/search?category=${slug}&q=${encodeURIComponent(query)}`}
+                className="flex w-24 shrink-0 flex-col items-center gap-1.5 rounded-xl border border-border bg-surface p-2 text-center transition hover:border-navy-800"
+              >
+                <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-border bg-panel">
+                  {categoryHasImage(slug) ? (
+                    <Image
+                      src={categoryImageSrc(slug)!}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="48px"
+                    />
+                  ) : null}
+                </div>
+                <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground">
+                  {categoryDisplayTitle(slug)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       <ClarifyQuestions
         originalQuery={query}
         currentParams={currentParams}

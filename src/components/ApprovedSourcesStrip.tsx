@@ -39,28 +39,31 @@ export function ApprovedSourcesStrip({ sources }: { sources: ApprovedSourceItem[
       </div>
 
       <ul
-        className="mt-3 flex flex-wrap gap-2.5"
+        className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5"
         aria-label="Approved retailer sources"
       >
         {visible.map((source) => (
           <li
             key={source.id}
-            className="group relative flex shrink-0 items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2"
+            className="group relative flex items-center gap-2.5 rounded-xl border border-border bg-surface p-2.5"
           >
             <Image
               src={sourceImageFor(source.id)}
               alt=""
-              width={28}
-              height={28}
-              className="h-7 w-7 rounded-lg border border-border bg-white object-contain p-0.5"
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 rounded-lg"
             />
-            <span
-              tabIndex={0}
-              title={source.trust.trustHint}
-              className="cursor-help text-xs font-semibold text-foreground outline-none"
-            >
-              {source.trust.label}
-            </span>
+            <div className="min-w-0">
+              <p
+                tabIndex={0}
+                title={source.trust.trustHint}
+                className="cursor-help truncate text-sm font-semibold text-foreground outline-none"
+              >
+                {source.trust.label}
+              </p>
+              <p className="truncate text-[11px] font-medium text-muted">{source.trust.badge}</p>
+            </div>
             {/* Hover / focus tooltip */}
             <div
               role="tooltip"
