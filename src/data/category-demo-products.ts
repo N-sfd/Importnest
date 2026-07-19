@@ -20,18 +20,42 @@ export type CategoryDemoProduct = {
   categorySlug: string;
   subtitle: string;
   badge?: string;
+  /** Overrides the category's shared hero image when a distinct real asset exists. */
+  image?: string;
 };
 
 const badgeCycle = ["Featured", "Popular pick", "Editor's pick", undefined] as const;
+
+/**
+ * A few categories have real, unused (not wired to any seeded product)
+ * extra images sitting in public/images/home/ — cycle through those for
+ * visual variety instead of repeating the single category hero image 8
+ * times. Every other category still falls back to that one hero image
+ * (see CategoryDemoGrid) — no new photos were fabricated to fill the gap.
+ */
+const EXTRA_IMAGES: Record<string, string[]> = {
+  electronics: [
+    "/images/home/headphones/overear.png",
+    "/images/home/headphones/airbuds-pro-3.png",
+    "/images/home/headphones/earbuds-case.png",
+  ],
+  automotive: [
+    "/images/home/automotive/car-jump-starter.png",
+    "/images/home/automotive/car-phone-mount.png",
+    "/images/home/automotive/car-usb-charger.png",
+  ],
+};
 
 function withBadges(
   categorySlug: string,
   entries: { title: string; brand: string; subtitle: string }[],
 ): CategoryDemoProduct[] {
+  const images = EXTRA_IMAGES[categorySlug];
   return entries.map((e, i) => ({
     id: `demo-${categorySlug}-${i + 1}`,
     categorySlug,
     badge: badgeCycle[i % badgeCycle.length],
+    image: images ? images[i % images.length] : undefined,
     ...e,
   }));
 }

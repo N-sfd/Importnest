@@ -7,7 +7,16 @@ import { getBestCurrentPrice, getSaveAndAlertState, getUserWatchlist } from "@/l
 // listing prices, not something a mock should stand in for.
 const PRODUCT_ID = "cp-iphone-6";
 
-describe("saved products and price alerts", () => {
+// This fixture only exists after someone runs the live sync against a
+// CanonicalProduct + ProductIdentifier seeded for cp-iphone-6 — see
+// compare-data.integration.test.ts for the full explanation. Skip cleanly
+// rather than fail with FK errors in any environment where that hasn't
+// been done.
+const productExists = await prisma.canonicalProduct
+  .findUnique({ where: { id: PRODUCT_ID } })
+  .then((p) => p !== null);
+
+describe.skipIf(!productExists)("saved products and price alerts", () => {
   const testUserId = `test-user-saved-data-${Date.now()}`;
 
   beforeAll(async () => {
@@ -76,7 +85,7 @@ describe("saved products and price alerts", () => {
   });
 });
 
-describe("ownership — a shopper only ever sees their own saved products and alerts", () => {
+describe.skipIf(!productExists)("ownership — a shopper only ever sees their own saved products and alerts", () => {
   const ownerId = `test-user-saved-owner-${Date.now()}`;
   const otherId = `test-user-saved-other-${Date.now()}`;
 
