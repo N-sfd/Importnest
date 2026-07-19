@@ -1,31 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
 import { productImageFor } from "@/lib/images";
-
-export type PopularComparison = {
-  productId: string;
-  brandName: string;
-  productName: string;
-  imageSrc: string;
-  lowestTotalCost: number;
-  offerCount: number;
-  freshnessMinutesAgo: number;
-  /** Real seeded average rating from CanonicalProduct.averageRating — never fabricated at render time. */
-  rating: number | null;
-  isSaved: boolean;
-};
+import type { PopularComparison } from "@/lib/popular-comparisons";
 
 /**
- * Products with the most approved listings, ranked by offer count then freshness.
- * Prices and freshness come only from live listing rows — no placeholders.
+ * Other products in the same category, ranked by offer count then freshness —
+ * same aggregation approach as getPopularComparisons. Returns the
+ * PopularComparison shape so PopularComparisonCard can render it directly.
+ * With a small catalog this often returns few or zero items — that's the
+ * honest result, not a bug, and callers should hide the section when empty.
  */
-export async function getPopularComparisons(
+export async function getRelatedProducts(
+  productId: string,
+  categoryId: string,
   limit = 4,
   savedProductIds: Set<string> = new Set(),
 ): Promise<PopularComparison[]> {
+  const candidates = await prisma.canonicalProduct.findMany({
+    where: { categoryId, id: { not: productId } },
+    select: { id: true },
+  });
+  if (candidates.length === 0) return [];
+  const candidateIds = candidates.map((c) => c.id);
+
   const listings = await prisma.listing.findMany({
     where: {
-      canonicalProductId: { not: null },
+      canonicalProductId: { in: candidateIds },
       matches: { some: { status: "approved" } },
     },
     select: {
@@ -37,12 +37,7 @@ export async function getPopularComparisons(
     },
   });
 
-  type Agg = {
-    offerCount: number;
-    lowestTotalCost: number;
-    freshestAt: Date;
-  };
-
+  type Agg = { offerCount: number; lowestTotalCost: number; freshestAt: Date };
   const byProduct = new Map<string, Agg>();
   for (const listing of listings) {
     const id = listing.canonicalProductId;
@@ -50,11 +45,7 @@ export async function getPopularComparisons(
     const total = listing.price + listing.shipping + listing.fees;
     const existing = byProduct.get(id);
     if (!existing) {
-      byProduct.set(id, {
-        offerCount: 1,
-        lowestTotalCost: total,
-        freshestAt: listing.freshnessCapturedAt,
-      });
+      byProduct.set(id, { offerCount: 1, lowestTotalCost: total, freshestAt: listing.freshnessCapturedAt });
       continue;
     }
     existing.offerCount += 1;
@@ -98,15 +89,4 @@ export async function getPopularComparisons(
       },
     ];
   });
-}
-
-export function freshnessLabel(minutesAgo: number): string {
-  if (minutesAgo <= 0) return "Updated just now";
-  if (minutesAgo === 1) return "Updated 1 minute ago";
-  if (minutesAgo < 60) return `Updated ${minutesAgo} minutes ago`;
-  const hours = Math.round(minutesAgo / 60);
-  if (hours === 1) return "Updated 1 hour ago";
-  if (hours < 48) return `Updated ${hours} hours ago`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? "Updated 1 day ago" : `Updated ${days} days ago`;
 }

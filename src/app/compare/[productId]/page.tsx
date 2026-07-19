@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
+import { TrackProductView } from "@/components/TrackProductView";
 import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
 import { PageShell } from "@/components/PageShell";
+import { PopularComparisonCard } from "@/components/PopularComparisonCard";
 import { PriceHistorySection } from "@/components/PriceHistorySection";
 import { PriorityTabs } from "@/components/PriorityTabs";
 import { ProductSummary } from "@/components/ProductSummary";
@@ -19,6 +21,7 @@ import {
   type CompareFilters,
 } from "@/lib/compare-data";
 import { formatMatchStatus } from "@/lib/compare-view";
+import { getRelatedProducts } from "@/lib/related-products";
 import type { Priority } from "@/lib/types";
 import { productImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +85,16 @@ export default async function ComparePage({
   }`;
   const authUser = await getAuthUser();
   const saveState = authUser ? await getSaveAndAlertState(authUser.id, productId) : null;
+  let savedIds = new Set<string>();
+  if (authUser) {
+    const saved = await prisma.savedProduct.findMany({
+      where: { userId: authUser.id },
+      select: { canonicalProductId: true },
+      take: 50,
+    });
+    savedIds = new Set(saved.map((s) => s.canonicalProductId));
+  }
+  const relatedProducts = await getRelatedProducts(productId, product.categoryId, 4, savedIds);
 
   const filters: CompareFilters = {};
   const parsedBudget = maxBudget ? Number(maxBudget) : undefined;
@@ -137,6 +150,12 @@ export default async function ComparePage({
 
   return (
     <PageShell>
+      <TrackProductView
+        productId={productId}
+        productName={product.modelName}
+        brandName={product.brand.name}
+        imageSrc={productImageFor(productId)}
+      />
       <nav className="mb-3 text-xs text-muted">
         <Link href="/" className="text-link hover:underline">
           Home
@@ -218,6 +237,18 @@ export default async function ComparePage({
       </section>
 
       <BackendSourcesPanel sources={sources} />
+
+      {relatedProducts.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-bold tracking-tight text-navy-900">Related alternatives</h2>
+          <p className="mt-1 text-sm text-muted">Other approved products in {product.category.name}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {relatedProducts.map((item) => (
+              <PopularComparisonCard key={item.productId} item={item} signedIn={Boolean(authUser)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <CompareMobileStickyActions
         productId={productId}

@@ -40,6 +40,8 @@ model CanonicalProduct {
   modelName     String
   modelNumber   String?
   configuration String?
+  averageRating Float?
+  ratingCount   Int?
 
   brand      Brand              @relation(fields: [brandId], references: [id])
   category   Category           @relation(fields: [categoryId], references: [id])

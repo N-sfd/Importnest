@@ -7,6 +7,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
 import { RecentSearches } from "@/components/RecentSearches";
+import { RecentlyViewedSection } from "@/components/RecentlyViewedSection";
 import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
 import {
@@ -53,6 +54,30 @@ const categories = [
     desc: categoryDescriptionFor("electronics"),
     href: "/search?category=electronics",
     image: categoryImageFor("electronics"),
+  },
+  {
+    name: "Kitchen",
+    desc: categoryDescriptionFor("kitchen"),
+    href: "/search?category=kitchen",
+    image: categoryImageFor("kitchen"),
+  },
+  {
+    name: "Footwear",
+    desc: categoryDescriptionFor("footwear"),
+    href: "/search?category=footwear",
+    image: categoryImageFor("footwear"),
+  },
+  {
+    name: "Beauty",
+    desc: categoryDescriptionFor("beauty"),
+    href: "/search?category=beauty",
+    image: categoryImageFor("beauty"),
+  },
+  {
+    name: "Accessories",
+    desc: categoryDescriptionFor("accessories"),
+    href: "/search?category=accessories",
+    image: categoryImageFor("accessories"),
   },
 ];
 
@@ -124,6 +149,7 @@ export default async function HomePage() {
       </section>
 
       <RecentSearches items={recentSearches} />
+      <RecentlyViewedSection />
       {user ? <SavedAlertsPreview items={watchlist} /> : null}
 
       {/* 2. Shop by Category */}

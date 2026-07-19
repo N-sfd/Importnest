@@ -8,7 +8,8 @@ export type ResultsSort =
   | "lowest_cost"
   | "fastest"
   | "best_value"
-  | "recently_updated";
+  | "recently_updated"
+  | "best_rated";
 
 export type SearchResultsFilters = {
   query?: string;
@@ -46,6 +47,8 @@ export type SearchResultProduct = {
   freshnessMinutesAgo: number | null;
   hasPickup: boolean;
   conditions: string[];
+  /** Real seeded average rating — never fabricated at render time. */
+  rating: number | null;
   /** Compact key attributes for the card (≤3) */
   attributes: { key: string; value: string; unit: string | null }[];
   sourceIds: string[];
@@ -285,6 +288,7 @@ export async function getSearchResults(
       freshnessMinutesAgo: agg ? minutesSince(agg.freshestAt) : null,
       hasPickup: agg?.hasPickup ?? false,
       conditions: agg ? [...agg.conditions] : [],
+      rating: p.averageRating,
       attributes: p.attributes.map((a) => ({
         key: a.key,
         value: a.value,
@@ -383,6 +387,12 @@ export async function getSearchResults(
         const af = a.freshnessMinutesAgo ?? 1e9;
         const bf = b.freshnessMinutesAgo ?? 1e9;
         return af - bf;
+      }
+      case "best_rated": {
+        if (a.rating == null && b.rating == null) return 0;
+        if (a.rating == null) return 1;
+        if (b.rating == null) return -1;
+        return b.rating - a.rating;
       }
       case "best_overall":
       default:
@@ -507,5 +517,6 @@ export const RESULTS_SORT_OPTIONS: { value: ResultsSort; label: string }[] = [
   { value: "lowest_cost", label: "Lowest total cost" },
   { value: "fastest", label: "Fastest available" },
   { value: "best_value", label: "Best value" },
+  { value: "best_rated", label: "Best rated" },
   { value: "recently_updated", label: "Recently updated" },
 ];

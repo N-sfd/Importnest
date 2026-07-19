@@ -71,6 +71,12 @@ export function ApprovedSourcesStrip({ sources }: { sources: ApprovedSourceItem[
           </li>
         ))}
       </ul>
+
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
+        <li>Sponsored results are labeled separately</li>
+        <li>Prices checked regularly</li>
+        <li>No hidden ranking influence</li>
+      </ul>
     </section>
   );
 }
