@@ -13,8 +13,9 @@ const SIZES = {
  * Target ~34px overall height / max ~220px width for a professional shopping header.
  */
 const HEADER_LOCKUP = {
-  sm: { textH: 14, iconH: 11, gap: 3 },
-  md: { textH: 22, iconH: 16, gap: 5 },
+  sm: { textH: 13, iconH: 10, gap: 3 },
+  /** ~30px overall height for a compact shopping header */
+  md: { textH: 18, iconH: 14, gap: 4 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";

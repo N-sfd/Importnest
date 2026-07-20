@@ -45,18 +45,26 @@ export function AddToCartButton({
   addedLabel = "Added to cart",
   ...item
 }: AddToCartButtonProps) {
-  const { isInCart, add, remove } = useCart();
+  const { isInCart, add, remove, isFull } = useCart();
   const inCart = isInCart(item.listingId, item.productId);
+  // The cart is full only from the perspective of adding a *new* line — an
+  // already-in-cart item's button must stay clickable so it can still be removed.
+  const limitReached = isFull && !inCart;
 
   function handleClick() {
     if (inCart) {
       remove(item.listingId, item.productId);
       return;
     }
+    if (limitReached) return;
     add(item);
   }
 
-  const ariaLabel = inCart ? `Remove ${item.title} from cart` : `Add ${item.title} to cart`;
+  const ariaLabel = inCart
+    ? `Remove ${item.title} from cart`
+    : limitReached
+      ? "Cart is full — remove an item to add this one"
+      : `Add ${item.title} to cart`;
 
   if (compact) {
     return (
@@ -65,8 +73,9 @@ export function AddToCartButton({
         onClick={handleClick}
         aria-label={ariaLabel}
         aria-pressed={inCart}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-panel/95 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-          inCart ? "text-accent" : "text-navy-900"
+        disabled={limitReached}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-panel/95 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:hover:border-border ${
+          inCart ? "text-accent" : limitReached ? "text-muted" : "text-navy-900"
         }`}
       >
         <CartIcon />
@@ -78,16 +87,19 @@ export function AddToCartButton({
     <button
       type="button"
       onClick={handleClick}
-      aria-label={label}
+      aria-label={ariaLabel}
       aria-pressed={inCart}
+      disabled={limitReached}
       className={
         inCart
           ? "flex min-h-11 items-center gap-1.5 rounded-full border border-accent/60 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/15"
-          : "btn-cta flex min-h-11 items-center gap-1.5 px-4 py-2 text-sm"
+          : limitReached
+            ? "flex min-h-11 cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-muted"
+            : "btn-cta flex min-h-11 items-center gap-1.5 px-4 py-2 text-sm"
       }
     >
       <CartIcon />
-      {inCart ? addedLabel : label}
+      {inCart ? addedLabel : limitReached ? "Limit reached" : label}
     </button>
   );
 }

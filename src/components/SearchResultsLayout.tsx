@@ -324,14 +324,14 @@ export function SearchResultProductCard({
     >
       <Link
         href={`/compare/${product.id}`}
-        className="relative mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-border bg-white sm:mx-0"
+        className="relative mx-auto h-[7.5rem] w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-border bg-navy-100 sm:mx-0"
       >
         <Image
           src={product.imageSrc}
           alt=""
           fill
           className={productThumbClass(product.imageSrc)}
-          sizes="112px"
+          sizes="120px"
         />
       </Link>
 
@@ -396,7 +396,7 @@ export function SearchResultProductCard({
         </p>
       </div>
 
-      <div className="flex shrink-0 flex-col items-stretch justify-between gap-2 sm:w-36 sm:items-end">
+      <div className="flex shrink-0 flex-col items-stretch justify-between gap-3 sm:w-40 sm:items-end">
         <div className="sm:text-right">
           {product.lowestTotalCost != null ? (
             <>
@@ -438,7 +438,7 @@ export function SearchResultProductCard({
           <div className="flex items-center gap-2">
             <Link
               href={`/compare/${product.id}`}
-              className="btn-cta flex-1 px-3 py-2 text-center text-sm"
+              className="btn-cta min-w-0 flex-1 px-3 py-2 text-center text-sm"
             >
               View offers
             </Link>

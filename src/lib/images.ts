@@ -64,16 +64,36 @@ export function categoryImageFor(category: string, fallback = BRAND_FALLBACK_IMA
 
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 
-export function productImageFor(productId: string) {
-  return productImages[productId] ?? BRAND_FALLBACK_IMAGE;
+/**
+ * Product photo when one is seeded, otherwise the product's own category
+ * image (when a category slug is available) rather than one generic brand
+ * icon shared by every uncategorized card — real assets only, never invented.
+ */
+export function getProductDisplayImage(options: {
+  productId?: string;
+  categorySlug?: string;
+  imageUrl?: string | null;
+  listingImageUrl?: string | null;
+}): string {
+  if (options.imageUrl?.trim()) return options.imageUrl.trim();
+  if (options.listingImageUrl?.trim()) return options.listingImageUrl.trim();
+  if (options.productId && productImages[options.productId]) {
+    return productImages[options.productId]!;
+  }
+  if (options.categorySlug) return categoryImageFor(options.categorySlug);
+  return BRAND_FALLBACK_IMAGE;
 }
 
-export function homeTopProductImageFor(productId: string) {
-  return homeTopProductImages[productId] ?? productImageFor(productId);
+export function productImageFor(productId: string, categorySlug?: string) {
+  return getProductDisplayImage({ productId, categorySlug });
 }
 
-export function homeDealImageFor(productId: string) {
-  return homeDealImages[productId] ?? productImageFor(productId);
+export function homeTopProductImageFor(productId: string, categorySlug?: string) {
+  return homeTopProductImages[productId] ?? productImageFor(productId, categorySlug);
+}
+
+export function homeDealImageFor(productId: string, categorySlug?: string) {
+  return homeDealImages[productId] ?? productImageFor(productId, categorySlug);
 }
 
 export function isBrandFallbackImage(src: string) {
@@ -84,15 +104,19 @@ export function isBrandFallbackImage(src: string) {
     src.includes("logo-mark") ||
     src.includes("logo8-mark") ||
     src.includes("logo8-icon") ||
-    src.includes("logo-circle")
+    src.includes("logo-circle") ||
+    src.includes("/demo-icons/")
   );
 }
 
-/** Extra padding so brand placeholders stay small inside product thumbnails. */
+/**
+ * Shopping-card thumbnails: cover for real photos / category imagery;
+ * padded contain only for brand-mark placeholders.
+ */
 export function productThumbClass(src: string) {
   return isBrandFallbackImage(src)
     ? "object-contain p-5 sm:p-6"
-    : "object-contain p-1.5";
+    : "object-cover";
 }
 
 /** Retailer / connector logos for listings loaded from the backend. */

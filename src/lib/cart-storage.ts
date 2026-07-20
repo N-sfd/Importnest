@@ -25,7 +25,10 @@ export type CartItem = {
 
 export const CART_STORAGE_KEY = "importnest_cart";
 export const CART_MAX_QUANTITY = 10;
-const CART_MAX_ITEMS = 100;
+/** Max distinct product/listing lines the cart holds — separate from CART_MAX_QUANTITY (per-line unit count). */
+export const CART_LINE_LIMIT = 4;
+/** Defensive parse-time cap only, well above CART_LINE_LIMIT — guards against an unbounded malformed localStorage array, not a UX limit. */
+const CART_PARSE_MAX_ITEMS = 100;
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
@@ -76,7 +79,7 @@ export function parseCartJSON(raw: string | null): CartItem[] {
     return parsed
       .filter(isValidCartItem)
       .map((item) => ({ ...item, quantity: clampQuantity(item.quantity) }))
-      .slice(0, CART_MAX_ITEMS);
+      .slice(0, CART_PARSE_MAX_ITEMS);
   } catch {
     return [];
   }
@@ -89,17 +92,25 @@ function lineKey(item: { listingId?: string; productId: string }): string {
 
 export type NewCartItem = Omit<CartItem, "quantity" | "addedAt">;
 
-export function addToCart(current: CartItem[], newItem: NewCartItem): CartItem[] {
+export type AddToCartOutcome = "added" | "merged" | "limit";
+export type AddToCartResult = { items: CartItem[]; outcome: AddToCartOutcome };
+
+export function addToCart(current: CartItem[], newItem: NewCartItem): AddToCartResult {
   const key = lineKey(newItem);
   const existingIndex = current.findIndex((item) => lineKey(item) === key);
   if (existingIndex >= 0) {
     const next = [...current];
     const existing = next[existingIndex]!;
     next[existingIndex] = { ...existing, quantity: clampQuantity(existing.quantity + 1) };
-    return next;
+    return { items: next, outcome: "merged" };
   }
-  if (current.length >= CART_MAX_ITEMS) return current;
-  return [...current, { ...newItem, quantity: 1, addedAt: new Date().toISOString() }];
+  if (current.length >= CART_LINE_LIMIT) {
+    return { items: current, outcome: "limit" };
+  }
+  return {
+    items: [...current, { ...newItem, quantity: 1, addedAt: new Date().toISOString() }],
+    outcome: "added",
+  };
 }
 
 export function removeFromCart(

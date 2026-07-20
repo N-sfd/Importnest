@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   addToCart,
+  CART_LINE_LIMIT,
   CART_STORAGE_KEY,
   isInCart,
   parseCartJSON,
@@ -13,11 +14,16 @@ import {
 } from "@/lib/cart-storage";
 
 export type { CartItem, NewCartItem };
+export { CART_LINE_LIMIT };
 
 type CartContextValue = {
   items: CartItem[];
   /** Total unit count across all lines (sum of quantities), for the header badge. */
   count: number;
+  /** Max distinct product/listing lines the cart holds. */
+  limit: number;
+  /** True once the cart holds CART_LINE_LIMIT distinct lines — adding a new (not-already-in-cart) line is a no-op past this point. */
+  isFull: boolean;
   isInCart: (listingId: string | undefined, productId: string) => boolean;
   add: (item: NewCartItem) => void;
   remove: (listingId: string | undefined, productId: string) => void;
@@ -33,6 +39,8 @@ type CartContextValue = {
 const noopContextValue: CartContextValue = {
   items: [],
   count: 0,
+  limit: CART_LINE_LIMIT,
+  isFull: false,
   isInCart: () => false,
   add: () => {},
   remove: () => {},
@@ -69,7 +77,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const add = useCallback((item: NewCartItem) => {
-    setItems((current) => addToCart(current, item));
+    setItems((current) => addToCart(current, item).items);
   }, []);
 
   const remove = useCallback((listingId: string | undefined, productId: string) => {
@@ -86,10 +94,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clear = useCallback(() => setItems([]), []);
 
   const count = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  const isFull = items.length >= CART_LINE_LIMIT;
 
   const value = useMemo<CartContextValue>(
-    () => ({ items, count, isInCart: has, add, remove, setQuantity, clear }),
-    [items, count, has, add, remove, setQuantity, clear],
+    () => ({ items, count, limit: CART_LINE_LIMIT, isFull, isInCart: has, add, remove, setQuantity, clear }),
+    [items, count, isFull, has, add, remove, setQuantity, clear],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

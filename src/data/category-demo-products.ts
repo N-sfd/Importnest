@@ -1,17 +1,17 @@
 /**
- * Homepage/category-browsing demo data only — see AGENTS.md.
+ * Category-browsing demo data only — see AGENTS.md / homepage-demo-data rule.
  *
  * These are NOT real listings: no price, no offer count, no source count,
  * no condition, no "last checked" freshness. Showing invented values for
- * any of those would misrepresent them as real commerce facts, which is
- * exactly what this project avoids everywhere else (compare pages, search
- * results, Top Products/Best Deals all derive strictly from seeded
- * Listing/PriceHistory rows). This file exists purely to keep category
- * browsing visually populated — rendered as non-interactive discovery
- * tiles (see CategoryDemoGrid), never wired into compare, save, alerts,
- * or ranking logic. Real products (the ones actually seeded in the DB)
- * keep full functionality everywhere they appear.
+ * any of those would misrepresent them as real commerce facts.
+ *
+ * Thumbnails use real photo assets only:
+ * - extra unused product photos when available for a category
+ * - otherwise the category hero image from public/images/categories/
+ * Never use abstract line-icon SVGs as if they were product photos.
  */
+
+import { categoryImageSrc, normalizeCategoryKey } from "@/lib/category-visuals";
 
 export type CategoryDemoProduct = {
   id: string;
@@ -29,113 +29,46 @@ const badgeCycle = ["Featured", "Popular pick", "Editor's pick", undefined] as c
 /**
  * A few categories have real, unused (not wired to any seeded product)
  * extra images sitting in public/images/home/ — cycle through those for
- * visual variety instead of repeating the single category hero image 8
- * times.
- *
- * Every other category gets a distinct, clearly-generic line-icon SVG per
- * sub-type instead (public/images/demo-icons/) rather than one repeated
- * photo — these are abstract placeholders, not claimed product photos, and
- * are assigned one-to-one below via each product's `image` field.
+ * visual variety instead of repeating the single category hero image.
  */
 const EXTRA_IMAGES: Record<string, string[]> = {
   electronics: [
     "/images/home/headphones/overear.png",
     "/images/home/headphones/airbuds-pro-3.png",
     "/images/home/headphones/earbuds-case.png",
+    "/images/categories/electronics.png",
   ],
   automotive: [
     "/images/home/automotive/car-jump-starter.png",
     "/images/home/automotive/car-phone-mount.png",
     "/images/home/automotive/car-usb-charger.png",
+    "/images/categories/automotive.png",
   ],
-};
-
-const DEMO_ICON = (slug: string) => `/images/demo-icons/${slug}.svg`;
-
-/** One icon per product, in the same order as each category's entry list below. */
-const ICON_IMAGES: Record<string, string[]> = {
   appliances: [
-    "microwave",
-    "toaster-oven",
-    "vacuum",
-    "slow-cooker",
-    "air-fryer",
-    "freezer",
-    "ac-unit",
-    "dehumidifier",
-  ].map(DEMO_ICON),
-  kitchen: [
-    "cookware-set",
-    "pour-over",
-    "knife-block",
-    "stand-mixer",
-    "cutting-board",
-    "kettle",
-    "food-storage",
-    "cast-iron-skillet",
-  ].map(DEMO_ICON),
-  footwear: [
-    "trail-runner",
-    "sneaker",
-    "hiking-boot",
-    "loafer",
-    "sandal",
-    "winter-boot",
-    "training-shoe",
-    "chukka-boot",
-  ].map(DEMO_ICON),
-  beauty: [
-    "cleansing-brush",
-    "hair-dryer",
-    "flat-iron",
-    "led-mirror",
-    "razor",
-    "facial-steamer",
-    "sonic-cleansing",
-    "nail-care",
-  ].map(DEMO_ICON),
-  accessories: [
-    "wallet",
-    "backpack",
-    "phone-case",
-    "travel-organizer",
-    "sunglasses",
-    "cable",
-    "crossbody-bag",
-    "watch-band",
-  ].map(DEMO_ICON),
-  outdoors: [
-    "daypack",
-    "tent",
-    "sleeping-bag",
-    "camp-stove",
-    "water-bottle",
-    "trekking-poles",
-    "lantern",
-    "camp-chair",
-  ].map(DEMO_ICON),
-  home: [
-    "blanket",
-    "table-lamp",
-    "storage-bins",
-    "throw-pillow",
-    "air-filter",
-    "wall-clock",
-    "diffuser",
-    "curtains",
-  ].map(DEMO_ICON),
+    "/images/categories/appliances.png",
+    "/images/home/categories/appliances.png",
+    "/images/products/dishwasher.png",
+    "/images/products/cordless-vacuum.png",
+  ],
+  kitchen: ["/images/categories/kitchen.png", "/images/categories/appliances.png"],
+  footwear: ["/images/categories/footwear.png", "/images/products/running-shoe.png"],
+  beauty: ["/images/categories/beauty.png"],
+  accessories: ["/images/categories/accessories.png"],
+  outdoors: ["/images/categories/outdoors.png", "/images/home/categories/outdoors.png"],
+  home: ["/images/categories/home.png", "/images/products/air-purifier.png"],
 };
 
 function withBadges(
   categorySlug: string,
   entries: { title: string; brand: string; subtitle: string }[],
 ): CategoryDemoProduct[] {
-  const images = EXTRA_IMAGES[categorySlug] ?? ICON_IMAGES[categorySlug];
+  const extras = EXTRA_IMAGES[categorySlug];
+  const categoryFallback = categoryImageSrc(categorySlug) ?? undefined;
   return entries.map((e, i) => ({
     id: `demo-${categorySlug}-${i + 1}`,
     categorySlug,
     badge: badgeCycle[i % badgeCycle.length],
-    image: images ? images[i % images.length] : undefined,
+    image: extras?.[i % extras.length] ?? categoryFallback,
     ...e,
   }));
 }
@@ -234,5 +167,9 @@ export const CATEGORY_DEMO_PRODUCTS: Record<string, CategoryDemoProduct[]> = {
 };
 
 export function getCategoryDemoProducts(categorySlug: string, limit = 8): CategoryDemoProduct[] {
-  return (CATEGORY_DEMO_PRODUCTS[categorySlug] ?? []).slice(0, limit);
+  const key = normalizeCategoryKey(categorySlug);
+  return (CATEGORY_DEMO_PRODUCTS[key] ?? CATEGORY_DEMO_PRODUCTS[categorySlug] ?? []).slice(
+    0,
+    limit,
+  );
 }
