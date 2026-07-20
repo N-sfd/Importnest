@@ -324,11 +324,11 @@ export function SearchResultProductCard({
     >
       <Link
         href={`/compare/${product.id}`}
-        className="relative mx-auto h-[7.5rem] w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-border bg-navy-100 sm:mx-0"
+        className="main-result-image relative mx-auto shrink-0 overflow-hidden border border-border sm:mx-0"
       >
         <Image
           src={product.imageSrc}
-          alt=""
+          alt={`${product.brandName} ${product.productName}`}
           fill
           className={productThumbClass(product.imageSrc)}
           sizes="120px"

@@ -45,7 +45,7 @@ export function TopProductsSection({
             <TopProductCard
               productId={item.productId}
               href={`/compare/${item.productId}`}
-              imageSrc={homeTopProductImageFor(item.productId)}
+              imageSrc={homeTopProductImageFor(item.productId, item.categorySlug, item.productName)}
               productName={item.productName}
               brandName={item.brandName}
               supportingLine={item.supportingLine}

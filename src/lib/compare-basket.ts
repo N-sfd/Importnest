@@ -34,7 +34,7 @@ export async function getCompareBasketItems(ids: string[]): Promise<CompareBaske
         name: product.modelName,
         brandName: product.brand.name,
         categoryName: product.category.name,
-        imageSrc: productImageFor(id),
+        imageSrc: productImageFor(id, product.category.slug, product.modelName),
         lowestKnownPrice: rows.length > 0 ? Math.min(...rows.map((row) => totalKnownCost(row.listing))) : null,
         offerCount: rows.length,
         conditions,

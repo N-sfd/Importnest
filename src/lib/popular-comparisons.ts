@@ -6,6 +6,7 @@ export type PopularComparison = {
   productId: string;
   brandName: string;
   productName: string;
+  categorySlug: string;
   imageSrc: string;
   lowestTotalCost: number;
   offerCount: number;
@@ -101,7 +102,7 @@ export async function getPopularComparisons(
 
   const products = await prisma.canonicalProduct.findMany({
     where: { id: { in: rankedIds } },
-    include: { brand: true },
+    include: { brand: true, category: true },
   });
   const productById = new Map(products.map((p) => [p.id, p]));
 
@@ -114,7 +115,8 @@ export async function getPopularComparisons(
         productId: id,
         brandName: product.brand.name,
         productName: product.modelName,
-        imageSrc: productImageFor(id),
+        categorySlug: product.category.slug,
+        imageSrc: productImageFor(id, product.category.slug, product.modelName),
         lowestTotalCost: agg.lowestTotalCost,
         offerCount: agg.offerCount,
         freshnessMinutesAgo: minutesSince(agg.freshestAt),

@@ -158,7 +158,7 @@ export function BrandLink({
           alt="Importnest"
           width={315}
           height={32}
-          className="h-8 w-auto max-w-[220px] object-contain object-left"
+          className="h-[31px] w-auto max-w-[210px] object-contain object-left"
           priority
         />
       </span>
@@ -168,7 +168,7 @@ export function BrandLink({
           alt="Importnest"
           width={53}
           height={28}
-          className="h-7 w-auto max-w-[160px] object-contain object-left"
+          className="h-7 w-auto max-w-[140px] object-contain object-left"
           priority
         />
       </span>

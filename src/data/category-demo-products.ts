@@ -5,13 +5,12 @@
  * no condition, no "last checked" freshness. Showing invented values for
  * any of those would misrepresent them as real commerce facts.
  *
- * Thumbnails use real photo assets only:
- * - extra unused product photos when available for a category
- * - otherwise the category hero image from public/images/categories/
- * Never use abstract line-icon SVGs as if they were product photos.
+ * Thumbnails resolve through getProductDisplayImage so each subtype gets a
+ * distinct photo fallback — never abstract line-icon SVGs.
  */
 
-import { categoryImageSrc, normalizeCategoryKey } from "@/lib/category-visuals";
+import { normalizeCategoryKey } from "@/lib/category-visuals";
+import { getProductDisplayImage } from "@/lib/images";
 
 export type CategoryDemoProduct = {
   id: string;
@@ -20,55 +19,25 @@ export type CategoryDemoProduct = {
   categorySlug: string;
   subtitle: string;
   badge?: string;
-  /** Overrides the category's shared hero image when a distinct real asset exists. */
-  image?: string;
+  /** Distinct subtype/category photo for this tile. */
+  image: string;
 };
 
 const badgeCycle = ["Featured", "Popular pick", "Editor's pick", undefined] as const;
-
-/**
- * A few categories have real, unused (not wired to any seeded product)
- * extra images sitting in public/images/home/ — cycle through those for
- * visual variety instead of repeating the single category hero image.
- */
-const EXTRA_IMAGES: Record<string, string[]> = {
-  electronics: [
-    "/images/home/headphones/overear.png",
-    "/images/home/headphones/airbuds-pro-3.png",
-    "/images/home/headphones/earbuds-case.png",
-    "/images/categories/electronics.png",
-  ],
-  automotive: [
-    "/images/home/automotive/car-jump-starter.png",
-    "/images/home/automotive/car-phone-mount.png",
-    "/images/home/automotive/car-usb-charger.png",
-    "/images/categories/automotive.png",
-  ],
-  appliances: [
-    "/images/categories/appliances.png",
-    "/images/home/categories/appliances.png",
-    "/images/products/dishwasher.png",
-    "/images/products/cordless-vacuum.png",
-  ],
-  kitchen: ["/images/categories/kitchen.png", "/images/categories/appliances.png"],
-  footwear: ["/images/categories/footwear.png", "/images/products/running-shoe.png"],
-  beauty: ["/images/categories/beauty.png"],
-  accessories: ["/images/categories/accessories.png"],
-  outdoors: ["/images/categories/outdoors.png", "/images/home/categories/outdoors.png"],
-  home: ["/images/categories/home.png", "/images/products/air-purifier.png"],
-};
 
 function withBadges(
   categorySlug: string,
   entries: { title: string; brand: string; subtitle: string }[],
 ): CategoryDemoProduct[] {
-  const extras = EXTRA_IMAGES[categorySlug];
-  const categoryFallback = categoryImageSrc(categorySlug) ?? undefined;
   return entries.map((e, i) => ({
     id: `demo-${categorySlug}-${i + 1}`,
     categorySlug,
     badge: badgeCycle[i % badgeCycle.length],
-    image: extras?.[i % extras.length] ?? categoryFallback,
+    image: getProductDisplayImage({
+      categorySlug,
+      title: e.title,
+      subtitle: e.subtitle,
+    }),
     ...e,
   }));
 }
@@ -115,14 +84,14 @@ export const CATEGORY_DEMO_PRODUCTS: Record<string, CategoryDemoProduct[]> = {
     { title: "Glenmoor Chukka Boot", brand: "Wayfarer", subtitle: "Classic ankle boot" },
   ]),
   beauty: withBadges("beauty", [
-    { title: "Lumenne Facial Cleansing Brush", brand: "Sable & Co.", subtitle: "Gentle daily cleansing device" },
     { title: "Rosemere Hair Dryer 1875W", brand: "Verabelle", subtitle: "Fast-drying dryer with cool shot" },
-    { title: "Silkwood Flat Iron", brand: "Sable & Co.", subtitle: "Ceramic plates for smooth styling" },
+    { title: "Lumenne Facial Cleansing Brush", brand: "Sable & Co.", subtitle: "Gentle daily cleansing device" },
+    { title: "Ambervale Electric Shaver", brand: "Sable & Co.", subtitle: "Rechargeable grooming razor" },
+    { title: "Coolmist Skincare Fridge", brand: "Verabelle", subtitle: "Mini fridge for serums and creams" },
+    { title: "Silkwood Curling Iron", brand: "Sable & Co.", subtitle: "Ceramic barrel for soft waves" },
     { title: "Petalglow LED Mirror", brand: "Verabelle", subtitle: "Lighted vanity mirror" },
-    { title: "Ambervale Electric Razor", brand: "Sable & Co.", subtitle: "Rechargeable grooming razor" },
-    { title: "Willowmist Facial Steamer", brand: "Verabelle", subtitle: "At-home facial steaming device" },
-    { title: "Cascade Sonic Cleansing Kit", brand: "Sable & Co.", subtitle: "Sonic cleansing with travel case" },
-    { title: "Marigold Nail Care Set", brand: "Verabelle", subtitle: "Manicure and pedicure kit" },
+    { title: "Softpulse Massage Tool", brand: "Sable & Co.", subtitle: "Handheld facial massage tool" },
+    { title: "Marigold Manicure Kit", brand: "Verabelle", subtitle: "Manicure and pedicure kit" },
   ]),
   accessories: withBadges("accessories", [
     { title: "Harrowgate Leather Wallet", brand: "Coalridge", subtitle: "Slim bifold wallet" },

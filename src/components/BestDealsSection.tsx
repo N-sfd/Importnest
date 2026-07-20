@@ -41,7 +41,7 @@ export function BestDealsSection({
             <DealProductCard
               productId={item.productId}
               href={`/compare/${item.productId}`}
-              imageSrc={homeDealImageFor(item.productId)}
+              imageSrc={homeDealImageFor(item.productId, item.categorySlug, item.productName)}
               productName={item.productName}
               brandName={item.brandName}
               currentTotal={item.currentTotal}

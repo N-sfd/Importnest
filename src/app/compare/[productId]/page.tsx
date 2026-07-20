@@ -159,7 +159,7 @@ export default async function ComparePage({
         productId,
         title: product.modelName,
         brand: product.brand.name,
-        imageUrl: productImageFor(productId),
+        imageUrl: productImageFor(productId, product.category.slug, product.modelName),
         retailerName: topListing.sourceName,
         condition: formatConditionLabel(topListing.condition),
         itemPrice: topListing.price,
@@ -175,7 +175,7 @@ export default async function ComparePage({
         productId={productId}
         productName={product.modelName}
         brandName={product.brand.name}
-        imageSrc={productImageFor(productId)}
+        imageSrc={productImageFor(productId, product.category.slug, product.modelName)}
       />
       <nav className="mb-3 text-xs text-muted">
         <Link href="/" className="text-link hover:underline">
@@ -193,7 +193,7 @@ export default async function ComparePage({
       </nav>
 
       <ProductSummary
-        imageSrc={productImageFor(productId)}
+        imageSrc={productImageFor(productId, product.category.slug, product.modelName)}
         brandName={product.brand.name}
         productName={product.modelName}
         modelNumber={product.modelNumber}
@@ -256,7 +256,7 @@ export default async function ComparePage({
               productId={productId}
               productName={product.modelName}
               brandName={product.brand.name}
-              productImageSrc={productImageFor(productId)}
+              productImageSrc={productImageFor(productId, product.category.slug, product.modelName)}
               rows={rows}
               priority={effectivePriority}
               priorityOptions={priorityOptions}

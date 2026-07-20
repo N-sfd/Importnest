@@ -308,7 +308,7 @@ export async function getSearchResults(
       modelNumber: p.modelNumber,
       categoryName: p.category.name,
       categorySlug: p.category.slug,
-      imageSrc: productImageFor(p.id),
+      imageSrc: productImageFor(p.id, p.category.slug, p.modelName),
       lowestTotalCost: agg?.lowestTotalCost ?? null,
       offerCount: agg?.offerCount ?? 0,
       freshnessMinutesAgo: agg ? minutesSince(agg.freshestAt) : null,

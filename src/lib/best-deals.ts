@@ -6,6 +6,7 @@ export type BestDealItem = {
   productId: string;
   brandName: string;
   productName: string;
+  categorySlug: string;
   imageSrc: string;
   currentTotal: number;
   /** Previous daily Total Known Cost when real PriceHistory supports it. */
@@ -136,7 +137,7 @@ export async function getBestDeals(
 
   const products = await prisma.canonicalProduct.findMany({
     where: { id: { in: productIds } },
-    include: { brand: true },
+    include: { brand: true, category: true },
   });
   const productById = new Map(products.map((p) => [p.id, p]));
 
@@ -165,7 +166,8 @@ export async function getBestDeals(
         productId: id,
         brandName: product.brand.name,
         productName: product.modelName,
-        imageSrc: productImageFor(id),
+        categorySlug: product.category.slug,
+        imageSrc: productImageFor(id, product.category.slug, product.modelName),
         currentTotal: agg.currentTotal,
         previousTotal: discountPercent != null ? previousTotal : null,
         discountPercent,
