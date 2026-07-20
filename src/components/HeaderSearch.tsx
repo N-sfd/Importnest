@@ -1,15 +1,10 @@
-"use client";
-
 /**
- * Always-visible header search. Large and centered in the header row.
+ * Always-visible header search — wide pill, primary focus of the top bar.
  */
 export function HeaderSearch() {
   return (
-    <div className="order-3 w-full min-w-0 lg:order-none lg:max-w-[760px]">
-      <form
-        action="/search"
-        className="flex w-full items-center overflow-hidden rounded-full border border-border bg-panel shadow-[0_1px_3px_rgb(4_25_53/0.08)] focus-within:border-cta/40 focus-within:ring-2 focus-within:ring-ring"
-      >
+    <div className="header-search">
+      <form action="/search" className="search-shell">
         <label htmlFor="header-q" className="sr-only">
           Search Importnest
         </label>
@@ -18,11 +13,12 @@ export function HeaderSearch() {
           name="q"
           type="search"
           placeholder="Search products, models, or UPCs"
-          className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-sm text-navy-900 outline-none placeholder:text-muted sm:px-5 sm:text-[15px]"
+          className="search-input"
+          autoComplete="off"
         />
         <button
           type="submit"
-          className="btn-cta m-1.5 h-10 min-w-[5rem] shrink-0 px-4 text-sm leading-none sm:min-w-[5.5rem] sm:px-5"
+          className="btn-cta m-1.5 h-9 min-w-[5.25rem] shrink-0 px-5 text-sm leading-none sm:h-10 sm:min-w-[5.75rem] sm:px-6"
         >
           Search
         </button>

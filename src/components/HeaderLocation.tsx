@@ -25,7 +25,7 @@ function loadLocation(): Location {
   }
 }
 
-/** Compact delivery location — structure only, no maps or Amazon branding. */
+/** Compact delivery location — structure only, no maps branding. */
 export function HeaderLocation() {
   const [location, setLocation] = useState<Location>({
     city: DEFAULT_CITY,
@@ -57,7 +57,7 @@ export function HeaderLocation() {
     return (
       <form
         onSubmit={save}
-        className="ml-1 flex min-w-0 max-w-[11rem] shrink-0 flex-col gap-1 sm:ml-2"
+        className="location-block flex min-w-0 flex-col gap-1"
         aria-label="Update delivery location"
       >
         <input
@@ -98,10 +98,10 @@ export function HeaderLocation() {
     <button
       type="button"
       onClick={() => setEditing(true)}
-      className="ml-1 hidden min-w-0 max-w-[10.5rem] shrink-0 rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta lg:ml-1 lg:block"
+      className="location-block rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
     >
-      <span className="block truncate text-[11px] leading-tight text-muted">Delivering to</span>
-      <span className="block truncate text-sm font-semibold leading-tight text-navy-900">
+      <span className="block truncate text-[11px] text-muted">Delivering to</span>
+      <span className="block truncate text-sm font-semibold text-navy-900">
         {location.city} {location.zip}
       </span>
       <span className="block text-[11px] font-medium text-link">Update location</span>

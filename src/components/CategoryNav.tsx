@@ -113,16 +113,14 @@ export function CategoryNav() {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative border-b border-border bg-navy-800/95 text-white/95">
-      <div className="mx-auto flex max-w-[1200px] items-stretch gap-1 px-2 py-1.5 text-sm sm:px-4">
+    <div ref={rootRef} className="category-nav relative border-b border-black/10 text-white">
+      <div className="category-nav-inner">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((v) => !v)}
-          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold transition ${
-            open ? "bg-cta text-white" : "bg-white/10 text-white hover:bg-white/15"
-          }`}
+          className="category-all"
         >
           <span aria-hidden className="text-base leading-none">
             ☰
@@ -132,17 +130,13 @@ export function CategoryNav() {
 
         <nav
           aria-label="Departments"
-          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {topNavLinks.map((link) => (
             <Link
               key={link.href + link.label}
               href={link.href}
-              className={`shrink-0 rounded-lg px-2.5 py-1.5 transition hover:bg-white/10 hover:text-white ${
-                link.featured
-                  ? "font-semibold text-cta"
-                  : "font-medium text-white/90"
-              }`}
+              className={`category-link ${link.featured ? "category-link-featured" : ""}`}
             >
               {link.label}
             </Link>
@@ -163,7 +157,7 @@ export function CategoryNav() {
             aria-label="All departments"
             className="absolute left-0 right-0 top-full z-40 border-b border-border shadow-[var(--shadow-panel)]"
           >
-            <div className="mx-auto max-w-[1200px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
+            <div className="mx-auto max-w-[1280px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
               <DepartmentPanel
                 departments={navDepartments}
                 activeId={activeDept}

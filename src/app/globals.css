@@ -163,3 +163,234 @@ a {
   }
 }
 
+/* —— Header / top navigation —— */
+.header-top-inner {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: grid;
+  grid-template-columns: auto auto minmax(420px, 1fr) auto;
+  align-items: center;
+  column-gap: 20px;
+  row-gap: 10px;
+}
+
+.header-logo img {
+  height: 34px;
+  max-width: 220px;
+  width: auto;
+  object-fit: contain;
+}
+
+.location-block {
+  min-width: 135px;
+  max-width: 11rem;
+  line-height: 1.15;
+}
+
+.header-search {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+  justify-self: stretch;
+}
+
+.search-shell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 1px 3px rgb(4 25 53 / 0.08);
+}
+
+.search-shell:focus-within {
+  border-color: color-mix(in srgb, var(--cta) 45%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0 18px;
+  font-size: 15px;
+  color: var(--navy-900);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f2a4a;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.header-action:hover {
+  color: #00afc7;
+  background: color-mix(in srgb, var(--navy-100) 80%, transparent);
+}
+
+.header-action .label {
+  display: none;
+}
+
+.category-nav {
+  background: #132b45;
+}
+
+.category-nav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 6px 24px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.category-link {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.category-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.category-link-featured {
+  color: var(--cta);
+}
+
+.category-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transition: background-color 140ms ease;
+}
+
+.category-all:hover,
+.category-all[aria-expanded="true"] {
+  background: var(--cta);
+  color: #ffffff;
+}
+
+@media (min-width: 640px) {
+  .header-action .label {
+    display: inline;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .search-shell {
+    height: 56px;
+    min-width: min(100%, 520px);
+  }
+}
+
+@media (min-width: 1100px) {
+  .header-top-inner {
+    grid-template-columns: auto auto minmax(520px, 1fr) auto;
+    gap: 22px;
+    padding: 14px 24px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 1099px) {
+  .header-top-inner {
+    grid-template-columns: auto minmax(280px, 1fr) auto;
+  }
+
+  .location-block {
+    display: none !important;
+  }
+
+  .search-shell {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .header-top-inner {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    column-gap: 12px;
+  }
+
+  .header-search {
+    order: 3;
+    width: 100%;
+    max-width: none;
+    flex: 1 1 100%;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .header-action {
+    padding: 8px;
+  }
+
+  .header-action .label {
+    display: none;
+  }
+
+  .search-shell {
+    height: 48px;
+  }
+
+  .category-nav-inner {
+    padding: 6px 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .category-nav-inner::-webkit-scrollbar {
+    display: none;
+  }
+}
+

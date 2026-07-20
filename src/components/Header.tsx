@@ -7,7 +7,7 @@ import { HeaderLocation } from "@/components/HeaderLocation";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { getAuthUser } from "@/lib/auth";
 
-/** Shared 22px stroke icon style so Saved/Alerts/Account line up visually with Compare/Cart's icons. */
+/** Shared 16px stroke icons for Saved / Alerts / Account. */
 const navIconProps = {
   width: 16,
   height: 16,
@@ -46,7 +46,6 @@ function UserIcon() {
   );
 }
 
-/** Icon-always, label-hidden-below-sm nav item — the same compact pattern CompareNavLink/CartNavLink use. */
 function NavLink({
   href,
   icon,
@@ -57,12 +56,9 @@ function NavLink({
   label: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold text-navy-900 transition hover:bg-navy-100 sm:px-3"
-    >
+    <Link href={href} className="header-action">
       {icon}
-      <span className="hidden sm:inline">{label}</span>
+      <span className="label">{label}</span>
     </Link>
   );
 }
@@ -73,15 +69,26 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
   return (
     <header className="sticky top-0 z-40">
       <div className="border-b border-border bg-white text-navy-900">
-        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:grid lg:grid-cols-[auto_auto_minmax(320px,1fr)_auto] lg:items-center lg:gap-4 lg:px-4">
-          <BrandLink logo="logo9" onDark={false} />
+        <div className="header-top-inner">
+          <div className="header-logo shrink-0">
+            <BrandLink logo="logo9" onDark={false} />
+          </div>
+
           <HeaderLocation />
 
-          {hideSearch ? null : <HeaderSearch />}
+          {hideSearch ? <div className="header-search" aria-hidden /> : <HeaderSearch />}
 
-          <nav className="order-2 ml-auto flex shrink-0 items-center gap-1 text-sm sm:order-none lg:ml-0">
-            <NavLink href={user ? "/saved" : "/login?next=/saved"} icon={<BookmarkIcon />} label="Saved" />
-            <NavLink href={user ? "/saved" : "/login?next=/saved"} icon={<BellIcon />} label="Alerts" />
+          <nav className="header-actions" aria-label="Account and shopping">
+            <NavLink
+              href={user ? "/saved" : "/login?next=/saved"}
+              icon={<BookmarkIcon />}
+              label="Saved"
+            />
+            <NavLink
+              href={user ? "/saved" : "/login?next=/saved"}
+              icon={<BellIcon />}
+              label="Alerts"
+            />
             <CompareNavLink />
             <CartNavLink />
             {user ? (
