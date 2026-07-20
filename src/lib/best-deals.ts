@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { productImageFor } from "@/lib/product-images";
 
 export type BestDealItem = {
   productId: string;
@@ -15,8 +15,11 @@ export type BestDealItem = {
   discountPercent: number | null;
   dealBadge: string;
   offerCount: number;
+  sourceCount: number;
   isSaved: boolean;
   freshnessMinutesAgo: number;
+  /** Real seeded average rating — never fabricated. */
+  rating: number | null;
   /** The specific listing backing currentTotal — used to add this exact offer to cart without inventing data. */
   bestListing: {
     listingId: string;
@@ -56,6 +59,7 @@ export async function getBestDeals(
   type Agg = {
     listingIds: string[];
     offerCount: number;
+    sourceNames: Set<string>;
     currentTotal: number;
     freshestAt: Date;
     bestListing: BestDealItem["bestListing"];
@@ -79,6 +83,7 @@ export async function getBestDeals(
       byProduct.set(id, {
         listingIds: [listing.id],
         offerCount: 1,
+        sourceNames: new Set([listing.source.name]),
         currentTotal: total,
         freshestAt: listing.freshnessCapturedAt,
         bestListing,
@@ -87,6 +92,7 @@ export async function getBestDeals(
     }
     existing.listingIds.push(listing.id);
     existing.offerCount += 1;
+    existing.sourceNames.add(listing.source.name);
     if (total < existing.currentTotal) {
       existing.currentTotal = total;
       existing.bestListing = bestListing;
@@ -173,8 +179,10 @@ export async function getBestDeals(
         discountPercent,
         dealBadge,
         offerCount: agg.offerCount,
+        sourceCount: agg.sourceNames.size,
         isSaved: savedProductIds.has(id),
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
+        rating: product.averageRating,
         bestListing: agg.bestListing,
       },
     ];

@@ -21,7 +21,8 @@ describe("ProductSummary — every field present", () => {
     expect(html).toContain("dishwasher.png");
     expect(html).toContain("Apex Home");
     expect(html).toContain("Apex Quiet Dishwasher AH-4200");
-    expect(html).toContain("Model AH-4200");
+    expect(html).toContain("Model");
+    expect(html).toContain("AH-4200");
     expect(html).toContain("Exact match · 96%");
     expect(html).toContain("3 offers");
     expect(html).toContain("Updated 5 minutes ago");
@@ -59,11 +60,12 @@ describe("ProductSummary — missing product image", () => {
 });
 
 describe("ProductSummary — real product image present", () => {
-  it("renders the real image without the placeholder-only padding", () => {
+  it("renders the real image with contain crop, not placeholder padding on the img", () => {
     const html = renderToStaticMarkup(<ProductSummary {...baseProps} imageSrc="/images/products/air-purifier.png" />);
 
     expect(html).toContain("air-purifier.png");
-    expect(html).not.toContain("p-5");
+    expect(html).toContain("object-contain");
+    expect(html).not.toMatch(/class="[^"]*object-contain[^"]*p-5/);
   });
 });
 
@@ -74,9 +76,10 @@ describe("ProductSummary — offer count wording", () => {
     expect(html).not.toContain("1 offers");
   });
 
-  it("shows an honest zero rather than hiding the field or inventing a count", () => {
+  it("shows an honest zero rather than inventing a count", () => {
     const html = renderToStaticMarkup(<ProductSummary {...baseProps} offerCount={0} />);
-    expect(html).toContain("0 offers");
+    expect(html).toContain("No offers");
+    expect(html).not.toContain("1 offer");
   });
 });
 
@@ -131,15 +134,31 @@ describe("ProductSummary — actions slot", () => {
   });
 });
 
-describe("ProductSummary — compact, not decorative", () => {
-  it("keeps the product name at a small heading size, not a large hero headline", () => {
+describe("ProductSummary — professional identity, not decorative clutter", () => {
+  it("uses a readable product title without oversized hero typography", () => {
     const html = renderToStaticMarkup(<ProductSummary {...baseProps} />);
-    expect(html).not.toContain("text-2xl");
-    expect(html).not.toContain("text-xl");
+    expect(html).toContain("text-lg font-bold");
+    expect(html).not.toContain("text-3xl");
+    expect(html).not.toContain("text-4xl");
   });
 
-  it("does not show price information in the compact summary", () => {
+  it("does not invent a price when no lowest Total Known Cost is passed", () => {
     const html = renderToStaticMarkup(<ProductSummary {...baseProps} />);
     expect(html).not.toContain("$");
+    expect(html).not.toContain("Total Known Cost");
+  });
+
+  it("shows From · Total Known Cost only when a real lowest total is provided", () => {
+    const html = renderToStaticMarkup(
+      <ProductSummary {...baseProps} lowestTotalKnownCost={849} />,
+    );
+    expect(html).toContain("From · Total Known Cost");
+    expect(html).toContain("$849.00");
+  });
+
+  it("renders the match status as a badge", () => {
+    const html = renderToStaticMarkup(<ProductSummary {...baseProps} />);
+    expect(html).toContain("Exact match · 96%");
+    expect(html).toContain("badge-savings");
   });
 });

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { getProductDisplayImage } from "@/lib/product-images";
 import type { SearchIntent } from "@/lib/search-intent";
 
 export type ResultsSort =
@@ -308,7 +308,11 @@ export async function getSearchResults(
       modelNumber: p.modelNumber,
       categoryName: p.category.name,
       categorySlug: p.category.slug,
-      imageSrc: productImageFor(p.id, p.category.slug, p.modelName),
+      imageSrc: getProductDisplayImage({
+        id: p.id,
+        categorySlug: p.category.slug,
+        title: p.modelName,
+      }),
       lowestTotalCost: agg?.lowestTotalCost ?? null,
       offerCount: agg?.offerCount ?? 0,
       freshnessMinutesAgo: agg ? minutesSince(agg.freshestAt) : null,

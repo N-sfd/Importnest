@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { productImageFor } from "@/lib/product-images";
 
 export type PopularComparison = {
   productId: string;
@@ -10,6 +10,8 @@ export type PopularComparison = {
   imageSrc: string;
   lowestTotalCost: number;
   offerCount: number;
+  /** Distinct approved retailers with a listing — never fabricated. */
+  sourceCount: number;
   freshnessMinutesAgo: number;
   /** Real seeded average rating from CanonicalProduct.averageRating — never fabricated at render time. */
   rating: number | null;
@@ -52,6 +54,7 @@ export async function getPopularComparisons(
 
   type Agg = {
     offerCount: number;
+    sourceNames: Set<string>;
     lowestTotalCost: number;
     freshestAt: Date;
     bestListing: PopularComparison["bestListing"];
@@ -74,6 +77,7 @@ export async function getPopularComparisons(
     if (!existing) {
       byProduct.set(id, {
         offerCount: 1,
+        sourceNames: new Set([listing.source.name]),
         lowestTotalCost: total,
         freshestAt: listing.freshnessCapturedAt,
         bestListing,
@@ -81,6 +85,7 @@ export async function getPopularComparisons(
       continue;
     }
     existing.offerCount += 1;
+    existing.sourceNames.add(listing.source.name);
     if (total < existing.lowestTotalCost) {
       existing.lowestTotalCost = total;
       existing.bestListing = bestListing;
@@ -119,6 +124,7 @@ export async function getPopularComparisons(
         imageSrc: productImageFor(id, product.category.slug, product.modelName),
         lowestTotalCost: agg.lowestTotalCost,
         offerCount: agg.offerCount,
+        sourceCount: agg.sourceNames.size,
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
         rating: product.averageRating,
         isSaved: savedProductIds.has(id),

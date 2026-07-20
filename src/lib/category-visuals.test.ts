@@ -6,7 +6,9 @@ import {
   categoryImageAlt,
   categoryImageSrc,
   normalizeCategoryKey,
+  relatedCategorySlugs,
 } from "@/lib/category-visuals";
+import { getCategoryCollageImages } from "@/lib/images";
 
 describe("category-visuals", () => {
   it("aliases beauty-devices to beauty", () => {
@@ -31,5 +33,23 @@ describe("category-visuals", () => {
     expect(categoryImageSrc("unknown-widget")).toBeNull();
     expect(categoryHasImage("unknown-widget")).toBe(false);
     expect(categoryDisplayTitle("unknown-widget")).toBe("Unknown Widget");
+  });
+
+  it("returns related categories that exclude the current department", () => {
+    const related = relatedCategorySlugs("footwear");
+    expect(related).not.toContain("footwear");
+    expect(related.length).toBeGreaterThan(0);
+  });
+});
+
+describe("kitchen + appliances collage", () => {
+  it("uses microwave, dishwasher, coffee maker, and air fryer thumbs", () => {
+    const thumbs = getCategoryCollageImages("appliances", "kitchen");
+    expect(thumbs).toEqual([
+      "/images/products/appliances/microwave.jpg",
+      "/images/products/appliances/dishwasher.jpg",
+      "/images/products/appliances/coffee-maker.jpg",
+      "/images/products/appliances/air-fryer.jpg",
+    ]);
   });
 });

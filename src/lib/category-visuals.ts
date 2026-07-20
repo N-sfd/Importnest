@@ -98,3 +98,38 @@ export function categoryHasImage(category: string): boolean {
 export function categoryImageAlt(category: string, title?: string): string {
   return `${categoryDisplayTitle(category, title)} category image`;
 }
+
+/** Stable list of shoppable category slugs (canonical keys). */
+export const SHOP_CATEGORY_SLUGS = [
+  "electronics",
+  "appliances",
+  "kitchen",
+  "footwear",
+  "beauty",
+  "accessories",
+  "automotive",
+  "outdoors",
+  "home",
+] as const;
+
+export type ShopCategorySlug = (typeof SHOP_CATEGORY_SLUGS)[number];
+
+/** Related departments for category browse chips — excludes the current category. */
+const RELATED_BY_CATEGORY: Record<string, ShopCategorySlug[]> = {
+  electronics: ["appliances", "accessories", "home", "kitchen"],
+  appliances: ["kitchen", "home", "electronics", "beauty"],
+  kitchen: ["appliances", "home", "beauty", "accessories"],
+  footwear: ["accessories", "outdoors", "beauty", "home"],
+  beauty: ["accessories", "electronics", "kitchen", "home"],
+  accessories: ["electronics", "footwear", "automotive", "beauty"],
+  automotive: ["electronics", "outdoors", "accessories", "home"],
+  outdoors: ["footwear", "automotive", "home", "accessories"],
+  home: ["appliances", "kitchen", "outdoors", "electronics"],
+};
+
+export function relatedCategorySlugs(category: string, limit = 6): ShopCategorySlug[] {
+  const key = normalizeCategoryKey(category);
+  const preferred = RELATED_BY_CATEGORY[key] ?? [];
+  const rest = SHOP_CATEGORY_SLUGS.filter((s) => s !== key && !preferred.includes(s));
+  return [...preferred, ...rest].filter((s) => s !== key).slice(0, limit);
+}

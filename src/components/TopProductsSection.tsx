@@ -1,24 +1,67 @@
 import Link from "next/link";
-import type { PopularComparison } from "@/lib/popular-comparisons";
+import {
+  HOMEPAGE_DEMO_TOP_PRODUCTS,
+  type HomepageDemoTopProduct,
+} from "@/data/homepage-demo-products";
 import { homeTopProductImageFor } from "@/lib/images";
-import { TopProductCard } from "@/components/TopProductCard";
+import { getProductDisplayImage } from "@/lib/product-images";
+import type { PopularComparison } from "@/lib/popular-comparisons";
+import { DemoTopProductCard, TopProductCard } from "@/components/TopProductCard";
 
-export type TopProductBadge = "Bestseller" | "Popular" | "Top rated";
+const TARGET_COUNT = 8;
 
-export type TopProductCardData = PopularComparison & {
-  badge: TopProductBadge;
-  supportingLine: string;
-};
+export type TopProductCardData = PopularComparison;
 
-/** Dense product cards for homepage “Top Products” — real totals only. */
+function topImageSrc(item: PopularComparison) {
+  return (
+    homeTopProductImageFor(item.productId, item.categorySlug, item.productName) ||
+    getProductDisplayImage({
+      productId: item.productId,
+      categorySlug: item.categorySlug,
+      title: item.productName,
+    })
+  );
+}
+
+function fillWithDemos(
+  listingItems: PopularComparison[],
+  demos: HomepageDemoTopProduct[],
+  limit: number,
+): Array<
+  | { kind: "listing"; item: PopularComparison }
+  | { kind: "demo"; item: HomepageDemoTopProduct }
+> {
+  const usedNames = new Set(listingItems.map((i) => i.productName.toLowerCase()));
+  const usedImages = new Set(listingItems.map((i) => topImageSrc(i)));
+  const out: Array<
+    | { kind: "listing"; item: PopularComparison }
+    | { kind: "demo"; item: HomepageDemoTopProduct }
+  > = listingItems.map((item) => ({ kind: "listing", item }));
+
+  for (const demo of demos) {
+    if (out.length >= limit) break;
+    if (usedNames.has(demo.productName.toLowerCase())) continue;
+    if (usedImages.has(demo.imageSrc)) continue;
+    usedNames.add(demo.productName.toLowerCase());
+    usedImages.add(demo.imageSrc);
+    out.push({ kind: "demo", item: demo });
+  }
+  return out.slice(0, limit);
+}
+
+/** Idealo-inspired Top Products — listing-backed cards first, demo browse pads after. */
 export function TopProductsSection({
   items,
   signedIn,
 }: {
-  items: TopProductCardData[];
+  items: PopularComparison[];
   signedIn: boolean;
 }) {
-  if (items.length === 0) return null;
+  const cards = fillWithDemos(items, HOMEPAGE_DEMO_TOP_PRODUCTS, TARGET_COUNT);
+  if (cards.length === 0) return null;
+
+  const hasListings = cards.some((c) => c.kind === "listing");
+  const hasDemos = cards.some((c) => c.kind === "demo");
 
   return (
     <section aria-labelledby="top-products-heading">
@@ -26,12 +69,16 @@ export function TopProductsSection({
         <div>
           <h2
             id="top-products-heading"
-            className="text-xl font-bold tracking-tight text-navy-900"
+            className="text-xl font-bold tracking-tight text-navy-900 sm:text-2xl"
           >
             Top Products
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            Most compared items from approved retailers — prices are Total Known Cost.
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            {hasListings && hasDemos
+              ? "Approved listing totals plus labeled demo browse cards with distinct product photos."
+              : hasListings
+                ? "Most compared items from approved retailers — prices are Total Known Cost."
+                : "Demo browse cards with distinct product photos — not live retailer offers."}
           </p>
         </div>
         <Link href="/search" className="text-sm font-semibold text-link hover:underline">
@@ -39,46 +86,24 @@ export function TopProductsSection({
         </Link>
       </div>
 
-      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-        {items.map((item) => (
-          <li key={item.productId} className="min-w-0">
-            <TopProductCard
-              productId={item.productId}
-              href={`/compare/${item.productId}`}
-              imageSrc={homeTopProductImageFor(item.productId, item.categorySlug, item.productName)}
-              productName={item.productName}
-              brandName={item.brandName}
-              supportingLine={item.supportingLine}
-              badge={item.badge}
-              fromPrice={item.lowestTotalCost}
-              rating={item.rating}
-              offerCount={item.offerCount}
-              bestListing={item.bestListing}
-              isSaved={item.isSaved}
-              signedIn={signedIn}
-            />
-          </li>
-        ))}
+      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
+        {cards.map((card, index) =>
+          card.kind === "listing" ? (
+            <li key={card.item.productId} className="min-w-0">
+              <TopProductCard
+                item={card.item}
+                imageSrc={topImageSrc(card.item)}
+                signedIn={signedIn}
+                index={index}
+              />
+            </li>
+          ) : (
+            <li key={card.item.id} className="min-w-0">
+              <DemoTopProductCard item={card.item} />
+            </li>
+          ),
+        )}
       </ul>
     </section>
   );
-}
-
-/** Assign display badges from ranking signals — never invent ratings. */
-export function withTopProductBadges(items: PopularComparison[]): TopProductCardData[] {
-  return items.map((item, index) => {
-    let badge: TopProductBadge = "Popular";
-    if (index === 0) badge = "Bestseller";
-    else if (item.rating != null) badge = "Top rated";
-    else if (item.offerCount >= 3) badge = "Popular";
-    else if (index <= 1) badge = "Bestseller";
-
-    return {
-      ...item,
-      badge,
-      supportingLine: `${item.brandName} · ${item.offerCount} approved ${
-        item.offerCount === 1 ? "offer" : "offers"
-      }`,
-    };
-  });
 }

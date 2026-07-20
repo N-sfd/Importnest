@@ -2,6 +2,7 @@ import { PageShell } from "@/components/PageShell";
 import { CategoryDemoGrid } from "@/components/CategoryDemoGrid";
 import { MobileFiltersSheet } from "@/components/MobileFiltersSheet";
 import { NoSearchResultsPanel } from "@/components/NoSearchResultsPanel";
+import { RelatedCategoryChips } from "@/components/RelatedCategoryChips";
 import {
   SearchFiltersForm,
   SearchFiltersSidebar,
@@ -90,11 +91,10 @@ export default async function SearchResultsPage({
     ),
   ).toString()}`;
   const activeFilters = countActiveResultFilters(params);
-  // Exact matches and comparable alternatives are already sorted exact-first;
-  // when a text search actually produced both kinds, render them as two
-  // clearly separate, distinctly headed groups rather than one mixed list.
   const { exact, comparable } = partitionByMatchKind(results.products);
   const showSeparateMatchSections = Boolean(params.q) && exact.length > 0 && comparable.length > 0;
+  const categorySlug = params.category?.trim() || null;
+  const hasLiveProducts = results.products.length > 0;
 
   return (
     <PageShell>
@@ -110,15 +110,43 @@ export default async function SearchResultsPage({
             />
           </MobileFiltersSheet>
 
+          {/* Category visual header lives in the toolbar when category is set */}
           <SearchResultsToolbar params={params} total={results.total} sort={sort} />
 
-          {results.products.length === 0 ? (
-            <NoSearchResultsPanel params={params} />
-          ) : showSeparateMatchSections ? (
-            <>
-              <ul className="space-y-3">
-                {exact.map((p) => (
-                  <li key={p.id}>
+          {/* 1) Matching live products first */}
+          {hasLiveProducts ? (
+            showSeparateMatchSections ? (
+              <>
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {exact.map((p) => (
+                    <li key={p.id} className="min-w-0">
+                      <SearchResultProductCard
+                        product={p}
+                        signedIn={Boolean(authUser)}
+                        redirectTo={redirectTo}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <h2 className="pt-2 text-sm font-bold uppercase tracking-wide text-muted">
+                  Comparable alternatives
+                </h2>
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {comparable.map((p) => (
+                    <li key={p.id} className="min-w-0">
+                      <SearchResultProductCard
+                        product={p}
+                        signedIn={Boolean(authUser)}
+                        redirectTo={redirectTo}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {results.products.map((p) => (
+                  <li key={p.id} className="min-w-0">
                     <SearchResultProductCard
                       product={p}
                       signedIn={Boolean(authUser)}
@@ -127,36 +155,25 @@ export default async function SearchResultsPage({
                   </li>
                 ))}
               </ul>
-              <h2 className="pt-2 text-sm font-bold uppercase tracking-wide text-muted">
-                Comparable alternatives
-              </h2>
-              <ul className="space-y-3">
-                {comparable.map((p) => (
-                  <li key={p.id}>
-                    <SearchResultProductCard
-                      product={p}
-                      signedIn={Boolean(authUser)}
-                      redirectTo={redirectTo}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </>
+            )
+          ) : categorySlug ? (
+            <NoSearchResultsPanel params={params} hideCategoryVisual />
           ) : (
-            <ul className="space-y-3">
-              {results.products.map((p) => (
-                <li key={p.id}>
-                  <SearchResultProductCard
-                    product={p}
-                    signedIn={Boolean(authUser)}
-                    redirectTo={redirectTo}
-                  />
-                </li>
-              ))}
-            </ul>
+            <NoSearchResultsPanel params={params} />
           )}
 
-          {params.category ? <CategoryDemoGrid categorySlug={params.category} /> : null}
+          {/* 2) More to explore — same category only */}
+          {categorySlug ? (
+            <CategoryDemoGrid
+              categorySlug={categorySlug}
+              prominence={hasLiveProducts ? "secondary" : "primary"}
+            />
+          ) : null}
+
+          {/* 3) Related category chips */}
+          {categorySlug ? (
+            <RelatedCategoryChips categorySlug={categorySlug} query={params.q} />
+          ) : null}
         </div>
       </div>
     </PageShell>
