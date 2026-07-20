@@ -114,7 +114,7 @@ export function CategoryNav() {
 
   return (
     <div ref={rootRef} className="category-nav relative border-b border-black/10 text-white">
-      <div className="category-nav-inner">
+      <div className="category-nav-inner nav-container">
         <button
           type="button"
           aria-expanded={open}

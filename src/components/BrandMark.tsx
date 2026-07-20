@@ -27,8 +27,8 @@ const ASSETS = {
     iconDark: "/brand/importnest-icon.png",
     circle: "/brand/importnest-icon.png",
     circleDark: "/brand/importnest-icon.png",
-    /** 1930×196 */
-    headerAspect: 9.85,
+    /** 2026×260 padded header lockup */
+    headerAspect: 7.79,
     /** 1220×380 transparent full with tagline */
     horizontalAspect: 3.21,
     stackedAspect: 3.0,
@@ -41,7 +41,7 @@ const ASSETS = {
     iconDark: "/brand/importnest-icon.png",
     circle: "/brand/importnest-icon.png",
     circleDark: "/brand/importnest-icon.png",
-    headerAspect: 9.85,
+    headerAspect: 7.79,
     horizontalAspect: 3.21,
     stackedAspect: 1.43,
   },
@@ -135,7 +135,6 @@ export function BrandMark({
  */
 export function BrandLink({
   className = "",
-  onDark = false,
   logo = "logo9",
 }: {
   variant?: "onDark" | "onLight";
@@ -143,35 +142,22 @@ export function BrandLink({
   onDark?: boolean;
   logo?: BrandLogo;
 }) {
-  const asset = ASSETS[logo];
-  const headerSrc = asset.header;
-  const iconSrc = onDark ? asset.iconDark : asset.icon;
+  const headerSrc = ASSETS[logo].header;
 
   return (
     <Link
       href="/"
-      className={`header-logo inline-flex shrink-0 items-center self-center transition hover:opacity-90 ${className}`}
+      className={`header-logo header-logo-wrapper brand-logo transition hover:opacity-90 ${className}`}
     >
-      <span className="hidden sm:inline-flex leading-none">
-        <Image
-          src={headerSrc}
-          alt="Importnest"
-          width={315}
-          height={32}
-          className="h-[30px] w-auto max-w-[200px] object-contain object-left"
-          priority
-        />
-      </span>
-      <span className="inline-flex leading-none sm:hidden">
-        <Image
-          src={iconSrc}
-          alt="Importnest"
-          width={48}
-          height={26}
-          className="h-[26px] w-auto max-w-[130px] object-contain object-left"
-          priority
-        />
-      </span>
+      <Image
+        src={headerSrc}
+        alt="Importnest"
+        width={230}
+        height={34}
+        className="block h-[34px] w-auto max-w-[230px] object-contain object-left"
+        style={{ height: 34, width: "auto", maxWidth: 230 }}
+        priority
+      />
     </Link>
   );
 }
