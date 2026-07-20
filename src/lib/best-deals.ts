@@ -136,9 +136,6 @@ export async function getBestDeals(
       dealBadge = "Compare totals";
     }
 
-    const score =
-      (discountPercent ?? 0) * 10 + agg.offerCount * 2 - minutesSince(agg.freshestAt) / 60;
-
     return [
       {
         productId: id,
@@ -152,13 +149,19 @@ export async function getBestDeals(
         offerCount: agg.offerCount,
         isSaved: savedProductIds.has(id),
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
-        score,
       },
     ];
   });
 
+  // Real discount% takes full priority — a product with a genuine price drop
+  // always outranks one without, regardless of offer count. Offer count is
+  // only a tiebreaker among products with the same (or no) discount.
   return scored
-    .sort((a, b) => b.score - a.score || a.currentTotal - b.currentTotal)
-    .slice(0, limit)
-    .map(({ score: _score, ...item }) => item);
+    .sort((a, b) => {
+      const discountDiff = (b.discountPercent ?? -1) - (a.discountPercent ?? -1);
+      if (discountDiff !== 0) return discountDiff;
+      if (b.offerCount !== a.offerCount) return b.offerCount - a.offerCount;
+      return a.currentTotal - b.currentTotal;
+    })
+    .slice(0, limit);
 }

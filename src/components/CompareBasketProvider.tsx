@@ -2,11 +2,17 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CompareToast } from "@/components/CompareToast";
+import {
+  addToBasket,
+  COMPARE_BASKET_LIMIT,
+  type CompareBasketEntry,
+  parseCompareBasketJSON,
+  removeFromBasket,
+} from "@/lib/compare-basket-storage";
 
 const STORAGE_KEY = "importnest.compareBasket";
-export const COMPARE_BASKET_LIMIT = 4;
-
-export type CompareBasketEntry = { id: string; name: string };
+export { COMPARE_BASKET_LIMIT };
+export type { CompareBasketEntry };
 type LastAction = { type: "added" } | { type: "limit" } | null;
 
 type CompareBasketContextValue = {
@@ -46,23 +52,7 @@ const CompareBasketContext = createContext<CompareBasketContextValue>(noopContex
 
 function loadItems(): CompareBasketEntry[] {
   if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(
-        (entry): entry is CompareBasketEntry =>
-          typeof entry === "object" &&
-          entry !== null &&
-          typeof (entry as CompareBasketEntry).id === "string" &&
-          typeof (entry as CompareBasketEntry).name === "string",
-      )
-      .slice(0, COMPARE_BASKET_LIMIT);
-  } catch {
-    return [];
-  }
+  return parseCompareBasketJSON(window.localStorage.getItem(STORAGE_KEY));
 }
 
 export function CompareBasketProvider({ children }: { children: React.ReactNode }) {
@@ -83,22 +73,18 @@ export function CompareBasketProvider({ children }: { children: React.ReactNode 
   const add = useCallback(
     (id: string, name: string) => {
       setItems((current) => {
-        if (current.some((item) => item.id === id)) return current;
-        if (current.length >= COMPARE_BASKET_LIMIT) {
-          setLastAction({ type: "limit" });
-          setToastVisible(true);
-          return current;
-        }
-        setLastAction({ type: "added" });
+        const { items: next, outcome } = addToBasket(current, id, name);
+        if (outcome === "duplicate") return current;
+        setLastAction({ type: outcome === "limit" ? "limit" : "added" });
         setToastVisible(true);
-        return [...current, { id, name }];
+        return next;
       });
     },
     [],
   );
 
   const remove = useCallback((id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
+    setItems((current) => removeFromBasket(current, id));
   }, []);
 
   const clear = useCallback(() => {

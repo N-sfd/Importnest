@@ -10,7 +10,7 @@ export type PopularComparison = {
   lowestTotalCost: number;
   offerCount: number;
   freshnessMinutesAgo: number;
-  /** Never fabricate — only set when a real rating field exists (none today). */
+  /** Real seeded average rating from CanonicalProduct.averageRating — never fabricated at render time. */
   rating: number | null;
   isSaved: boolean;
 };
@@ -93,7 +93,7 @@ export async function getPopularComparisons(
         lowestTotalCost: agg.lowestTotalCost,
         offerCount: agg.offerCount,
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
-        rating: null,
+        rating: product.averageRating,
         isSaved: savedProductIds.has(id),
       },
     ];

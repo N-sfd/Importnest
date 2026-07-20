@@ -10,9 +10,17 @@ const SIZES = {
 } as const;
 
 /** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
+/**
+ * The wordmark's ~10.8:1 aspect ratio means a height tall enough to hit a
+ * ~260px total-width cap and a ~36px height cap at the same time is not
+ * achievable simultaneously (36px tall alone would need ~390px of width just
+ * for the text). Width is prioritized here — it's what determines whether
+ * the logo dominates the header — at the cost of a shorter height than a
+ * naive per-property target would suggest.
+ */
 const HEADER_LOCKUP = {
-  sm: { textH: 32, iconH: 24, gap: 6 },
-  md: { textH: 40, iconH: 30, gap: 8 },
+  sm: { textH: 13, iconH: 10, gap: 3 },
+  md: { textH: 18, iconH: 13, gap: 4 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";
@@ -191,7 +199,7 @@ export function BrandLink({
         <BrandMark logo={logo} showWordmark layout="header" onDark={onDark} size="md" />
       </span>
       <span className="inline-flex leading-none sm:hidden">
-        <BrandMark logo={logo} showWordmark layout="header" onDark={onDark} size="sm" />
+        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="sm" />
       </span>
     </Link>
   );

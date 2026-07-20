@@ -143,6 +143,8 @@ async function main() {
       modelName: "Apex Home Quiet Dishwasher",
       modelNumber: "AH-4200",
       configuration: "Standard, Matte Black",
+      averageRating: 4.6,
+      ratingCount: 312,
       identifiers: {
         create: [
           { type: "UPC", value: "012345678905" },
@@ -167,6 +169,8 @@ async function main() {
       modelName: "Aura Pure HEPA Air Purifier",
       modelNumber: "AP-900",
       configuration: "Large room, White",
+      averageRating: 4.7,
+      ratingCount: 189,
       identifiers: {
         create: [
           { type: "UPC", value: "012345678912" },
@@ -190,6 +194,8 @@ async function main() {
       modelName: "Stride Velocity Run",
       modelNumber: "SV-9",
       configuration: "Size 9, Black/White",
+      averageRating: 4.8,
+      ratingCount: 540,
       identifiers: {
         create: [
           { type: "UPC", value: "012345678929" },
@@ -213,6 +219,8 @@ async function main() {
       modelName: "Apex Home Cordless Stick Vacuum",
       modelNumber: "CV-210",
       configuration: "Standard, Graphite",
+      averageRating: 4.4,
+      ratingCount: 97,
       identifiers: {
         create: [
           { type: "UPC", value: "012345678936" },

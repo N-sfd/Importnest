@@ -17,6 +17,7 @@ function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResult
     freshnessMinutesAgo: 10,
     hasPickup: false,
     conditions: ["new"],
+    rating: null,
     attributes: [],
     sourceIds: ["src-1"],
     isSaved: false,

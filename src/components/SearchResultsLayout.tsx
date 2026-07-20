@@ -337,6 +337,9 @@ export function SearchResultProductCard({
         <div className="flex flex-wrap gap-1.5">
           {isExact ? <ResultBadge tone="exact">Exact match</ResultBadge> : null}
           {isComparable ? <ResultBadge tone="comparable">Comparable alternative</ResultBadge> : null}
+          {product.rating != null ? (
+            <ResultBadge tone="highlight">★ {product.rating.toFixed(1)}</ResultBadge>
+          ) : null}
           {product.highlights.slice(0, 2).map((h) => (
             <ResultBadge key={h} tone="highlight">
               {HIGHLIGHT_LABELS[h]}

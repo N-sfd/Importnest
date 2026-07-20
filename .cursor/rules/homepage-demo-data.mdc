@@ -1,25 +1,23 @@
 ---
-description: Homepage demo product data must never be treated as live retailer facts
-globs: src/data/homepage-demo-products.ts,src/app/page.tsx,src/components/TopProductsSection.tsx,src/components/BestDealsSection.tsx
+description: Category demo product data must never be treated as live retailer facts
+globs: src/data/category-demo-products.ts,src/components/CategoryDemoGrid.tsx,src/app/search/results/page.tsx
 alwaysApply: false
 ---
 
-# Homepage demo data
+# Category demo data
 
-`src/data/homepage-demo-products.ts` is **homepage demo data only**.
+`src/data/category-demo-products.ts` is **category-browsing demo data only** —
+rendered as non-interactive discovery tiles (`CategoryDemoGrid`) so category
+pages don't feel empty while the real catalog is small.
 
-- Do not use it as live retailer data.
-- Do not use these prices for production ranking.
-- Real comparison pages must use stored listings, approved source data, and PriceHistory records.
-- Demo `href`s like `/compare/demo-*` are placeholders unless a real seeded product exists (e.g. QuietWash → `cp-apex-ah4200`).
-
-## Image folders
-
-Place matching assets under:
-
-- `public/images/home/top-products/`
-- `public/images/home/deals/`
-- `public/images/home/categories/`
-- `public/images/home/automotive/`
-- `public/images/home/headphones/`
-- `public/images/home/outdoors/`
+- No price, offer count, source count, condition, or freshness fields —
+  those read as real commerce facts and must only ever come from real
+  Listing/PriceHistory rows.
+- Never wire these into compare, save, alerts, or ranking logic.
+- Real comparison pages must use stored listings, approved source data, and
+  PriceHistory records — this file has no bearing on any of that.
+- Demo tiles link to `/search?category=<slug>` (browse the real category),
+  never to a fake product detail page.
+- Demo tiles reuse each category's existing hero image
+  (`public/images/categories/<slug>.png`) rather than fabricating dozens of
+  distinct product photos.
