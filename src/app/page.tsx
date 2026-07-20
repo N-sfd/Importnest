@@ -136,7 +136,7 @@ export default async function HomePage() {
       </section>
 
       {/* 3. Top Products — trending / most-compared */}
-      <TopProductsSection items={topProducts} />
+      <TopProductsSection items={topProducts} signedIn={Boolean(user)} />
 
       {/* 4. Best Deals — ranked by real discount, badge emphasized */}
       <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />

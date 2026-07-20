@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AddToCartButton } from "@/components/AddToCartButton";
+import type { NewCartItem } from "@/lib/cart-storage";
 import {
   removeAlertAction,
   saveProductAction,
@@ -12,9 +14,9 @@ import {
 export type ProductAlertState = { threshold: string | null; isActive: boolean } | null;
 
 /**
- * Compact Save / price-alert controls for the comparison page. The alert
- * form starts collapsed behind a single toggle button labeled "Set price
- * alert" (no alert yet) or "Edit alert" (one already exists) — the four
+ * Compact Save / price-alert / Add to cart controls for the comparison page.
+ * The alert form starts collapsed behind a single toggle button labeled "Set
+ * price alert" (no alert yet) or "Edit alert" (one already exists) — the four
  * button states shopper-facing copy needs to show, in one place, rather than
  * an always-open form taking up identity-section space.
  */
@@ -25,6 +27,7 @@ export function ProductActions({
   alert,
   suggestedAlert,
   currentLowestPrice,
+  cartItem,
 }: {
   productId: string;
   redirectTo: string;
@@ -32,11 +35,14 @@ export function ProductActions({
   alert: ProductAlertState;
   suggestedAlert: string;
   currentLowestPrice: number | null;
+  /** The top-ranked listing snapshot, when at least one real offer exists — omitted (no button) otherwise. */
+  cartItem?: NewCartItem;
 }) {
   const [editingAlert, setEditingAlert] = useState(false);
 
   return (
     <div className="flex flex-wrap items-start gap-3">
+      {cartItem ? <AddToCartButton {...cartItem} /> : null}
       <form
         action={
           isSaved

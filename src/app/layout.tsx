@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { CartProvider } from "@/components/CartProvider";
 import { CompareBasketProvider } from "@/components/CompareBasketProvider";
 import { RecentlyViewedProvider } from "@/components/RecentlyViewedProvider";
 import { themeInitScript } from "@/components/ThemeToggle";
@@ -52,7 +53,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-surface font-sans text-foreground antialiased">
         <CompareBasketProvider>
-          <RecentlyViewedProvider>{children}</RecentlyViewedProvider>
+          <CartProvider>
+            <RecentlyViewedProvider>{children}</RecentlyViewedProvider>
+          </CartProvider>
         </CompareBasketProvider>
       </body>
     </html>

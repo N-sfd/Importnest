@@ -89,6 +89,9 @@ function renderPriorityTabs(
   return renderToStaticMarkup(
     <PriorityTabs
       productId={productId}
+      productName="Test Product"
+      brandName="Test Brand"
+      productImageSrc="/brand/logo-app-icon-light.png"
       rows={rows}
       priority={priority}
       priorityOptions={priorityOptions}
@@ -194,7 +197,7 @@ describe("PriorityTabs — offer card, View offer visibility", () => {
     const rows = [makeRow({ id: "a", url: "https://example.com/offer" })];
     const html = renderPriorityTabs(rows);
 
-    expect(html).toContain("View offer");
+    expect(html).toContain("View retailer offer");
     expect(html).toContain('href="/go/a"');
     expect(html).toContain("Why this option");
   });

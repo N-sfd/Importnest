@@ -50,6 +50,7 @@ export function BestDealsSection({
               discountPercent={item.discountPercent}
               isSaved={item.isSaved}
               signedIn={signedIn}
+              bestListing={item.bestListing}
             />
           </li>
         ))}

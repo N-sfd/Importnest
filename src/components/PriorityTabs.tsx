@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { BottomSheet } from "@/components/BottomSheet";
 import {
   formatConditionLabel,
@@ -138,11 +139,17 @@ function RecommendationPanel({
 
 function OfferCard({
   productId,
+  productName,
+  brandName,
+  productImageSrc,
   row,
   isTop,
   recommendationLabel,
 }: {
   productId: string;
+  productName: string;
+  brandName: string;
+  productImageSrc: string;
   row: CompareRow;
   isTop: boolean;
   recommendationLabel: string;
@@ -242,9 +249,23 @@ function OfferCard({
             rel="noopener noreferrer sponsored"
             className="btn-cta min-h-11 px-4 py-2 text-center text-sm"
           >
-            View offer
+            View retailer offer
           </a>
         ) : null}
+        <AddToCartButton
+          label="Add this offer to cart"
+          listingId={listing.id}
+          productId={productId}
+          title={productName}
+          brand={brandName}
+          imageUrl={productImageSrc}
+          retailerName={listing.sourceName}
+          condition={formatConditionLabel(listing.condition)}
+          itemPrice={listing.price}
+          shipping={listing.shipping}
+          fees={listing.mandatoryFees}
+          totalKnownCost={total}
+        />
       </div>
     </li>
   );
@@ -252,12 +273,18 @@ function OfferCard({
 
 export function PriorityTabs({
   productId,
+  productName,
+  brandName,
+  productImageSrc,
   rows,
   priority,
   priorityOptions,
   panel,
 }: {
   productId: string;
+  productName: string;
+  brandName: string;
+  productImageSrc: string;
   /** Already ranked server-side for `priority` — this component never re-sorts. */
   rows: CompareRow[];
   priority: Priority;
@@ -387,6 +414,9 @@ export function PriorityTabs({
           <OfferCard
             key={row.listing.id}
             productId={productId}
+            productName={productName}
+            brandName={brandName}
+            productImageSrc={productImageSrc}
             row={row}
             isTop={row.listing.id === topId}
             recommendationLabel={recommendationLabel}

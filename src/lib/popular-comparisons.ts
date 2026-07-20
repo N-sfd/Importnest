@@ -13,6 +13,15 @@ export type PopularComparison = {
   /** Real seeded average rating from CanonicalProduct.averageRating — never fabricated at render time. */
   rating: number | null;
   isSaved: boolean;
+  /** The specific listing backing lowestTotalCost — used to add this exact offer to cart without inventing data. */
+  bestListing: {
+    listingId: string;
+    sourceName: string;
+    condition: string;
+    price: number;
+    shipping: number;
+    fees: number;
+  };
 };
 
 /**
@@ -29,11 +38,14 @@ export async function getPopularComparisons(
       matches: { some: { status: "approved" } },
     },
     select: {
+      id: true,
       canonicalProductId: true,
       price: true,
       shipping: true,
       fees: true,
+      condition: true,
       freshnessCapturedAt: true,
+      source: { select: { name: true } },
     },
   });
 
@@ -41,6 +53,7 @@ export async function getPopularComparisons(
     offerCount: number;
     lowestTotalCost: number;
     freshestAt: Date;
+    bestListing: PopularComparison["bestListing"];
   };
 
   const byProduct = new Map<string, Agg>();
@@ -48,17 +61,29 @@ export async function getPopularComparisons(
     const id = listing.canonicalProductId;
     if (!id) continue;
     const total = listing.price + listing.shipping + listing.fees;
+    const bestListing: PopularComparison["bestListing"] = {
+      listingId: listing.id,
+      sourceName: listing.source.name,
+      condition: listing.condition,
+      price: listing.price,
+      shipping: listing.shipping,
+      fees: listing.fees,
+    };
     const existing = byProduct.get(id);
     if (!existing) {
       byProduct.set(id, {
         offerCount: 1,
         lowestTotalCost: total,
         freshestAt: listing.freshnessCapturedAt,
+        bestListing,
       });
       continue;
     }
     existing.offerCount += 1;
-    existing.lowestTotalCost = Math.min(existing.lowestTotalCost, total);
+    if (total < existing.lowestTotalCost) {
+      existing.lowestTotalCost = total;
+      existing.bestListing = bestListing;
+    }
     if (listing.freshnessCapturedAt > existing.freshestAt) {
       existing.freshestAt = listing.freshnessCapturedAt;
     }
@@ -95,6 +120,7 @@ export async function getPopularComparisons(
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
         rating: product.averageRating,
         isSaved: savedProductIds.has(id),
+        bestListing: agg.bestListing,
       },
     ];
   });

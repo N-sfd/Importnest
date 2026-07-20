@@ -11,7 +11,13 @@ export type TopProductCardData = PopularComparison & {
 };
 
 /** Dense product cards for homepage “Top Products” — real totals only. */
-export function TopProductsSection({ items }: { items: TopProductCardData[] }) {
+export function TopProductsSection({
+  items,
+  signedIn,
+}: {
+  items: TopProductCardData[];
+  signedIn: boolean;
+}) {
   if (items.length === 0) return null;
 
   return (
@@ -41,11 +47,15 @@ export function TopProductsSection({ items }: { items: TopProductCardData[] }) {
               href={`/compare/${item.productId}`}
               imageSrc={homeTopProductImageFor(item.productId)}
               productName={item.productName}
+              brandName={item.brandName}
               supportingLine={item.supportingLine}
               badge={item.badge}
               fromPrice={item.lowestTotalCost}
               rating={item.rating}
               offerCount={item.offerCount}
+              bestListing={item.bestListing}
+              isSaved={item.isSaved}
+              signedIn={signedIn}
             />
           </li>
         ))}

@@ -98,7 +98,7 @@ export function HeaderLocation() {
     <button
       type="button"
       onClick={() => setEditing(true)}
-      className="ml-1 hidden min-w-0 max-w-[10.5rem] shrink-0 rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta lg:ml-2 lg:block"
+      className="ml-1 hidden min-w-0 max-w-[10.5rem] shrink-0 rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta lg:ml-1 lg:block"
     >
       <span className="block truncate text-[11px] leading-tight text-muted">Delivering to</span>
       <span className="block truncate text-sm font-semibold leading-tight text-navy-900">

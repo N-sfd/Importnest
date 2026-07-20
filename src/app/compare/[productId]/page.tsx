@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { ComparisonMethodologyPanel } from "@/components/ComparisonMethodologyPanel";
@@ -21,7 +22,7 @@ import {
   totalKnownCost,
   type CompareFilters,
 } from "@/lib/compare-data";
-import { formatMatchStatus } from "@/lib/compare-view";
+import { formatConditionLabel, formatMatchStatus } from "@/lib/compare-view";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Priority } from "@/lib/types";
 import { productImageFor } from "@/lib/images";
@@ -149,6 +150,25 @@ export default async function ComparePage({
     lowestKnown != null ? Math.max(1, Math.floor(lowestKnown * 0.95)).toFixed(2) : "";
   const priceHistory = await getProductPriceHistory(productId, lowestKnown);
 
+  // Top-ranked listing snapshot for the identity-strip Add to cart button —
+  // omitted entirely (no button) when there are no approved offers at all.
+  const topListing = rows[0]?.listing;
+  const summaryCartItem = topListing
+    ? {
+        listingId: topListing.id,
+        productId,
+        title: product.modelName,
+        brand: product.brand.name,
+        imageUrl: productImageFor(productId),
+        retailerName: topListing.sourceName,
+        condition: formatConditionLabel(topListing.condition),
+        itemPrice: topListing.price,
+        shipping: topListing.shipping,
+        fees: topListing.mandatoryFees,
+        totalKnownCost: totalKnownCost(topListing),
+      }
+    : undefined;
+
   return (
     <PageShell>
       <TrackProductView
@@ -184,12 +204,15 @@ export default async function ComparePage({
         actions={
           <div className="flex flex-wrap items-start gap-3">
             {!authUser ? (
-              <Link
-                href={`/login?next=${encodeURIComponent(redirectTo)}`}
-                className="text-sm font-medium text-link hover:underline"
-              >
-                Sign in to save this product or set a price alert
-              </Link>
+              <>
+                {summaryCartItem ? <AddToCartButton {...summaryCartItem} /> : null}
+                <Link
+                  href={`/login?next=${encodeURIComponent(redirectTo)}`}
+                  className="text-sm font-medium text-link hover:underline"
+                >
+                  Sign in to save this product or set a price alert
+                </Link>
+              </>
             ) : (
               <ProductActions
                 productId={productId}
@@ -198,6 +221,7 @@ export default async function ComparePage({
                 alert={saveState?.alert ?? null}
                 suggestedAlert={suggestedAlert}
                 currentLowestPrice={lowestKnown}
+                cartItem={summaryCartItem}
               />
             )}
             <AddToCompareButton productId={productId} productName={product.modelName} />
@@ -230,6 +254,9 @@ export default async function ComparePage({
           <div className="mt-4">
             <PriorityTabs
               productId={productId}
+              productName={product.modelName}
+              brandName={product.brand.name}
+              productImageSrc={productImageFor(productId)}
               rows={rows}
               priority={effectivePriority}
               priorityOptions={priorityOptions}

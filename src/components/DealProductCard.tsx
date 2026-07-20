@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
+import { formatConditionLabel } from "@/lib/compare-view";
 import { productThumbClass } from "@/lib/images";
 import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
+import type { BestDealItem } from "@/lib/best-deals";
 
 export type DealProductCardProps = {
   productId: string;
@@ -17,6 +20,7 @@ export type DealProductCardProps = {
   discountPercent: number | null;
   isSaved: boolean;
   signedIn: boolean;
+  bestListing: BestDealItem["bestListing"];
 };
 
 function HeartIcon({ filled }: { filled: boolean }) {
@@ -52,6 +56,7 @@ export function DealProductCard({
   discountPercent,
   isSaved,
   signedIn,
+  bestListing,
 }: DealProductCardProps) {
   return (
     <div className="relative h-full">
@@ -122,6 +127,20 @@ export function DealProductCard({
           </Link>
         )}
         <AddToCompareButton productId={productId} productName={productName} />
+        <AddToCartButton
+          compact
+          listingId={bestListing.listingId}
+          productId={productId}
+          title={productName}
+          brand={brandName}
+          imageUrl={imageSrc}
+          retailerName={bestListing.sourceName}
+          condition={formatConditionLabel(bestListing.condition)}
+          itemPrice={bestListing.price}
+          shipping={bestListing.shipping}
+          fees={bestListing.fees}
+          totalKnownCost={bestListing.price + bestListing.shipping + bestListing.fees}
+        />
       </div>
     </div>
   );

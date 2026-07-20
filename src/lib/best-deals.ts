@@ -16,6 +16,15 @@ export type BestDealItem = {
   offerCount: number;
   isSaved: boolean;
   freshnessMinutesAgo: number;
+  /** The specific listing backing currentTotal — used to add this exact offer to cart without inventing data. */
+  bestListing: {
+    listingId: string;
+    sourceName: string;
+    condition: string;
+    price: number;
+    shipping: number;
+    fees: number;
+  };
 };
 
 /**
@@ -37,7 +46,9 @@ export async function getBestDeals(
       price: true,
       shipping: true,
       fees: true,
+      condition: true,
       freshnessCapturedAt: true,
+      source: { select: { name: true } },
     },
   });
 
@@ -46,6 +57,7 @@ export async function getBestDeals(
     offerCount: number;
     currentTotal: number;
     freshestAt: Date;
+    bestListing: BestDealItem["bestListing"];
   };
 
   const byProduct = new Map<string, Agg>();
@@ -53,6 +65,14 @@ export async function getBestDeals(
     const id = listing.canonicalProductId;
     if (!id) continue;
     const total = listing.price + listing.shipping + listing.fees;
+    const bestListing: BestDealItem["bestListing"] = {
+      listingId: listing.id,
+      sourceName: listing.source.name,
+      condition: listing.condition,
+      price: listing.price,
+      shipping: listing.shipping,
+      fees: listing.fees,
+    };
     const existing = byProduct.get(id);
     if (!existing) {
       byProduct.set(id, {
@@ -60,12 +80,16 @@ export async function getBestDeals(
         offerCount: 1,
         currentTotal: total,
         freshestAt: listing.freshnessCapturedAt,
+        bestListing,
       });
       continue;
     }
     existing.listingIds.push(listing.id);
     existing.offerCount += 1;
-    existing.currentTotal = Math.min(existing.currentTotal, total);
+    if (total < existing.currentTotal) {
+      existing.currentTotal = total;
+      existing.bestListing = bestListing;
+    }
     if (listing.freshnessCapturedAt > existing.freshestAt) {
       existing.freshestAt = listing.freshnessCapturedAt;
     }
@@ -149,6 +173,7 @@ export async function getBestDeals(
         offerCount: agg.offerCount,
         isSaved: savedProductIds.has(id),
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
+        bestListing: agg.bestListing,
       },
     ];
   });

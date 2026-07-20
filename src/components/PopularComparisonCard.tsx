@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
+import { formatConditionLabel } from "@/lib/compare-view";
 import {
   freshnessLabel,
   type PopularComparison,
@@ -66,6 +68,20 @@ export function PopularComparisonCard({
             </form>
           ) : null}
           <AddToCompareButton productId={item.productId} productName={item.productName} />
+          <AddToCartButton
+            compact
+            listingId={item.bestListing.listingId}
+            productId={item.productId}
+            title={item.productName}
+            brand={item.brandName}
+            imageUrl={item.imageSrc}
+            retailerName={item.bestListing.sourceName}
+            condition={formatConditionLabel(item.bestListing.condition)}
+            itemPrice={item.bestListing.price}
+            shipping={item.bestListing.shipping}
+            fees={item.bestListing.fees}
+            totalKnownCost={item.bestListing.price + item.bestListing.shipping + item.bestListing.fees}
+          />
           <Link
             href={`/compare/${item.productId}`}
             className="btn-cta px-3 py-1.5 text-xs"

@@ -56,6 +56,15 @@ export type SearchResultProduct = {
   /** Set when a text query is present */
   matchKind: MatchKind | null;
   highlights: ResultHighlight[];
+  /** The specific listing backing lowestTotalCost — used to add this exact offer to cart without inventing data. Null when there are no approved offers. */
+  bestListing: {
+    listingId: string;
+    sourceName: string;
+    condition: string;
+    price: number;
+    shipping: number;
+    fees: number;
+  } | null;
 };
 
 export type SearchResultsFacetOptions = {
@@ -152,6 +161,7 @@ function significantWords(query: string): string[] {
 }
 
 type ListingRow = {
+  id: string;
   canonicalProductId: string | null;
   sourceId: string;
   condition: string;
@@ -160,6 +170,7 @@ type ListingRow = {
   fees: number;
   deliveryLabel: string | null;
   freshnessCapturedAt: Date;
+  source: { name: string };
 };
 
 type ProductAgg = {
@@ -169,6 +180,7 @@ type ProductAgg = {
   hasPickup: boolean;
   conditions: Set<string>;
   sourceIds: Set<string>;
+  bestListing: NonNullable<SearchResultProduct["bestListing"]>;
 };
 
 function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
@@ -178,6 +190,14 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
     if (!id) continue;
     const total = l.price + l.shipping + l.fees;
     const pickup = /pickup/i.test(l.deliveryLabel ?? "");
+    const bestListing: ProductAgg["bestListing"] = {
+      listingId: l.id,
+      sourceName: l.source.name,
+      condition: l.condition,
+      price: l.price,
+      shipping: l.shipping,
+      fees: l.fees,
+    };
     const existing = byProduct.get(id);
     if (!existing) {
       byProduct.set(id, {
@@ -187,11 +207,15 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
         hasPickup: pickup,
         conditions: new Set([l.condition]),
         sourceIds: new Set([l.sourceId]),
+        bestListing,
       });
       continue;
     }
     existing.offerCount += 1;
-    existing.lowestTotalCost = Math.min(existing.lowestTotalCost, total);
+    if (total < existing.lowestTotalCost) {
+      existing.lowestTotalCost = total;
+      existing.bestListing = bestListing;
+    }
     if (l.freshnessCapturedAt > existing.freshestAt) existing.freshestAt = l.freshnessCapturedAt;
     existing.hasPickup = existing.hasPickup || pickup;
     existing.conditions.add(l.condition);
@@ -259,6 +283,7 @@ export async function getSearchResults(
       ...(filters.sourceId ? { sourceId: filters.sourceId } : {}),
     },
     select: {
+      id: true,
       canonicalProductId: true,
       sourceId: true,
       condition: true,
@@ -267,6 +292,7 @@ export async function getSearchResults(
       fees: true,
       deliveryLabel: true,
       freshnessCapturedAt: true,
+      source: { select: { name: true } },
     },
   });
 
@@ -295,6 +321,7 @@ export async function getSearchResults(
         unit: a.unit,
       })),
       sourceIds: agg ? [...agg.sourceIds] : [],
+      bestListing: agg?.bestListing ?? null,
       isSaved: saved.has(p.id),
       matchKind: classifyMatchKind({
         query: filters.query,

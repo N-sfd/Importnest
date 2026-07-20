@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
+import { formatConditionLabel } from "@/lib/compare-view";
 import {
   conditionBadgeLabels,
   type ResultHighlight,
@@ -438,8 +440,26 @@ export function SearchResultProductCard({
               href={`/compare/${product.id}`}
               className="btn-cta flex-1 px-3 py-2 text-center text-sm"
             >
-              Compare
+              View offers
             </Link>
+            {product.bestListing ? (
+              <AddToCartButton
+                compact
+                listingId={product.bestListing.listingId}
+                productId={product.id}
+                title={product.productName}
+                brand={product.brandName}
+                imageUrl={product.imageSrc}
+                retailerName={product.bestListing.sourceName}
+                condition={formatConditionLabel(product.bestListing.condition)}
+                itemPrice={product.bestListing.price}
+                shipping={product.bestListing.shipping}
+                fees={product.bestListing.fees}
+                totalKnownCost={
+                  product.bestListing.price + product.bestListing.shipping + product.bestListing.fees
+                }
+              />
+            ) : null}
             <AddToCompareButton productId={product.id} productName={product.productName} />
           </div>
         </div>

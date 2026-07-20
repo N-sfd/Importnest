@@ -5,7 +5,7 @@
  */
 export function HeaderSearch() {
   return (
-    <div className="order-3 w-full min-w-0 lg:order-none lg:mx-2 lg:flex-1">
+    <div className="order-3 w-full min-w-0 lg:order-none lg:max-w-[760px]">
       <form
         action="/search"
         className="flex w-full items-center overflow-hidden rounded-full border border-border bg-panel shadow-[0_1px_3px_rgb(4_25_53/0.08)] focus-within:border-cta/40 focus-within:ring-2 focus-within:ring-ring"

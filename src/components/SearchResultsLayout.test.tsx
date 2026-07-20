@@ -23,6 +23,7 @@ function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResult
     isSaved: false,
     matchKind: "exact",
     highlights: [],
+    bestListing: null,
     ...overrides,
   };
 }
