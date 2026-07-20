@@ -282,8 +282,8 @@ a {
 
 .product-card-image {
   position: relative;
-  width: 92px;
-  height: 92px;
+  width: 96px;
+  height: 96px;
   border-radius: 14px;
   overflow: hidden;
   background: #f4f7fa;
@@ -292,10 +292,24 @@ a {
 .result-card-image,
 .main-result-image {
   position: relative;
-  width: 118px;
-  height: 118px;
+  width: 120px;
+  height: 120px;
   border-radius: 16px;
   overflow: hidden;
+  background: #f4f7fa;
+}
+
+.category-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 48px);
+  gap: 8px;
+}
+
+.category-visual-grid img {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
   background: #f4f7fa;
 }
 

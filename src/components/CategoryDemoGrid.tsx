@@ -43,7 +43,7 @@ export function CategoryDemoGrid({ categorySlug }: { categorySlug: string }) {
                 alt={`${product.brand} ${product.title}`}
                 fill
                 className={`${productThumbClass(product.image)} transition duration-300 group-hover:scale-[1.04]`}
-                sizes="88px"
+                sizes="96px"
               />
             </div>
             <div className="min-w-0 flex-1 py-0.5">

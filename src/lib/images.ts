@@ -60,6 +60,7 @@ export const homeCategoryImages: Record<string, string> = {
 export const productImageFallbacks: Record<string, Record<string, string>> = {
   footwear: {
     "trail runner": "/images/products/footwear/trail-runner.jpg",
+    "running shoe": "/images/products/footwear/running-shoe.jpg",
     "canvas sneaker": "/images/products/footwear/canvas-sneaker.jpg",
     sneaker: "/images/products/footwear/canvas-sneaker.jpg",
     "hiking boot": "/images/products/footwear/hiking-boot.jpg",
@@ -68,6 +69,10 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     "winter boot": "/images/products/footwear/winter-boot.jpg",
     "training shoe": "/images/products/footwear/training-shoe.jpg",
     "chukka boot": "/images/products/footwear/chukka-boot.jpg",
+    "casual shoe": "/images/products/footwear/casual-shoe.jpg",
+    "dress shoe": "/images/products/footwear/dress-shoe.jpg",
+    "slip-on": "/images/products/footwear/slip-on.jpg",
+    "slip on": "/images/products/footwear/slip-on.jpg",
   },
   accessories: {
     wallet: "/images/products/accessories/wallet.jpg",
@@ -79,6 +84,9 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     charging: "/images/products/accessories/cable-set.jpg",
     crossbody: "/images/products/accessories/crossbody-bag.jpg",
     "watch band": "/images/products/accessories/watch-band.jpg",
+    "laptop sleeve": "/images/products/accessories/laptop-sleeve.jpg",
+    "charging pad": "/images/products/accessories/wireless-charging-pad.jpg",
+    "wireless charg": "/images/products/accessories/wireless-charging-pad.jpg",
   },
   beauty: {
     "hair dryer": "/images/products/beauty/hair-dryer.jpg",
@@ -89,37 +97,50 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     razor: "/images/products/beauty/electric-shaver.jpg",
     "skincare fridge": "/images/products/beauty/skincare-fridge.jpg",
     "curling iron": "/images/products/beauty/curling-iron.jpg",
-    "flat iron": "/images/products/beauty/curling-iron.jpg",
+    straightener: "/images/products/beauty/hair-straightener.jpg",
+    "flat iron": "/images/products/beauty/hair-straightener.jpg",
     "led mirror": "/images/products/beauty/led-mirror.jpg",
     mirror: "/images/products/beauty/led-mirror.jpg",
     massage: "/images/products/beauty/massage-tool.jpg",
     manicure: "/images/products/beauty/manicure-kit.jpg",
     nail: "/images/products/beauty/manicure-kit.jpg",
+    grooming: "/images/products/beauty/grooming-kit.jpg",
     steamer: "/images/products/beauty/skincare-fridge.jpg",
   },
   appliances: {
     dishwasher: "/images/products/appliances/dishwasher.jpg",
+    refrigerator: "/images/products/appliances/refrigerator.jpg",
+    fridge: "/images/products/appliances/refrigerator.jpg",
     vacuum: "/images/products/appliances/vacuum.jpg",
     "upright vacuum": "/images/products/appliances/upright-vacuum.jpg",
     microwave: "/images/products/appliances/microwave.jpg",
     toaster: "/images/products/appliances/toaster-oven.jpg",
     "slow cooker": "/images/products/appliances/slow-cooker.jpg",
     "air fryer": "/images/products/appliances/air-fryer.jpg",
+    "coffee maker": "/images/products/appliances/coffee-maker.jpg",
     freezer: "/images/products/appliances/freezer.jpg",
     "window ac": "/images/products/appliances/window-ac.jpg",
     "air conditioner": "/images/products/appliances/air-conditioner.jpg",
     dehumidifier: "/images/products/appliances/dehumidifier.jpg",
     "air purifier": "/images/products/appliances/air-purifier.jpg",
+    "washing machine": "/images/products/appliances/washing-machine.jpg",
+    laundry: "/images/products/appliances/washing-machine.jpg",
   },
   kitchen: {
     cookware: "/images/products/kitchen/cookware.jpg",
+    dinnerware: "/images/products/kitchen/dinnerware.jpg",
+    utensil: "/images/products/kitchen/utensils.jpg",
+    blender: "/images/products/kitchen/blender.jpg",
     "pour-over": "/images/products/kitchen/pour-over.jpg",
-    coffee: "/images/products/kitchen/pour-over.jpg",
+    "coffee machine": "/images/products/kitchen/coffee-machine.jpg",
+    coffee: "/images/products/kitchen/coffee-machine.jpg",
     knife: "/images/products/kitchen/knife-block.jpg",
     mixer: "/images/products/kitchen/stand-mixer.jpg",
     "cutting board": "/images/products/kitchen/cutting-board.jpg",
     kettle: "/images/products/kitchen/kettle.jpg",
     storage: "/images/products/kitchen/food-storage.jpg",
+    bakeware: "/images/products/kitchen/bakeware.jpg",
+    organizer: "/images/products/kitchen/kitchen-organizer.jpg",
     skillet: "/images/products/kitchen/cast-iron.jpg",
     "cast iron": "/images/products/kitchen/cast-iron.jpg",
   },
@@ -129,16 +150,18 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     storage: "/images/products/home/storage-bins.jpg",
     pillow: "/images/products/home/throw-pillow.jpg",
     filter: "/images/products/home/air-filter.jpg",
-    "air purifier": "/images/products/home/air-filter.jpg",
+    "air purifier": "/images/products/home/air-purifier.jpg",
     clock: "/images/products/home/wall-clock.jpg",
     diffuser: "/images/products/home/diffuser.jpg",
     curtain: "/images/products/home/curtains.jpg",
+    rug: "/images/products/home/rug.jpg",
+    organizer: "/images/products/home/home-organizer.jpg",
   },
   electronics: {
     phone: "/images/products/electronics/phone.jpg",
     smartphone: "/images/products/electronics/phone.jpg",
     ultrabook: "/images/products/electronics/ultrabook.jpg",
-    laptop: "/images/products/electronics/ultrabook.jpg",
+    laptop: "/images/products/electronics/laptop.jpg",
     earbuds: "/images/products/electronics/earbuds.jpg",
     headphones: "/images/products/electronics/headphones.jpg",
     monitor: "/images/products/electronics/monitor.jpg",
@@ -149,6 +172,9 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     keyboard: "/images/products/electronics/keyboard.jpg",
     ssd: "/images/products/electronics/ssd.jpg",
     speaker: "/images/products/electronics/speaker.jpg",
+    camera: "/images/products/electronics/camera.jpg",
+    gaming: "/images/products/electronics/gaming.jpg",
+    gamepad: "/images/products/electronics/gaming.jpg",
   },
   automotive: {
     "dash cam": "/images/products/automotive/dash-cam.jpg",
@@ -159,18 +185,107 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     "floor mat": "/images/products/automotive/floor-mats.jpg",
     inflator: "/images/products/automotive/tire-inflator.jpg",
     "car vacuum": "/images/products/automotive/car-vacuum.jpg",
+    "battery charger": "/images/products/automotive/battery-charger.jpg",
+    "seat cover": "/images/products/automotive/seat-cover.jpg",
+    wiper: "/images/products/automotive/windshield-wipers.jpg",
+    "tool kit": "/images/products/automotive/tool-kit.jpg",
   },
   outdoors: {
+    backpack: "/images/products/outdoors/backpack.jpg",
     daypack: "/images/products/outdoors/daypack.jpg",
     tent: "/images/products/outdoors/tent.jpg",
     "sleeping bag": "/images/products/outdoors/sleeping-bag.jpg",
     stove: "/images/products/outdoors/camp-stove.jpg",
-    bottle: "/images/products/outdoors/water-bottle.jpg",
+    bottle: "/images/products/outdoors/hiking-bottle.jpg",
     trekking: "/images/products/outdoors/trekking-poles.jpg",
     lantern: "/images/products/outdoors/lantern.jpg",
     chair: "/images/products/outdoors/camp-chair.jpg",
+    cooler: "/images/products/outdoors/cooler.jpg",
+    picnic: "/images/products/outdoors/picnic-blanket.jpg",
+    "travel bag": "/images/products/outdoors/travel-bag.jpg",
   },
 };
+
+/** Representative subtype thumbs for category visual collages. */
+export const categoryCollageImages: Record<string, string[]> = {
+  electronics: [
+    "/images/products/electronics/phone.jpg",
+    "/images/products/electronics/laptop.jpg",
+    "/images/products/electronics/headphones.jpg",
+    "/images/products/electronics/tablet.jpg",
+  ],
+  appliances: [
+    "/images/products/appliances/microwave.jpg",
+    "/images/products/appliances/dishwasher.jpg",
+    "/images/products/appliances/coffee-maker.jpg",
+    "/images/products/appliances/air-fryer.jpg",
+  ],
+  kitchen: [
+    "/images/products/kitchen/cookware.jpg",
+    "/images/products/kitchen/blender.jpg",
+    "/images/products/kitchen/coffee-machine.jpg",
+    "/images/products/kitchen/kettle.jpg",
+  ],
+  beauty: [
+    "/images/products/beauty/hair-dryer.jpg",
+    "/images/products/beauty/electric-shaver.jpg",
+    "/images/products/beauty/facial-cleansing-brush.jpg",
+    "/images/products/beauty/led-mirror.jpg",
+  ],
+  footwear: [
+    "/images/products/footwear/running-shoe.jpg",
+    "/images/products/footwear/hiking-boot.jpg",
+    "/images/products/footwear/sandal.jpg",
+    "/images/products/footwear/loafer.jpg",
+  ],
+  accessories: [
+    "/images/products/accessories/wallet.jpg",
+    "/images/products/accessories/backpack.jpg",
+    "/images/products/accessories/sunglasses.jpg",
+    "/images/products/accessories/phone-case.jpg",
+  ],
+  automotive: [
+    "/images/products/automotive/dash-cam.jpg",
+    "/images/products/automotive/phone-mount.jpg",
+    "/images/products/automotive/jump-starter.jpg",
+    "/images/products/automotive/floor-mats.jpg",
+  ],
+  outdoors: [
+    "/images/products/outdoors/tent.jpg",
+    "/images/products/outdoors/daypack.jpg",
+    "/images/products/outdoors/lantern.jpg",
+    "/images/products/outdoors/cooler.jpg",
+  ],
+  home: [
+    "/images/products/home/blanket.jpg",
+    "/images/products/home/table-lamp.jpg",
+    "/images/products/home/storage-bins.jpg",
+    "/images/products/home/air-purifier.jpg",
+  ],
+};
+
+/**
+ * Collage thumbs for category visual cards.
+ * When query suggests kitchen + appliances category, prefer kitchen-appliance set.
+ */
+export function getCategoryCollageImages(
+  categorySlug: string,
+  query?: string | null,
+): string[] {
+  const key = normalizeCategoryKey(categorySlug);
+  const q = (query ?? "").toLowerCase();
+
+  if (key === "appliances" && q.includes("kitchen")) {
+    return [
+      "/images/products/appliances/microwave.jpg",
+      "/images/products/appliances/dishwasher.jpg",
+      "/images/products/appliances/coffee-maker.jpg",
+      "/images/products/appliances/air-fryer.jpg",
+    ];
+  }
+
+  return categoryCollageImages[key] ?? [categoryImageFor(key)];
+}
 
 /** Resolve a category image for cards/headers — never returns a broken path. */
 export function categoryImageFor(category: string, fallback = BRAND_FALLBACK_IMAGE) {
@@ -187,20 +302,21 @@ export function categoryImageFor(category: string, fallback = BRAND_FALLBACK_IMA
 export const emptyStateImage = "/images/empty-states/saved-watchlist.svg";
 
 /**
- * Match title/subtitle text against subtype keys for a category.
+ * Match title/subtitle/tags text against subtype keys for a category.
  * Longer keys win so "hiking boot" beats a hypothetical "boot".
  */
 export function subtypeFallbackImage(
   categorySlug: string | undefined,
   title?: string | null,
   subtitle?: string | null,
+  tags?: string[] | null,
 ): string | null {
   if (!categorySlug) return null;
   const key = normalizeCategoryKey(categorySlug);
   const map = productImageFallbacks[key];
   if (!map) return null;
 
-  const haystack = `${title ?? ""} ${subtitle ?? ""}`.toLowerCase();
+  const haystack = `${title ?? ""} ${subtitle ?? ""} ${(tags ?? []).join(" ")}`.toLowerCase();
   if (!haystack.trim()) return null;
 
   const entries = Object.entries(map).sort((a, b) => b[0].length - a[0].length);
@@ -215,7 +331,7 @@ export function subtypeFallbackImage(
  * 1. product.imageUrl / primaryImage
  * 2. listing.imageUrl
  * 3. seeded product id map
- * 4. subtype-specific fallback (title/subtitle match)
+ * 4. subtype-specific fallback (title/subtitle/tags match)
  * 5. category-specific fallback
  * 6. neutral brand fallback
  */
@@ -224,6 +340,7 @@ export function getProductDisplayImage(options: {
   categorySlug?: string;
   title?: string | null;
   subtitle?: string | null;
+  tags?: string[] | null;
   imageUrl?: string | null;
   primaryImage?: string | null;
   listingImageUrl?: string | null;
@@ -238,6 +355,7 @@ export function getProductDisplayImage(options: {
     options.categorySlug,
     options.title,
     options.subtitle,
+    options.tags,
   );
   if (subtype) return subtype;
   if (options.categorySlug) return categoryImageFor(options.categorySlug);

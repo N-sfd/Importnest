@@ -36,6 +36,18 @@ const SUGGESTED_CATEGORIES = [
   "automotive",
 ];
 
+/** Narrower set surfaced specifically for "deals"-style queries. */
+const DEALS_CATEGORIES = ["electronics", "appliances", "kitchen", "footwear", "accessories"];
+
+function DealsTagIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.83 0l-6.37-6.37a2 2 0 0 1 0-2.83l8-8A2 2 0 0 1 13 3h6a2 2 0 0 1 2 2v6a2 2 0 0 1-.4 1.6z" />
+      <circle cx="15.5" cy="8.5" r="1.5" />
+    </svg>
+  );
+}
+
 const AI_INTENT_TO_PARAM: Record<string, (value: unknown) => [string, string] | null> = {
   budgetMax: (v) => (typeof v === "number" ? ["budgetMax", String(v)] : null),
   condition: (v) => (typeof v === "string" ? ["condition", v] : null),
@@ -168,25 +180,56 @@ export default async function ClarifyPage({
         <CategoryVisualCard
           category={params.category}
           title={categoryRecord?.name}
+          query={query}
           className="mb-5"
           compact
         />
       ) : (
         <div className="mb-5">
           {isDealsQuery ? (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-wide text-accent">Deals</p>
-              <p className="mt-0.5 text-sm text-muted">
-                Tell us what type of deal you want so we can compare useful offers.
-              </p>
-            </>
+            <div className="mb-3 rounded-2xl border border-accent/30 bg-accent/10 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent">
+                  <DealsTagIcon />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-accent">Deals</p>
+                  <p className="mt-0.5 text-sm font-semibold text-navy-900">
+                    Find deal-worthy categories to compare
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">
+                    Tell us what type of deal you want so we can compare useful offers from approved
+                    sources.
+                  </p>
+                </div>
+              </div>
+              <div className="category-visual-grid mt-3">
+                {DEALS_CATEGORIES.slice(0, 4).map((slug) => (
+                  <div
+                    key={slug}
+                    className="relative overflow-hidden rounded-[10px] border border-border bg-[#F4F7FA]"
+                  >
+                    {categoryHasImage(slug) ? (
+                      <Image
+                        src={categoryImageSrc(slug)!}
+                        alt=""
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-cover"
+                        sizes="48px"
+                      />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
               Not sure which department?
             </p>
           )}
           <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">
-            {SUGGESTED_CATEGORIES.map((slug) => (
+            {(isDealsQuery ? DEALS_CATEGORIES : SUGGESTED_CATEGORIES).map((slug) => (
               <Link
                 key={slug}
                 href={`/search?category=${slug}&q=${encodeURIComponent(query)}`}

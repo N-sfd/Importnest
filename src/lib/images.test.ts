@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BRAND_FALLBACK_IMAGE,
+  getCategoryCollageImages,
   getProductDisplayImage,
   isBrandFallbackImage,
   productImageFor,
@@ -76,6 +77,24 @@ describe("subtypeFallbackImage", () => {
       "air-conditioner",
     );
   });
+
+  it("matches kitchen and beauty subtypes from titles", () => {
+    expect(subtypeFallbackImage("kitchen", "Whirlblend Countertop Blender")).toContain("blender");
+    expect(subtypeFallbackImage("beauty", "Sleekline Hair Straightener")).toContain(
+      "hair-straightener",
+    );
+  });
+});
+
+describe("getCategoryCollageImages", () => {
+  it("prefers kitchen-appliance collage when query is kitchen and category is appliances", () => {
+    const thumbs = getCategoryCollageImages("appliances", "kitchen");
+    expect(thumbs).toHaveLength(4);
+    expect(thumbs.some((t) => t.includes("microwave"))).toBe(true);
+    expect(thumbs.some((t) => t.includes("dishwasher"))).toBe(true);
+    expect(thumbs.some((t) => t.includes("coffee-maker"))).toBe(true);
+    expect(thumbs.some((t) => t.includes("air-fryer"))).toBe(true);
+  });
 });
 
 describe("productThumbClass", () => {
@@ -99,17 +118,22 @@ describe("category demo thumbnails", () => {
     "outdoors",
   ] as const;
 
-  it("provides at least 8 demo products per major category", () => {
+  it("provides at least 10 demo products per major category", () => {
     for (const slug of categories) {
-      expect(getCategoryDemoProducts(slug).length).toBeGreaterThanOrEqual(8);
+      expect(getCategoryDemoProducts(slug).length).toBeGreaterThanOrEqual(10);
     }
   });
 
-  it("uses distinct photos within footwear, beauty, accessories, appliances, and electronics", () => {
-    for (const slug of ["footwear", "beauty", "accessories", "appliances", "electronics"] as const) {
+  it("uses distinct photos within every major category", () => {
+    for (const slug of categories) {
       const products = getCategoryDemoProducts(slug);
       const images = products.map((p) => p.image);
-      expect(new Set(images).size).toBe(images.length);
+      const unique = new Set(images);
+      if (unique.size !== images.length) {
+        const dups = images.filter((img, i) => images.indexOf(img) !== i);
+        throw new Error(`${slug} has duplicate images: ${[...new Set(dups)].join(", ")}`);
+      }
+      expect(unique.size).toBe(images.length);
       for (const image of images) {
         expect(image).not.toContain("/demo-icons/");
         expect(image).toMatch(/\.(png|jpe?g|webp)$/i);

@@ -72,7 +72,7 @@ export function SearchResultsToolbar({
   return (
     <div className="space-y-4 border-b border-border pb-4">
       {params.category ? (
-        <CategoryVisualCard category={params.category} compact />
+        <CategoryVisualCard category={params.category} query={params.q} compact />
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

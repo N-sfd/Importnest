@@ -84,7 +84,7 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
   return (
     <div className="space-y-4">
       {params.category ? (
-        <CategoryVisualCard category={params.category} compact />
+        <CategoryVisualCard category={params.category} query={params.q} compact />
       ) : null}
 
       {categoryOnly ? (
