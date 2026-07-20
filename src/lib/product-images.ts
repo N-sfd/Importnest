@@ -7,8 +7,10 @@
  * 2. listing.imageUrl
  * 3. seeded product id map
  * 4. subtype-specific fallback (title, subtitle, tags, subtype)
- * 5. category-specific fallback (/images/categories/…)
- * 6. neutral brand fallback
+ * 5. neutral brand fallback
+ *
+ * Intentionally skips /images/categories/* collages — those reuse one photo
+ * across an entire department and make every card look identical.
  */
 
 import {
@@ -169,10 +171,14 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
   electronics: {
     phone: "/images/products/electronics/phone.jpg",
     smartphone: "/images/products/electronics/phone.jpg",
+    "smart phone": "/images/products/electronics/phone.jpg",
     ultrabook: "/images/products/electronics/ultrabook.jpg",
     laptop: "/images/products/electronics/laptop.jpg",
     earbuds: "/images/products/electronics/earbuds.jpg",
+    "noise-cancelling earbuds": "/images/products/electronics/earbuds.jpg",
     headphones: "/images/products/electronics/headphones.jpg",
+    "over-ear headphones": "/images/products/electronics/headphones.jpg",
+    "over ear headphones": "/images/products/electronics/headphones.jpg",
     monitor: "/images/products/electronics/monitor.jpg",
     streaming: "/images/products/electronics/streaming-stick.jpg",
     "smart watch": "/images/products/electronics/smartwatch.jpg",
@@ -181,13 +187,17 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     keyboard: "/images/products/electronics/keyboard.jpg",
     ssd: "/images/products/electronics/ssd.jpg",
     speaker: "/images/products/electronics/speaker.jpg",
+    "bluetooth speaker": "/images/products/electronics/speaker.jpg",
     camera: "/images/products/electronics/camera.jpg",
     "gaming accessory": "/images/products/electronics/gaming.jpg",
+    "gaming controller": "/images/products/electronics/gaming.jpg",
     gaming: "/images/products/electronics/gaming.jpg",
     gamepad: "/images/products/electronics/gaming.jpg",
+    arcade: "/images/products/electronics/gaming.jpg",
   },
   automotive: {
     "dash cam": "/images/products/automotive/dash-cam.jpg",
+    dashcam: "/images/products/automotive/dash-cam.jpg",
     "jump starter": "/images/products/automotive/jump-starter.jpg",
     cargo: "/images/products/automotive/cargo-organizer.jpg",
     headlight: "/images/products/automotive/headlight-kit.jpg",
@@ -204,6 +214,7 @@ export const productImageFallbacks: Record<string, Record<string, string>> = {
     wipers: "/images/products/automotive/wipers.jpg",
     wiper: "/images/products/automotive/wipers.jpg",
     "tool kit": "/images/products/automotive/tool-kit.jpg",
+    "emergency tool": "/images/products/automotive/tool-kit.jpg",
   },
   outdoors: {
     backpack: "/images/products/outdoors/hiking-backpack.jpg",
@@ -350,7 +361,6 @@ export function getProductDisplayImage(product: ProductImageSource): string {
   const subtype = subtypeFallbackImage(categorySlug, title, product.subtitle, tagsFrom(product));
   if (subtype) return subtype;
 
-  if (categorySlug) return categoryFallbackImage(categorySlug);
   return BRAND_FALLBACK_IMAGE;
 }
 

@@ -5,7 +5,6 @@ import {
   getProductDisplayImage,
   imageForSubtype,
   productImageAlt,
-  productImageFor,
   PRODUCT_IMAGE_SIZE,
   subtypeFallbackImage,
 } from "@/lib/product-images";
@@ -66,17 +65,22 @@ describe("getProductDisplayImage", () => {
     ).toBe("/images/products/electronics/headphones.jpg");
   });
 
-  it("falls back to the category photo when no product or subtype image exists", () => {
+  it("falls back to the brand mark when no product or subtype image exists", () => {
     expect(getProductDisplayImage({ productId: "unknown-product", categorySlug: "appliances" })).toBe(
-      "/images/categories/appliances.png",
+      BRAND_FALLBACK_IMAGE,
     );
   });
 
-  it("aliases beauty-devices to the beauty category image", () => {
-    expect(productImageFor("unknown", "beauty-devices")).toContain("beauty");
+  it("aliases beauty-devices to beauty subtype photos", () => {
+    expect(
+      getProductDisplayImage({
+        categorySlug: "beauty-devices",
+        title: "Rosemere Hair Dryer",
+      }),
+    ).toContain("/images/products/beauty/");
   });
 
-  it("uses brand fallback only when no product or category image is available", () => {
+  it("uses brand fallback when no product, subtype, or category signal is available", () => {
     expect(getProductDisplayImage({ productId: "unknown" })).toBe(BRAND_FALLBACK_IMAGE);
   });
 

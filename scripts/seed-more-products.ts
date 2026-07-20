@@ -61,12 +61,18 @@ type ProductDef = {
 };
 
 const PRODUCTS: ProductDef[] = [
-  // electronics
+  // electronics — titles map to distinct subtype photos in product-images.ts
   { id: "cp-x-headphones", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Over-Ear Headphones", modelNumber: "NB-H1", rating: 4.6, ratingCount: 428, basePrice: 149, offers: 7, discount: true },
   { id: "cp-x-ultrabook", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus 14 Ultrabook", modelNumber: "NB-U14", rating: 4.5, ratingCount: 213, basePrice: 899, offers: 6 },
   { id: "cp-x-tablet", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Pro Tablet", modelNumber: "NB-T11", rating: 4.4, ratingCount: 165, basePrice: 429, offers: 5, discount: true },
   { id: "cp-x-keyboard", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Mechanical Keyboard", modelNumber: "NB-K87", rating: 4.7, ratingCount: 356, basePrice: 89, offers: 4 },
   { id: "cp-x-earbuds", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Wireless Earbuds", modelNumber: "NB-E9", rating: 4.3, ratingCount: 512, basePrice: 79, offers: 6, discount: true },
+  { id: "cp-x-phone", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Smart Phone SE", modelNumber: "NB-P1", rating: 4.5, ratingCount: 390, basePrice: 499, offers: 5 },
+  { id: "cp-x-monitor", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Clearview Monitor", modelNumber: "NB-M27", rating: 4.6, ratingCount: 188, basePrice: 249, offers: 4 },
+  { id: "cp-x-smartwatch", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Solace Smartwatch", modelNumber: "NB-SW", rating: 4.4, ratingCount: 276, basePrice: 179, offers: 5, discount: true },
+  { id: "cp-x-speaker", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Auralite Bluetooth Speaker", modelNumber: "NB-SP", rating: 4.3, ratingCount: 154, basePrice: 69, offers: 4 },
+  { id: "cp-x-camera", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus Lensfield Compact Camera", modelNumber: "NB-CAM", rating: 4.5, ratingCount: 121, basePrice: 329, offers: 4 },
+  { id: "cp-x-gamepad", brandId: "brand-nimbus", categoryId: "cat-electronics", modelName: "Nimbus ArcadePad Gaming Controller", modelNumber: "NB-GP", rating: 4.6, ratingCount: 340, basePrice: 59, offers: 5 },
   // kitchen
   { id: "cp-x-blender", brandId: "brand-chefline", categoryId: "cat-kitchen", modelName: "ChefLine Countertop Blender", modelNumber: "CL-B5", rating: 4.5, ratingCount: 274, basePrice: 119, offers: 5 },
   { id: "cp-x-kettle", brandId: "brand-chefline", categoryId: "cat-kitchen", modelName: "ChefLine Electric Kettle", modelNumber: "CL-K2", rating: 4.6, ratingCount: 198, basePrice: 59, offers: 4, discount: true },
@@ -83,9 +89,17 @@ const PRODUCTS: ProductDef[] = [
   // appliances
   { id: "cp-x-microwave", brandId: "brand-apex", categoryId: "cat-appliances", modelName: "Apex Home Microwave Oven", modelNumber: "AH-MW", rating: 4.4, ratingCount: 176, basePrice: 129, offers: 5 },
   { id: "cp-x-airfryer", brandId: "brand-apex", categoryId: "cat-appliances", modelName: "Apex Home Air Fryer", modelNumber: "AH-AF", rating: 4.7, ratingCount: 389, basePrice: 99, offers: 6, discount: true },
-  // automotive
-  { id: "cp-x-dashcam", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Dash Cam", modelNumber: "RP-DC", rating: 4.3, ratingCount: 142, basePrice: 79, offers: 4 },
+  // automotive — distinct subtype photos (never reuse phone-mount for everything)
+  { id: "cp-x-dashcam", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Dash Cam 1080p", modelNumber: "RP-DC", rating: 4.3, ratingCount: 142, basePrice: 79, offers: 4 },
+  { id: "cp-x-phonemount", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Phone Mount", modelNumber: "RP-PM", rating: 4.2, ratingCount: 98, basePrice: 29, offers: 3 },
+  { id: "cp-x-batcharger", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Battery Charger", modelNumber: "RP-BC", rating: 4.4, ratingCount: 167, basePrice: 59, offers: 4 },
   { id: "cp-x-floormats", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Floor Mats", modelNumber: "RP-FM", rating: 4.5, ratingCount: 210, basePrice: 49, offers: 3 },
+  { id: "cp-x-inflator", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Tire Inflator", modelNumber: "RP-TI", rating: 4.3, ratingCount: 134, basePrice: 45, offers: 3 },
+  { id: "cp-x-carvac", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Car Vacuum", modelNumber: "RP-CV", rating: 4.4, ratingCount: 156, basePrice: 55, offers: 4 },
+  { id: "cp-x-seatcover", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Seat Cover", modelNumber: "RP-SC", rating: 4.2, ratingCount: 88, basePrice: 39, offers: 3 },
+  { id: "cp-x-jump", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Jump Starter", modelNumber: "RP-JS", rating: 4.6, ratingCount: 201, basePrice: 89, offers: 4, discount: true },
+  { id: "cp-x-wipers", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Windshield Wipers", modelNumber: "RP-WW", rating: 4.5, ratingCount: 240, basePrice: 24, offers: 3 },
+  { id: "cp-x-toolkit", brandId: "brand-roadpro", categoryId: "cat-automotive", modelName: "RoadPro Emergency Tool Kit", modelNumber: "RP-TK", rating: 4.4, ratingCount: 112, basePrice: 49, offers: 3 },
   // outdoors
   { id: "cp-x-cooler", brandId: "brand-trailpeak", categoryId: "cat-outdoors", modelName: "TrailPeak Cooler", modelNumber: "TP-CL", rating: 4.6, ratingCount: 168, basePrice: 119, offers: 4, discount: true },
   { id: "cp-x-tent", brandId: "brand-trailpeak", categoryId: "cat-outdoors", modelName: "TrailPeak Camping Tent", modelNumber: "TP-TN", rating: 4.5, ratingCount: 254, basePrice: 179, offers: 5 },
@@ -151,16 +165,23 @@ async function main() {
       const listingId = `xl-${short}-${i}`;
       const price = Math.round(p.basePrice * (1 + deltas[i]!) * 100) / 100;
       const shipping = i % 3 === 0 ? 0 : Math.round((3.99 + i) * 100) / 100;
+      // Last offer is always open-box + pickup so filtered search
+      // (condition=open_box&pickup=1) still returns real Add-to-Cart listings.
+      const isOpenBoxPickup = i === offers - 1;
       await prisma.listing.create({
         data: {
           id: listingId,
           sourceId: SOURCES[i % SOURCES.length]!,
           canonicalProductId: p.id,
-          condition: i === offers - 1 ? "open-box" : "new",
+          condition: isOpenBoxPickup ? "open-box" : "new",
           price,
-          shipping,
+          shipping: isOpenBoxPickup ? 0 : shipping,
           fees: 0,
-          deliveryLabel: i % 2 === 0 ? "Tomorrow" : "2-4 days",
+          deliveryLabel: isOpenBoxPickup
+            ? "Pickup today"
+            : i % 2 === 0
+              ? "Tomorrow"
+              : "2-4 days",
           url: `https://example.com/offers/${listingId}`,
           freshnessCapturedAt: minutesAgo(3 + i * 2),
         },

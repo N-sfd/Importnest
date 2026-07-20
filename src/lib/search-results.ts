@@ -147,6 +147,27 @@ function filterConditionMatches(listingCondition: string, filter: SearchResultsF
   return listingCondition === filter;
 }
 
+function listingHasPickup(deliveryLabel: string | null | undefined): boolean {
+  return /pickup/i.test(deliveryLabel ?? "");
+}
+
+/**
+ * When condition/pickup filters are active, only listings that satisfy those
+ * filters may back the card's price and Add to Cart (bestListing).
+ */
+export function listingMatchesOfferFilters(
+  listing: { condition: string; deliveryLabel: string | null },
+  filters: Pick<SearchResultsFilters, "condition" | "pickupOnly">,
+): boolean {
+  if (filters.condition && !filterConditionMatches(listing.condition, filters.condition)) {
+    return false;
+  }
+  if (filters.pickupOnly && !listingHasPickup(listing.deliveryLabel)) {
+    return false;
+  }
+  return true;
+}
+
 function significantWords(query: string): string[] {
   const stop = new Set([
     "a", "an", "the", "for", "of", "in", "on", "with", "under", "over", "to",
@@ -189,7 +210,7 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
     const id = l.canonicalProductId;
     if (!id) continue;
     const total = l.price + l.shipping + l.fees;
-    const pickup = /pickup/i.test(l.deliveryLabel ?? "");
+    const pickup = listingHasPickup(l.deliveryLabel);
     const bestListing: ProductAgg["bestListing"] = {
       listingId: l.id,
       sourceName: l.source.name,
@@ -296,11 +317,20 @@ export async function getSearchResults(
     },
   });
 
-  const aggs = buildAggs(listings);
+  // Facet universe: all approved listings in scope.
+  // Card price + bestListing: only listings matching active condition/pickup filters,
+  // so Add to Cart always uses the real offer backing the displayed card.
+  const allAggs = buildAggs(listings);
+  const offerFilterActive = Boolean(filters.condition || filters.pickupOnly);
+  const displayListings = offerFilterActive
+    ? listings.filter((l) => listingMatchesOfferFilters(l, filters))
+    : listings;
+  const aggs = buildAggs(displayListings);
   const saved = filters.savedProductIds ?? new Set<string>();
 
   let rows: SearchResultProduct[] = products.map((p) => {
     const agg = aggs.get(p.id);
+    const facetAgg = allAggs.get(p.id);
     return {
       id: p.id,
       brandName: p.brand.name,
@@ -316,15 +346,15 @@ export async function getSearchResults(
       lowestTotalCost: agg?.lowestTotalCost ?? null,
       offerCount: agg?.offerCount ?? 0,
       freshnessMinutesAgo: agg ? minutesSince(agg.freshestAt) : null,
-      hasPickup: agg?.hasPickup ?? false,
-      conditions: agg ? [...agg.conditions] : [],
+      hasPickup: facetAgg?.hasPickup ?? false,
+      conditions: facetAgg ? [...facetAgg.conditions] : [],
       rating: p.averageRating,
       attributes: p.attributes.map((a) => ({
         key: a.key,
         value: a.value,
         unit: a.unit,
       })),
-      sourceIds: agg ? [...agg.sourceIds] : [],
+      sourceIds: facetAgg ? [...facetAgg.sourceIds] : [],
       bestListing: agg?.bestListing ?? null,
       isSaved: saved.has(p.id),
       matchKind: classifyMatchKind({
@@ -339,13 +369,37 @@ export async function getSearchResults(
   });
 
   // Facets from pre-filter universe (current query/category scope), then apply product filters
-  const facetBase = rows;
+  const facetBase = products.map((p) => {
+    const facetAgg = allAggs.get(p.id);
+    return {
+      id: p.id,
+      brandName: p.brand.name,
+      productName: p.modelName,
+      modelNumber: p.modelNumber,
+      categoryName: p.category.name,
+      categorySlug: p.category.slug,
+      imageSrc: "",
+      lowestTotalCost: facetAgg?.lowestTotalCost ?? null,
+      offerCount: facetAgg?.offerCount ?? 0,
+      freshnessMinutesAgo: null,
+      hasPickup: facetAgg?.hasPickup ?? false,
+      conditions: facetAgg ? [...facetAgg.conditions] : [],
+      rating: p.averageRating,
+      attributes: [],
+      sourceIds: facetAgg ? [...facetAgg.sourceIds] : [],
+      bestListing: null,
+      isSaved: saved.has(p.id),
+      matchKind: null as SearchResultProduct["matchKind"],
+      highlights: [] as SearchResultProduct["highlights"],
+    } satisfies SearchResultProduct;
+  });
 
   if (filters.availableOnly) {
     rows = rows.filter((p) => p.offerCount > 0);
   }
   if (filters.pickupOnly) {
-    rows = rows.filter((p) => p.hasPickup);
+    // With offer-filter aggregation, products without a pickup listing have offerCount 0.
+    rows = rows.filter((p) => p.offerCount > 0 && p.hasPickup);
   }
   if (filters.priceMin != null) {
     rows = rows.filter((p) => p.lowestTotalCost != null && p.lowestTotalCost >= filters.priceMin!);
@@ -354,9 +408,8 @@ export async function getSearchResults(
     rows = rows.filter((p) => p.lowestTotalCost != null && p.lowestTotalCost <= filters.priceMax!);
   }
   if (filters.condition) {
-    rows = rows.filter((p) =>
-      p.conditions.some((c) => filterConditionMatches(c, filters.condition)),
-    );
+    // Require at least one listing matching the condition (already reflected in offerCount).
+    rows = rows.filter((p) => p.offerCount > 0);
   }
   if (filters.savedOnly) {
     rows = rows.filter((p) => p.isSaved);

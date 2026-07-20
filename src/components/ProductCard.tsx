@@ -35,6 +35,8 @@ export type ProductCardProps = {
   offerCount?: number | null;
   sourceCount?: number | null;
   freshnessMinutesAgo?: number | null;
+  /** Category slug for subtype image fallbacks when imageSrc errors. */
+  categorySlug?: string | null;
   bestListing?: ProductCardListing | null;
   isSaved?: boolean;
   signedIn?: boolean;
@@ -82,6 +84,7 @@ export function ProductCard({
   offerCount,
   sourceCount,
   freshnessMinutesAgo,
+  categorySlug,
   bestListing,
   isSaved = false,
   signedIn = false,
@@ -132,7 +135,9 @@ export function ProductCard({
           <ProductImage
             src={imageSrc}
             alt={imageAlt}
+            category={categorySlug}
             title={productName}
+            subtitle={subtitleText}
             size="card"
             className="transition duration-300 group-hover:scale-[1.03]"
             sizes="(max-width:640px) 50vw, (max-width:1280px) 25vw, 20vw"

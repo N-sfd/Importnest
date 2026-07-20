@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useCart } from "@/components/CartProvider";
 import type { NewCartItem } from "@/lib/cart-storage";
 
@@ -51,7 +52,10 @@ export function AddToCartButton({
   // already-in-cart item's button must stay clickable so it can still be removed.
   const limitReached = isFull && !inCart;
 
-  function handleClick() {
+  function handleClick(event: MouseEvent<HTMLButtonElement>) {
+    // Cards may nest links; keep the cart action from navigating away.
+    event.preventDefault();
+    event.stopPropagation();
     if (inCart) {
       remove(item.listingId, item.productId);
       return;

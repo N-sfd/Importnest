@@ -315,6 +315,7 @@ export function SearchResultProductCard({
       offerCount={product.offerCount}
       sourceCount={product.sourceIds.length}
       freshnessMinutesAgo={product.freshnessMinutesAgo}
+      categorySlug={product.categorySlug}
       bestListing={product.bestListing}
       isSaved={product.isSaved}
       signedIn={signedIn}

@@ -395,11 +395,12 @@ a {
   overflow: hidden;
   background: #f7fafc;
   border-radius: 14px;
-  padding: 10px;
+  padding: 12px;
 }
 
 .product-card-image img {
   object-fit: contain;
+  object-position: center;
 }
 
 .compact-product-image {
@@ -415,6 +416,7 @@ a {
 
 .compact-product-image img {
   object-fit: contain;
+  object-position: center;
 }
 
 .result-product-image {
@@ -425,11 +427,12 @@ a {
   overflow: hidden;
   background: #f7fafc;
   border-radius: 16px;
-  padding: 10px;
+  padding: 12px;
 }
 
 .result-product-image img {
   object-fit: contain;
+  object-position: center;
 }
 
 .product-card-body {
@@ -465,7 +468,14 @@ a {
   height: 120px;
   border-radius: 16px;
   overflow: hidden;
-  background: var(--surface);
+  background: #f7fafc;
+  padding: 12px;
+}
+
+.result-card-image img,
+.main-result-image img {
+  object-fit: contain;
+  object-position: center;
 }
 
 .category-visual-grid {

@@ -36,18 +36,25 @@ export function CategoryDemoGrid({
   const subtypes = getCategoryDemoSubtypes(categorySlug);
   const headingId = prominence === "primary" ? "category-browse-heading" : "category-demo-heading";
   const imageBySubtype = new Map(products.map((p) => [p.subtype.toLowerCase(), p.image]));
+  const isBeauty = key === "beauty";
+  const sectionTitle =
+    prominence === "primary"
+      ? isBeauty
+        ? "Explore Beauty Devices"
+        : `Explore ${title}`
+      : `More to explore in ${title}`;
+  const sectionSubtitle = isBeauty
+    ? "10 beauty and personal-care device types with distinct photos — browse ideas, then compare live offers when available."
+    : `${products.length} ${title} product types with distinct photos — browse ideas, then compare live offers when available.`;
 
   return (
     <section className={prominence === "primary" ? "mt-2" : "mt-8"} aria-labelledby={headingId}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id={headingId} className="text-lg font-bold tracking-tight text-navy-900 sm:text-xl">
-            {prominence === "primary" ? `Explore ${title}` : `More to explore in ${title}`}
+            {sectionTitle}
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            {products.length} {title} product types with distinct photos — browse ideas, then
-            compare live offers when available.
-          </p>
+          <p className="mt-1 max-w-2xl text-sm text-muted">{sectionSubtitle}</p>
         </div>
         <Link href={browseHref} className="text-sm font-semibold text-link hover:underline">
           View all {title}
@@ -90,7 +97,7 @@ export function CategoryDemoGrid({
               href={`/search/results?q=${encodeURIComponent(product.subtype)}&category=${encodeURIComponent(categorySlug)}`}
               className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)] transition hover:-translate-y-0.5 hover:border-accent/45"
             >
-              <div className="relative mx-2 mt-2 overflow-hidden rounded-[14px]">
+              <div className="relative mx-2 mt-2 overflow-hidden rounded-[14px] bg-[#F7FAFC]">
                 <ProductImage
                   src={product.image}
                   category={product.categorySlug}
@@ -98,7 +105,7 @@ export function CategoryDemoGrid({
                   title={product.title}
                   subtitle={product.subtitle}
                   size="card"
-                  className="transition duration-300 group-hover:scale-[1.04]"
+                  className="transition duration-300 group-hover:scale-[1.03]"
                   sizes="(max-width:640px) 50vw, (max-width:1280px) 25vw, 20vw"
                 />
                 {product.badge ? (
@@ -107,15 +114,15 @@ export function CategoryDemoGrid({
                   </span>
                 ) : null}
               </div>
-              <div className="flex flex-1 flex-col gap-0.5 p-3">
+              <div className="flex min-h-[7.5rem] flex-1 flex-col gap-0.5 p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   {product.brand}
                 </p>
                 <p className="line-clamp-2 text-sm font-semibold leading-snug text-navy-900 group-hover:text-link">
                   {product.title}
                 </p>
-                <p className="mt-0.5 line-clamp-2 text-xs capitalize text-muted">{product.subtype}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-muted">{product.subtitle}</p>
+                <p className="mt-0.5 text-xs capitalize text-accent">{product.subtype}</p>
+                <p className="mt-auto line-clamp-2 text-xs text-muted">{product.subtitle}</p>
               </div>
             </Link>
           </li>

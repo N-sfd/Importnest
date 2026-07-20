@@ -33,7 +33,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   appliances: "Appliances",
   kitchen: "Kitchen",
   footwear: "Footwear",
-  beauty: "Beauty",
+  beauty: "Beauty Devices",
   accessories: "Accessories",
   automotive: "Automotive",
   outdoors: "Outdoors",

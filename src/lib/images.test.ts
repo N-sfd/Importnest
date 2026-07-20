@@ -27,6 +27,9 @@ describe("productThumbClass re-export", () => {
   });
 
   it("re-exports getProductDisplayImage from product-images", () => {
-    expect(getProductDisplayImage({ categorySlug: "appliances" })).toContain("appliances");
+    expect(
+      getProductDisplayImage({ categorySlug: "appliances", title: "Brightwell Dishwasher" }),
+    ).toContain("dishwasher");
+    expect(getProductDisplayImage({ categorySlug: "appliances" })).toBe(BRAND_FALLBACK_IMAGE);
   });
 });

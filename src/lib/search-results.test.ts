@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { partitionByMatchKind, type SearchResultProduct } from "@/lib/search-results";
+import {
+  listingMatchesOfferFilters,
+  partitionByMatchKind,
+  type SearchResultProduct,
+} from "@/lib/search-results";
 
 function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResultProduct {
   return {
@@ -51,5 +55,36 @@ describe("partitionByMatchKind", () => {
     const { exact, comparable } = partitionByMatchKind(products);
     expect(exact.length + comparable.length).toBe(products.length);
     expect([...exact, ...comparable].map((p) => p.id).sort()).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("listingMatchesOfferFilters", () => {
+  const openBoxPickup = { condition: "open-box", deliveryLabel: "Pickup today" };
+  const newShip = { condition: "new", deliveryLabel: "Tomorrow" };
+
+  it("keeps open-box pickup listings when both filters are active", () => {
+    expect(
+      listingMatchesOfferFilters(openBoxPickup, { condition: "open_box", pickupOnly: true }),
+    ).toBe(true);
+  });
+
+  it("rejects a new shipping listing when open-box + pickup filters are active", () => {
+    expect(
+      listingMatchesOfferFilters(newShip, { condition: "open_box", pickupOnly: true }),
+    ).toBe(false);
+  });
+
+  it("rejects open-box without pickup when pickupOnly is set", () => {
+    expect(
+      listingMatchesOfferFilters(
+        { condition: "open-box", deliveryLabel: "2-4 days" },
+        { condition: "open_box", pickupOnly: true },
+      ),
+    ).toBe(false);
+  });
+
+  it("allows any listing when no offer filters are active", () => {
+    expect(listingMatchesOfferFilters(newShip, {})).toBe(true);
+    expect(listingMatchesOfferFilters(openBoxPickup, {})).toBe(true);
   });
 });

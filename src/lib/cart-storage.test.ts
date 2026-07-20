@@ -148,6 +148,19 @@ describe("addToCart", () => {
     expect(result.items).toHaveLength(CART_LINE_LIMIT);
     expect(result.items[0]!.quantity).toBe(2);
   });
+
+  it("updates cart unit count when the same filtered listing is added again", () => {
+    const { quantity, addedAt, ...newItem } = makeItem({
+      productId: "cp-x-earbuds",
+      listingId: "xl-earbuds-5",
+      title: "Nimbus Wireless Earbuds",
+    });
+    const first = addToCart([], newItem);
+    expect(first.items.reduce((sum, i) => sum + i.quantity, 0)).toBe(1);
+    const second = addToCart(first.items, newItem);
+    expect(second.outcome).toBe("merged");
+    expect(second.items.reduce((sum, i) => sum + i.quantity, 0)).toBe(2);
+  });
 });
 
 describe("removeFromCart", () => {

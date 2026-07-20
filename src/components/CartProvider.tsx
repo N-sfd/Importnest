@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { CartToast } from "@/components/CartToast";
 import {
   addToCart,
   CART_LINE_LIMIT,
@@ -9,12 +10,15 @@ import {
   parseCartJSON,
   removeFromCart,
   updateCartQuantity,
+  type AddToCartOutcome,
   type CartItem,
   type NewCartItem,
 } from "@/lib/cart-storage";
 
 export type { CartItem, NewCartItem };
 export { CART_LINE_LIMIT };
+
+type LastAction = { type: AddToCartOutcome } | null;
 
 type CartContextValue = {
   items: CartItem[];
@@ -29,6 +33,9 @@ type CartContextValue = {
   remove: (listingId: string | undefined, productId: string) => void;
   setQuantity: (listingId: string | undefined, productId: string, quantity: number) => void;
   clear: () => void;
+  lastAction: LastAction;
+  toastVisible: boolean;
+  dismissToast: () => void;
 };
 
 /**
@@ -46,6 +53,9 @@ const noopContextValue: CartContextValue = {
   remove: () => {},
   setQuantity: () => {},
   clear: () => {},
+  lastAction: null,
+  toastVisible: false,
+  dismissToast: () => {},
 };
 
 const CartContext = createContext<CartContextValue>(noopContextValue);
@@ -60,6 +70,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Guards the write effect so it never overwrites real storage with the
   // empty initial state before the load effect has run once.
   const [hydrated, setHydrated] = useState(false);
+  const [lastAction, setLastAction] = useState<LastAction>(null);
+  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     setItems(loadItems());
@@ -77,7 +89,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const add = useCallback((item: NewCartItem) => {
-    setItems((current) => addToCart(current, item).items);
+    setItems((current) => {
+      const result = addToCart(current, item);
+      setLastAction({ type: result.outcome });
+      setToastVisible(true);
+      return result.items;
+    });
   }, []);
 
   const remove = useCallback((listingId: string | undefined, productId: string) => {
@@ -91,17 +108,42 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const clear = useCallback(() => setItems([]), []);
+  const clear = useCallback(() => {
+    setItems([]);
+    setToastVisible(false);
+  }, []);
+
+  const dismissToast = useCallback(() => {
+    setToastVisible(false);
+  }, []);
 
   const count = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
   const isFull = items.length >= CART_LINE_LIMIT;
 
   const value = useMemo<CartContextValue>(
-    () => ({ items, count, limit: CART_LINE_LIMIT, isFull, isInCart: has, add, remove, setQuantity, clear }),
-    [items, count, isFull, has, add, remove, setQuantity, clear],
+    () => ({
+      items,
+      count,
+      limit: CART_LINE_LIMIT,
+      isFull,
+      isInCart: has,
+      add,
+      remove,
+      setQuantity,
+      clear,
+      lastAction,
+      toastVisible,
+      dismissToast,
+    }),
+    [items, count, isFull, has, add, remove, setQuantity, clear, lastAction, toastVisible, dismissToast],
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      <CartToast />
+    </CartContext.Provider>
+  );
 }
 
 export function useCart() {
