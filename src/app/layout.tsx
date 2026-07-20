@@ -30,10 +30,11 @@ export const metadata: Metadata = {
     "Compare purchasing options across approved online sources with transparent, explainable recommendations.",
   icons: {
     icon: [
+      { url: "/brand/importnest-icon.png", type: "image/png" },
       { url: "/brand/favicon-dark.png", type: "image/png" },
       { url: "/brand/favicon-light.png", type: "image/png", media: "(prefers-color-scheme: light)" },
     ],
-    apple: "/brand/logo-app-icon-dark.png",
+    apple: "/brand/importnest-icon.png",
   },
 };
 

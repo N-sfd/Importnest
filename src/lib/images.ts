@@ -6,7 +6,7 @@ import {
 } from "@/lib/category-visuals";
 
 /** Compact brand mark used as a product-card placeholder. */
-export const BRAND_FALLBACK_IMAGE = "/brand/logo-app-icon-light.png";
+export const BRAND_FALLBACK_IMAGE = "/brand/importnest-icon.png";
 
 const PRODUCT_FILES: Record<string, string> = {
   "cp-apex-ah4200": "dishwasher.png",
@@ -99,6 +99,7 @@ export function homeDealImageFor(productId: string, categorySlug?: string) {
 export function isBrandFallbackImage(src: string) {
   return (
     src === BRAND_FALLBACK_IMAGE ||
+    src.includes("importnest-icon") ||
     src.includes("logo-app-icon") ||
     src.includes("logo9-icon") ||
     src.includes("logo-mark") ||
