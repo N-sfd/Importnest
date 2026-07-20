@@ -401,7 +401,7 @@ export function SearchResultProductCard({
           {product.lowestTotalCost != null ? (
             <>
               <p className="text-[11px] font-medium text-muted">From</p>
-              <p className="text-lg font-bold tabular-nums text-price">
+              <p className="text-lg price-text">
                 ${product.lowestTotalCost.toFixed(2)}
               </p>
             </>

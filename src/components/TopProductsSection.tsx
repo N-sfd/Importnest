@@ -21,7 +21,7 @@ export function TopProductsSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-10" aria-labelledby="top-products-heading">
+    <section aria-labelledby="top-products-heading">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2

@@ -26,7 +26,7 @@ function Badge({
   tone,
   children,
 }: {
-  tone: "top" | "authorized" | "neutral";
+  tone: "top" | "authorized" | "neutral" | "fresh" | "stale";
   children: React.ReactNode;
 }) {
   const toneClass =
@@ -34,7 +34,11 @@ function Badge({
       ? "bg-cta/30 text-navy-900"
       : tone === "authorized"
         ? "bg-navy-100 text-navy-900"
-        : "bg-surface text-muted";
+          : tone === "fresh"
+          ? "badge-savings"
+          : tone === "stale"
+            ? "bg-amber-100 text-amber-900"
+            : "bg-surface text-muted";
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${toneClass}`}>
       {children}
@@ -63,7 +67,9 @@ function RecommendationPanel({
     <div className="rounded-2xl border border-cta/40 bg-cta/10 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">Recommended</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
+            Why recommended
+          </p>
           <h3 className="mt-1 text-lg font-bold tracking-tight text-foreground">{model.label}</h3>
           <p className="mt-1 text-sm font-medium text-foreground">{model.retailerName}</p>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/85">
@@ -72,7 +78,7 @@ function RecommendationPanel({
         </div>
         <div className="text-right">
           <p className="text-xs font-medium text-muted">Total known cost</p>
-          <p className="text-xl font-bold tabular-nums text-price">
+          <p className="text-xl price-text">
             ${model.totalKnownCost.toFixed(2)}
           </p>
           <div className="mt-1">
@@ -194,6 +200,11 @@ function OfferCard({
               <Badge tone="neutral">{recommendation.label}</Badge>
             )}
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
+            {isStaleFreshness(listing.freshnessMinutesAgo) ? (
+              <Badge tone="stale">Data may be outdated</Badge>
+            ) : (
+              <Badge tone="fresh">Updated recently</Badge>
+            )}
           </div>
           {listing.sourceTypeLabel ? (
             <>

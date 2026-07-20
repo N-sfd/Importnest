@@ -46,7 +46,7 @@ export function HomeTrustCard() {
 /**
  * Compact personalization blocks for homepage.
  * Never shows empty “appear here as you shop” placeholders.
- * Desktop sidebar only renders when there is real user activity data.
+ * Prefer inline mid-page placement over an empty right rail.
  */
 export function HomePersonalizationRail({
   recentSearches,
@@ -64,7 +64,7 @@ export function HomePersonalizationRail({
   const hasServerContent = hasRecent || hasWatchlist;
 
   if (placement === "sidebar") {
-    // Hide empty right rail entirely — no unfinished placeholder copy.
+    // Legacy sidebar path — hide when empty so the homepage stays full-width.
     if (!hasServerContent) return null;
 
     return (
@@ -89,28 +89,55 @@ export function HomePersonalizationRail({
 
   if (placement === "inline") {
     return (
-      <div className="home-section grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <HomeTrustCard />
-        {hasRecent ? (
-          <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-            <RecentSearches items={recentSearches} compact />
-          </div>
-        ) : null}
-        {showWatchlist ? (
-          <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-            <SavedAlertsPreview items={watchlist} compact />
-          </div>
-        ) : null}
-      </div>
+      <section
+        className="home-section"
+        aria-labelledby="watchlist-preview-heading"
+      >
+        <div className="mb-3">
+          <h2
+            id="watchlist-preview-heading"
+            className="text-xl font-bold tracking-tight text-navy-900"
+          >
+            Price alerts &amp; watchlist
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Track saved products and stay ready when totals change.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <HomeTrustCard />
+          {hasRecent ? (
+            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
+              <RecentSearches items={recentSearches} compact />
+            </div>
+          ) : null}
+          {hasWatchlist ? (
+            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
+              <SavedAlertsPreview items={watchlist} compact />
+            </div>
+          ) : (
+            <aside className="rounded-2xl border border-dashed border-border bg-panel p-4">
+              <p className="text-sm font-semibold text-navy-900">Start a watchlist</p>
+              <p className="mt-1 text-sm text-muted">
+                Save products while you compare to get price-alert previews here.
+              </p>
+              <Link
+                href={showWatchlist ? "/saved" : "/login?next=/saved"}
+                className="mt-3 inline-block text-xs font-semibold text-link hover:underline"
+              >
+                {showWatchlist ? "Open saved products →" : "Sign in to save →"}
+              </Link>
+            </aside>
+          )}
+        </div>
+      </section>
     );
   }
 
-  // Mobile: only mount framed cards that can self-hide when empty.
+  // Mobile: client recently-viewed only (self-hides when empty).
   return (
-    <div className="mt-6 space-y-3 xl:hidden" aria-label="Your activity">
+    <div className="home-section space-y-3 xl:hidden" aria-label="Recently viewed">
       <RecentlyViewedSection compact framed />
-      {hasRecent ? <RecentSearches items={recentSearches} compact framed /> : null}
-      {showWatchlist ? <SavedAlertsPreview items={watchlist} compact framed /> : null}
     </div>
   );
 }

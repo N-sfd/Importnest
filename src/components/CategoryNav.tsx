@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   navDepartments,
   topNavLinks,
@@ -85,12 +86,39 @@ function DepartmentPanel({
   );
 }
 
+function navLinkIsActive(
+  href: string,
+  pathname: string,
+  category: string | null,
+  q: string | null,
+): boolean {
+  if (!pathname.startsWith("/search")) return false;
+  try {
+    const url = new URL(href, "https://importnest.local");
+    const linkCategory = url.searchParams.get("category");
+    const linkQ = url.searchParams.get("q");
+    if (linkQ === "deals") {
+      return (q ?? "").toLowerCase().includes("deal");
+    }
+    if (linkCategory) {
+      return category === linkCategory;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 /** Amazon / Idealo-style department bar + All menu flyout. */
 export function CategoryNav() {
   const [open, setOpen] = useState(false);
   const [activeDept, setActiveDept] = useState(navDepartments[0]?.id ?? "home");
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+  const q = searchParams.get("q");
 
   useEffect(() => {
     if (!open) return;
@@ -132,15 +160,21 @@ export function CategoryNav() {
           aria-label="Departments"
           className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {topNavLinks.map((link) => (
-            <Link
-              key={link.href + link.label}
-              href={link.href}
-              className={`category-link ${link.featured ? "category-link-featured" : ""}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {topNavLinks.map((link) => {
+            const active = navLinkIsActive(link.href, pathname, category, q);
+            return (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`category-link ${link.featured ? "category-link-featured" : ""} ${
+                  active ? "category-link-active" : ""
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
@@ -157,7 +191,7 @@ export function CategoryNav() {
             aria-label="All departments"
             className="absolute left-0 right-0 top-full z-40 border-b border-border shadow-[var(--shadow-panel)]"
           >
-            <div className="mx-auto max-w-[1280px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
+            <div className="mx-auto max-w-[1440px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
               <DepartmentPanel
                 departments={navDepartments}
                 activeId={activeDept}

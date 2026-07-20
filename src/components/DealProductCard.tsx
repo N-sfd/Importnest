@@ -74,7 +74,7 @@ export function DealProductCard({
           />
           <span
             className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-              discountPercent != null ? "bg-cta text-white" : "bg-navy-900 text-white"
+              discountPercent != null ? "badge-savings" : "bg-navy-900 text-white"
             }`}
           >
             {discountPercent != null ? `Save ${discountPercent}%` : dealBadge}
@@ -86,9 +86,7 @@ export function DealProductCard({
           </p>
           <p className="text-[11px] text-muted">{brandName}</p>
           <div className="mt-auto flex flex-wrap items-baseline gap-2 pt-1">
-            <p className="text-base font-extrabold tabular-nums text-navy-900">
-              ${currentTotal.toFixed(2)}
-            </p>
+            <p className="text-base price-text">${currentTotal.toFixed(2)}</p>
             {previousTotal != null ? (
               <p className="text-xs tabular-nums text-muted line-through">
                 ${previousTotal.toFixed(2)}

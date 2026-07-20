@@ -112,14 +112,19 @@ function CartLineRow({
           ) : null}
 
           {!unavailable && item.listingId ? (
-            <a
-              href={`/go/${item.listingId}`}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="btn-cta min-h-11 px-3 py-2 text-center text-sm"
-            >
-              Continue to retailer checkout
-            </a>
+            <div>
+              <a
+                href={`/go/${item.listingId}`}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="btn-cta block min-h-11 px-3 py-2 text-center text-sm"
+              >
+                Continue to retailer
+              </a>
+              <p className="mt-1 text-center text-[11px] leading-snug text-muted">
+                Purchase completes on {item.retailerName ?? "the retailer"}&apos;s website.
+              </p>
+            </div>
           ) : null}
 
           {signedIn ? (
@@ -193,13 +198,20 @@ function CartSummary({ items }: { items: CartItem[] }) {
       ) : null}
 
       <p className="mt-3 text-xs text-muted">Excludes local sales tax.</p>
-      <p className="mt-1 text-xs text-muted">
-        Checkout happens on each retailer&apos;s website — Importnest does not process payments.
-      </p>
 
-      <Link href="/checkout" className="btn-cta mt-4 block min-h-11 px-4 py-2.5 text-center text-sm">
-        Continue to checkout
-      </Link>
+      <div className="mt-4 space-y-3 border-t border-border pt-3">
+        <div>
+          <Link href="/checkout" className="btn-cta block min-h-11 px-4 py-2.5 text-center text-sm">
+            Checkout demo
+          </Link>
+          <p className="mt-1 text-center text-[11px] leading-snug text-muted">
+            Demo checkout is for product-flow testing only. No payment is processed.
+          </p>
+        </div>
+        <p className="text-center text-[11px] leading-snug text-muted">
+          Prefer to buy now? Use an item&apos;s <span className="font-semibold text-navy-900">Continue to retailer</span> button instead — purchase is completed on the retailer website. Importnest helps compare offers before you buy.
+        </p>
+      </div>
     </aside>
   );
 }

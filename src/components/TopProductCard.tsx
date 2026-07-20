@@ -25,9 +25,9 @@ export type TopProductCardProps = {
 };
 
 function badgeClass(badge: TopProductBadge) {
-  if (badge === "Bestseller") return "bg-cta text-white";
+  if (badge === "Bestseller") return "badge-savings";
   if (badge === "Top rated") return "bg-navy-900 text-white";
-  return "bg-accent/15 text-accent";
+  return "badge-accent";
 }
 
 function HeartIcon({ filled }: { filled: boolean }) {
@@ -95,7 +95,7 @@ export function TopProductCard({
               {offerCount} {offerCount === 1 ? "offer" : "offers"} compared
             </p>
           )}
-          <p className="mt-auto pt-1 text-base font-extrabold tabular-nums text-navy-900">
+          <p className="mt-auto pt-1 text-base price-text">
             <span className="text-[11px] font-bold uppercase tracking-wide text-accent">From </span>$
             {fromPrice.toFixed(2)}
           </p>

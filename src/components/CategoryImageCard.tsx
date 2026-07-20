@@ -25,11 +25,11 @@ export function CategoryImageCard({ name, desc, href, image }: CategoryImageCard
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-navy-900/75 via-navy-900/25 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-navy-900/55 via-navy-900/15 to-transparent"
         />
         <div className="absolute inset-x-0 bottom-0 px-3.5 py-3.5">
           <div className="font-bold text-white drop-shadow-sm">{name}</div>
-          <div className="text-xs text-white/90">{desc}</div>
+          <div className="line-clamp-2 text-xs text-white/90">{desc}</div>
         </div>
       </div>
     </Link>
@@ -38,7 +38,7 @@ export function CategoryImageCard({ name, desc, href, image }: CategoryImageCard
 
 export function CategoryImageGrid({ items }: { items: CategoryImageCardProps[] }) {
   return (
-    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
       {items.map((item) => (
         <CategoryImageCard key={item.name} {...item} />
       ))}

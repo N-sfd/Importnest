@@ -44,7 +44,7 @@ export function PopularComparisonCard({
         >
           {item.productName}
         </Link>
-        <p className="mt-1.5 text-base font-bold tabular-nums text-price">
+        <p className="mt-1.5 text-base price-text">
           From ${item.lowestTotalCost.toFixed(2)}
         </p>
         <p className="mt-0.5 text-xs text-muted">
@@ -104,10 +104,15 @@ export function PopularComparisonsSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-10">
+    <section aria-labelledby="popular-comparisons-heading">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-navy-900">Popular comparisons</h2>
+          <h2
+            id="popular-comparisons-heading"
+            className="text-xl font-bold tracking-tight text-navy-900"
+          >
+            Popular comparisons
+          </h2>
           <p className="mt-1 text-sm text-muted">Live totals from approved retailers</p>
         </div>
       </div>

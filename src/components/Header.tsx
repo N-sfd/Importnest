@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { BrandLink } from "@/components/BrandMark";
 import { CartNavLink } from "@/components/CartNavLink";
 import { CategoryNav } from "@/components/CategoryNav";
@@ -100,7 +101,9 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
         </div>
       </div>
 
-      <CategoryNav />
+      <Suspense fallback={<div className="category-nav border-b border-black/10" aria-hidden />}>
+        <CategoryNav />
+      </Suspense>
     </header>
   );
 }

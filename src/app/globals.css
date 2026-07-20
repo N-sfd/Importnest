@@ -2,40 +2,42 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0b1220;
-  --surface: #f3f5f7;
+  --foreground: #0f2a4a;
+  --surface: #f5f7fa;
   --panel: #ffffff;
-  --border: #e2e6ea;
-  --navy-950: #021027;
-  /* Header / chrome navy (richer blue, not near-black) */
-  --navy-900: #041935;
-  --navy-800: #0b1f38;
-  --navy-100: #e8f4f8;
-  /* Logo teal / cyan (NEST, cart, tag) — primary buttons + accents */
+  --border: #dde6ee;
+  --navy-950: #0a1a2e;
+  --navy-900: #0f2a4a;
+  --navy-800: #132b45;
+  --navy-100: #eaf4f7;
   --accent: #00b8d4;
-  --cta: #00b8d4;
-  --cta-hover: #0098b5;
-  --price: #041935;
+  --cta: #10bfd3;
+  --cta-hover: #00a8c0;
+  --price: #e65300;
+  --savings: #9edb32;
+  --warning: #f59e0b;
   --link: #008fad;
   --muted: #5c6770;
   --ring: #00b8d4;
-  --shadow-panel: 0 1px 2px rgb(4 25 53 / 0.05), 0 10px 28px rgb(4 25 53 / 0.08);
+  --shadow-panel: 0 1px 2px rgb(15 42 74 / 0.04), 0 8px 24px rgb(15 42 74 / 0.06);
 }
 
 html.dark {
-  --background: #041935;
+  --background: #0f2a4a;
   --foreground: #e8eef6;
-  --surface: #08111d;
-  --panel: #0c1828;
-  --border: #1e3048;
-  --navy-950: #021027;
-  --navy-900: #041935;
-  --navy-800: #0b1f38;
-  --navy-100: #152536;
+  --surface: #0c1624;
+  --panel: #122033;
+  --border: #243447;
+  --navy-950: #0a1a2e;
+  --navy-900: #0f2a4a;
+  --navy-800: #132b45;
+  --navy-100: #1a2f45;
   --accent: #2ec8e6;
   --cta: #2ec8e6;
   --cta-hover: #4ad4ee;
-  --price: #f2f6fb;
+  --price: #ff7a3d;
+  --savings: #9edb32;
+  --warning: #f59e0b;
   --link: #5ed4ec;
   --muted: #9aa8b5;
   --ring: #2ec8e6;
@@ -57,6 +59,8 @@ html.dark {
   --color-cta: var(--cta);
   --color-cta-hover: var(--cta-hover);
   --color-price: var(--price);
+  --color-savings: var(--savings);
+  --color-warning: var(--warning);
   --color-link: var(--link);
   --color-muted: var(--muted);
   --color-ring: var(--ring);
@@ -272,12 +276,34 @@ a {
 
 .page-shell {
   width: 100%;
-  background: #f4f7fa;
+  background: var(--surface);
 }
 
 .home-section {
   width: 100%;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+}
+
+.section-soft {
+  background: #eef7fa;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.price-text {
+  color: var(--price);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-accent {
+  background: color-mix(in srgb, var(--accent) 14%, white);
+  color: var(--navy-900);
+}
+
+.badge-savings {
+  background: var(--savings);
+  color: #0f2a4a;
 }
 
 .product-card-image {
@@ -382,7 +408,13 @@ a {
 }
 
 .category-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.category-link[aria-current="page"],
+.category-link-active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
 }
 
 .category-link-featured {

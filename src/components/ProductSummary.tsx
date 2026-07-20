@@ -69,7 +69,7 @@ export function ProductSummary({
             <span className="text-xs font-bold uppercase tracking-wider text-accent">
               Lowest Total Known Cost
             </span>
-            <span className="ml-2 text-lg font-extrabold tabular-nums text-navy-900">
+            <span className="ml-2 text-lg price-text">
               ${lowestTotalKnownCost.toFixed(2)}
             </span>
           </p>

@@ -263,6 +263,9 @@ export function CheckoutClient({ defaultEmail }: { defaultEmail: string }) {
           <p className="text-sm font-semibold text-amber-900">
             Checkout demo — payment processing is not connected yet.
           </p>
+          <p className="mt-1 text-xs font-medium text-amber-900">
+            Demo checkout is for product-flow testing only. No payment is processed.
+          </p>
           <p className="mt-1 text-xs text-muted">
             No payment method is collected here. Completing this demo does not charge any card or move
             any money.

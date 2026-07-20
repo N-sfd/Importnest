@@ -15,7 +15,7 @@ export function BestDealsSection({
 
   return (
     <section
-      className="mt-10 rounded-2xl border border-border bg-surface px-4 py-6 sm:px-6 sm:py-7"
+      className="section-soft rounded-2xl px-4 py-6 sm:px-6 sm:py-7"
       aria-labelledby="best-deals-heading"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
