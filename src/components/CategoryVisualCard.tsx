@@ -87,7 +87,7 @@ export function CategoryVisualCard({
       {useCollage ? (
         <div className="category-visual-grid shrink-0" aria-hidden={false}>
           {collage.map((src, i) => (
-            <div key={`${src}-${i}`} className="relative overflow-hidden rounded-[10px] border border-border bg-[#F4F7FA]">
+            <div key={`${src}-${i}`} className="relative overflow-hidden rounded-[10px] border border-border bg-surface">
               <Image
                 src={src}
                 alt=""

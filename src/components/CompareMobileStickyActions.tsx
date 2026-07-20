@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
 import {
-  removeAlertAction,
   saveProductAction,
   setPriceAlertAction,
   unsaveProductAction,
@@ -72,17 +71,12 @@ export function CompareMobileStickyActions({
 
         {signedIn ? (
           hasAlert ? (
-            <form
-              action={removeAlertAction.bind(null, productId, "price-drop", redirectTo)}
-              className="flex-1"
+            <Link
+              href={`/saved#alerts`}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-full border border-border px-3 py-2.5 text-center text-sm font-semibold text-navy-900"
             >
-              <button
-                type="submit"
-                className="min-h-11 w-full rounded-full border border-border px-3 py-2.5 text-sm font-semibold text-navy-900"
-              >
-                Alert on
-              </button>
-            </form>
+              Alert on
+            </Link>
           ) : (
             <form
               action={setPriceAlertAction.bind(null, productId, redirectTo)}

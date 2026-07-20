@@ -10,7 +10,7 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
   if (visible.length === 0) return null;
 
   return (
-    <div className="panel mt-6 p-4 sm:p-5">
+    <div className="panel p-4 sm:p-5">
       <h2 className="text-sm font-semibold text-foreground">Approved sources</h2>
       <p className="mt-1 text-xs text-muted">
         Live listings from trusted connectors. Freshness updates as sources sync.

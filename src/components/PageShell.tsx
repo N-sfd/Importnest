@@ -19,8 +19,8 @@ export function PageShell({
           width === "narrow"
             ? "mx-auto w-full min-w-0 max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
             : width === "wide"
-              ? "page-container home-container mx-auto w-full min-w-0 flex-1 py-6 sm:py-8"
-              : "mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 py-6 sm:px-6 sm:py-8"
+              ? "page-container mx-auto w-full min-w-0 flex-1 py-8"
+              : "page-container mx-auto w-full min-w-0 flex-1 py-8"
         }
       >
         {children}

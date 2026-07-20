@@ -19,31 +19,31 @@ export type BrandLayout = "horizontal" | "stacked" | "header";
  */
 const ASSETS = {
   logo9: {
-    header: "/brand/importnest-header-logo.png",
-    horizontal: "/brand/importnest-full-logo.png",
-    horizontalOnDark: "/brand/importnest-full-logo-on-dark.png",
-    stacked: "/brand/importnest-full-logo-on-dark.png",
+    header: "/brand/importnest-header-logo-v2.png",
+    horizontal: "/brand/importnest-full-logo-v2.png",
+    horizontalOnDark: "/brand/importnest-full-logo-on-dark-v2.png",
+    stacked: "/brand/importnest-full-logo-on-dark-v2.png",
     icon: "/brand/importnest-icon.png",
     iconDark: "/brand/importnest-icon.png",
     circle: "/brand/importnest-icon.png",
     circleDark: "/brand/importnest-icon.png",
-    /** 2026×260 padded header lockup */
-    headerAspect: 7.79,
-    /** 1220×380 transparent full with tagline */
-    horizontalAspect: 3.21,
-    stackedAspect: 3.0,
+    /** Navy-plate compact lockup (icon + IMPORTNEST, no tagline) — blends with the navy header */
+    headerAspect: 6.39,
+    /** 982×316 transparent full lockup with tagline */
+    horizontalAspect: 3.11,
+    stackedAspect: 3.11,
   },
   nest: {
-    header: "/brand/importnest-header-logo.png",
-    horizontal: "/brand/importnest-full-logo.png",
-    stacked: "/brand/logo-primary.png",
+    header: "/brand/importnest-header-logo-v2.png",
+    horizontal: "/brand/importnest-full-logo-v2.png",
+    stacked: "/brand/importnest-full-logo-v2.png",
     icon: "/brand/importnest-icon.png",
     iconDark: "/brand/importnest-icon.png",
     circle: "/brand/importnest-icon.png",
     circleDark: "/brand/importnest-icon.png",
-    headerAspect: 7.79,
-    horizontalAspect: 3.21,
-    stackedAspect: 1.43,
+    headerAspect: 6.39,
+    horizontalAspect: 3.11,
+    stackedAspect: 3.11,
   },
   in: {
     header: "/brand/logo8-full-dark.png",
@@ -131,7 +131,7 @@ export function BrandMark({
 
 /**
  * Header home link — compact transparent logo (icon + IMPORTNEST only).
- * Never uses the tagline lockup in the top nav.
+ * Never uses the tagline lockup, dark plate, or decorative underline.
  */
 export function BrandLink({
   className = "",
@@ -143,19 +143,22 @@ export function BrandLink({
   logo?: BrandLogo;
 }) {
   const headerSrc = ASSETS[logo].header;
+  const aspect = ASSETS[logo].headerAspect;
+  const height = 32;
+  const width = Math.round(height * aspect);
 
   return (
     <Link
       href="/"
-      className={`header-logo header-logo-wrapper brand-logo transition hover:opacity-90 ${className}`}
+      className={`header-logo brand-logo transition hover:opacity-90 ${className}`}
+      aria-label="Importnest home"
     >
       <Image
         src={headerSrc}
         alt="Importnest"
-        width={230}
-        height={34}
-        className="block h-[34px] w-auto max-w-[230px] object-contain object-left"
-        style={{ height: 34, width: "auto", maxWidth: 230 }}
+        width={width}
+        height={height}
+        className="header-logo-img"
         priority
       />
     </Link>

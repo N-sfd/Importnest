@@ -19,8 +19,8 @@ export default async function SavedPage() {
   if (!user) {
     return (
       <PageShell>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Saved products and alerts
+        <h1 className="text-2xl font-bold tracking-tight text-navy-900">
+          Favourites &amp; price alerts
         </h1>
         <p className="mt-4 text-sm text-muted">
           <Link href="/login?next=/saved" className="font-medium text-link hover:underline">
@@ -41,23 +41,42 @@ export default async function SavedPage() {
     <PageShell>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Saved products and alerts
+          <h1 className="text-2xl font-bold tracking-tight text-navy-900">
+            Favourites &amp; price alerts
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Track price changes across approved sources.
+            Save products you care about, then set alerts when Total Known Cost drops across approved
+            sources.
           </p>
         </div>
         {items.length > 0 ? (
           <p className="text-sm text-muted">
-            {items.length} {items.length === 1 ? "product" : "products"}
+            {items.length} {items.length === 1 ? "favourite" : "favourites"}
             {watching > 0 ? ` · ${watching} active alerts` : null}
             {triggered > 0 ? ` · ${triggered} triggered` : null}
           </p>
         ) : null}
       </div>
 
-      <div id="alerts" className="scroll-mt-24" />
+      {items.length > 0 ? (
+        <nav
+          aria-label="Watchlist sections"
+          className="mt-5 flex flex-wrap gap-2 border-b border-border pb-3"
+        >
+          <a
+            href="#favourites"
+            className="rounded-full bg-cta px-3.5 py-1.5 text-xs font-semibold text-white"
+          >
+            Favourites ({items.length})
+          </a>
+          <a
+            href="#alerts"
+            className="rounded-full border border-border bg-panel px-3.5 py-1.5 text-xs font-semibold text-navy-900 hover:border-accent"
+          >
+            Price alerts ({withAlerts.length})
+          </a>
+        </nav>
+      ) : null}
 
       {items.length === 0 ? (
         <div className="mt-8 space-y-4">
@@ -108,17 +127,43 @@ export default async function SavedPage() {
               <StatusBanner
                 tone="info"
                 title="No alerts"
-                description="You have saved products, but no price alerts are active. Edit any card to set a target price."
+                description="You have saved products, but no price alerts are active. Edit any card to set a target price. Alerts are stored in your account — delivery channels are not connected yet."
               />
             </div>
           ) : null}
-          <ul className="mt-6 space-y-3">
-            {items.map((item) => (
-              <li key={item.canonicalProductId}>
-                <WatchlistProductCard item={item} />
-              </li>
-            ))}
-          </ul>
+
+          <section id="favourites" className="mt-6 scroll-mt-24" aria-labelledby="favourites-heading">
+            <h2 id="favourites-heading" className="text-sm font-bold uppercase tracking-wide text-muted">
+              Favourites
+            </h2>
+            <ul className="mt-3 space-y-3">
+              {items.map((item) => (
+                <li key={item.canonicalProductId}>
+                  <WatchlistProductCard item={item} />
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {withAlerts.length > 0 ? (
+            <section id="alerts" className="mt-10 scroll-mt-24" aria-labelledby="alerts-heading">
+              <h2 id="alerts-heading" className="text-sm font-bold uppercase tracking-wide text-muted">
+                Price alerts
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                In-app targets on Total Known Cost — notifications are not sent outside Importnest yet.
+              </p>
+              <ul className="mt-3 space-y-3">
+                {withAlerts.map((item) => (
+                  <li key={`alert-${item.canonicalProductId}`}>
+                    <WatchlistProductCard item={item} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : (
+            <div id="alerts" className="scroll-mt-24" />
+          )}
         </>
       )}
     </PageShell>

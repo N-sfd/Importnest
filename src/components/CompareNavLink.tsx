@@ -14,7 +14,7 @@ export function CompareNavLink() {
       className="header-action"
       aria-label={`Compare${count > 0 ? `, ${count} items` : ""}`}
     >
-      <span className="relative inline-flex overflow-visible p-0.5">
+      <span className="relative inline-flex overflow-visible p-1">
         <CompareIcon />
         {count > 0 ? (
           <span className="header-action-badge">{count > 99 ? "99+" : count}</span>

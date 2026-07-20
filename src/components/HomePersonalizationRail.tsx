@@ -5,16 +5,14 @@ import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import type { RecentSearch } from "@/lib/recent-searches";
 import type { WatchlistItem } from "@/lib/saved-data";
 
-/** Always-useful trust card — never an empty “recent searches” placeholder. */
+/** Useful trust card when there is no recent-activity data. */
 export function HomeTrustCard() {
   return (
     <aside
       className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]"
-      aria-label="How Importnest protects comparisons"
+      aria-label="Compare with confidence"
     >
-      <h2 className="text-sm font-bold tracking-tight text-navy-900">
-        Importnest protects your comparison
-      </h2>
+      <h2 className="text-sm font-bold tracking-tight text-navy-900">Compare with confidence</h2>
       <ul className="mt-3 space-y-2 text-sm text-muted">
         <li className="flex gap-2">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
@@ -26,11 +24,11 @@ export function HomeTrustCard() {
         </li>
         <li className="flex gap-2">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          Sponsored results labeled separately
+          Sponsored results labeled
         </li>
         <li className="flex gap-2">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          No hidden ranking influence
+          Price alerts available
         </li>
       </ul>
       <Link
@@ -44,9 +42,9 @@ export function HomeTrustCard() {
 }
 
 /**
- * Compact personalization blocks for homepage.
+ * Homepage personalization / trust rail.
  * Never shows empty “appear here as you shop” placeholders.
- * Prefer inline mid-page placement over an empty right rail.
+ * Sidebar always has useful content (trust at minimum).
  */
 export function HomePersonalizationRail({
   recentSearches,
@@ -61,26 +59,23 @@ export function HomePersonalizationRail({
 }) {
   const hasRecent = recentSearches.length > 0;
   const hasWatchlist = showWatchlist && watchlist.length > 0;
-  const hasServerContent = hasRecent || hasWatchlist;
 
   if (placement === "sidebar") {
-    // Legacy sidebar path — hide when empty so the homepage stays full-width.
-    if (!hasServerContent) return null;
-
     return (
-      <aside className="hidden w-[280px] shrink-0 xl:block" aria-label="Your activity">
-        <div className="sticky top-24 space-y-4">
+      <aside className="home-sidebar" aria-label="Shopping shortcuts">
+        <div className="home-sidebar-sticky">
           {hasRecent ? (
             <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
               <RecentSearches items={recentSearches} compact />
             </div>
           ) : null}
           <RecentlyViewedSection compact framed />
-          {showWatchlist ? (
+          {hasWatchlist ? (
             <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-              <SavedAlertsPreview items={watchlist} compact />
+              <SavedAlertsPreview items={watchlist} compact limit={3} />
             </div>
           ) : null}
+          {/* Always useful — replaces empty recent-search placeholders */}
           <HomeTrustCard />
         </div>
       </aside>
@@ -89,54 +84,61 @@ export function HomePersonalizationRail({
 
   if (placement === "inline") {
     return (
-      <section
-        className="home-section"
-        aria-labelledby="watchlist-preview-heading"
-      >
-        <div className="mb-3">
-          <h2
-            id="watchlist-preview-heading"
-            className="text-xl font-bold tracking-tight text-navy-900"
-          >
-            Price alerts &amp; watchlist
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Track saved products and stay ready when totals change.
-          </p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <HomeTrustCard />
-          {hasRecent ? (
-            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-              <RecentSearches items={recentSearches} compact />
-            </div>
-          ) : null}
-          {hasWatchlist ? (
-            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-              <SavedAlertsPreview items={watchlist} compact />
-            </div>
-          ) : (
-            <aside className="rounded-2xl border border-dashed border-border bg-panel p-4">
-              <p className="text-sm font-semibold text-navy-900">Start a watchlist</p>
-              <p className="mt-1 text-sm text-muted">
-                Save products while you compare to get price-alert previews here.
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)] sm:p-5">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-navy-900">
+                Favourites &amp; price alerts
+              </h3>
+              <p className="mt-0.5 text-sm text-muted">
+                Get notified when Total Known Cost drops.
               </p>
-              <Link
-                href={showWatchlist ? "/saved" : "/login?next=/saved"}
-                className="mt-3 inline-block text-xs font-semibold text-link hover:underline"
-              >
-                {showWatchlist ? "Open saved products →" : "Sign in to save →"}
-              </Link>
-            </aside>
+            </div>
+            <Link href="/saved" className="text-sm font-semibold text-link hover:underline">
+              Open watchlist
+            </Link>
+          </div>
+          {hasWatchlist ? (
+            <SavedAlertsPreview items={watchlist} compact={false} limit={4} showHeader={false} />
+          ) : (
+            <div>
+              <p className="text-sm font-semibold text-navy-900">Start your watchlist</p>
+              <p className="mt-1 text-sm text-muted">
+                Heart a product on Top Products or Best Deals, then set a target price on the saved
+                page.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={showWatchlist ? "/saved" : "/login?next=/saved"}
+                  className="btn-cta px-4 py-2 text-sm"
+                >
+                  {showWatchlist ? "Open saved products" : "Sign in to save"}
+                </Link>
+                <Link
+                  href="/search?category=electronics"
+                  className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-navy-900 hover:border-accent"
+                >
+                  Browse products
+                </Link>
+              </div>
+            </div>
           )}
         </div>
-      </section>
+        {hasRecent ? (
+          <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
+            <RecentSearches items={recentSearches} compact />
+          </div>
+        ) : (
+          <HomeTrustCard />
+        )}
+      </div>
     );
   }
 
-  // Mobile: client recently-viewed only (self-hides when empty).
+  // Mobile: recently viewed only when data exists (component self-hides).
   return (
-    <div className="home-section space-y-3 xl:hidden" aria-label="Recently viewed">
+    <div className="mt-4 lg:hidden" aria-label="Recently viewed">
       <RecentlyViewedSection compact framed />
     </div>
   );

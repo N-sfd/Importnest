@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { EXAMPLE_SEARCHES } from "@/lib/search-prompts";
 
-export function HeroSearch() {
+export function HeroSearch({ className = "" }: { className?: string }) {
   const pills = EXAMPLE_SEARCHES.map((e) => ({
     label: e.label,
     href: `/search?q=${encodeURIComponent(e.query)}`,
   }));
 
   return (
-    <div className="relative mt-7">
+    <div className={`relative ${className || "mt-5"}`}>
       <form
         action="/search"
-        className="flex items-center overflow-hidden rounded-full border border-border bg-white shadow-[0_8px_24px_rgb(4_25_53/0.12)] focus-within:ring-2 focus-within:ring-ring"
+        className="flex items-center overflow-hidden rounded-full border border-border bg-white shadow-[0_6px_18px_rgb(16_35_63/0.08)] focus-within:ring-2 focus-within:ring-ring"
       >
         <label htmlFor="home-q" className="sr-only">
           What are you shopping for?

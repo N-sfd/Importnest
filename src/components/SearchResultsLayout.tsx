@@ -1,17 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { AddToCartButton } from "@/components/AddToCartButton";
-import { AddToCompareButton } from "@/components/AddToCompareButton";
-import { formatConditionLabel } from "@/lib/compare-view";
+import { ProductCard, type ProductCardBadge } from "@/components/ProductCard";
 import {
   conditionBadgeLabels,
   type ResultHighlight,
   type SearchResultProduct,
   type SearchResultsFacetOptions,
 } from "@/lib/search-results";
-import { productThumbClass } from "@/lib/images";
-import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
 export type ResultsPageParams = {
   q?: string;
@@ -33,20 +27,30 @@ export type ResultsPageParams = {
   brands?: string;
 };
 
-function freshnessText(minutes: number | null) {
-  if (minutes == null) return "No recent sync";
-  if (minutes <= 0) return "Updated just now";
-  if (minutes === 1) return "Updated 1 min ago";
-  if (minutes < 60) return `Updated ${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  return hours === 1 ? "Updated 1 hr ago" : `Updated ${hours} hr ago`;
-}
-
 const HIGHLIGHT_LABELS: Record<ResultHighlight, string> = {
   best_value: "Best value",
   lowest_cost: "Lowest cost",
   fastest: "Fastest available",
 };
+
+function searchResultBadge(product: SearchResultProduct): ProductCardBadge | null {
+  if (product.highlights.includes("lowest_cost")) return "Best deal";
+  if (product.highlights.includes("best_value")) return "Featured";
+  if (product.matchKind === "exact") return "Featured";
+  if (product.offerCount >= 3) return "Popular";
+  return null;
+}
+
+function searchResultSubtitle(product: SearchResultProduct): string | null {
+  if (product.attributes.length > 0) {
+    return product.attributes
+      .map((a) => `${a.key} ${a.value}${a.unit ? ` ${a.unit}` : ""}`)
+      .join(" · ");
+  }
+  if (product.modelNumber) return `Model ${product.modelNumber}`;
+  return product.categoryName || null;
+}
+
 
 export function countActiveResultFilters(params: ResultsPageParams): number {
   let n = 0;
@@ -276,31 +280,6 @@ export function SearchFiltersSidebar({
   );
 }
 
-function ResultBadge({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: "exact" | "comparable" | "highlight" | "condition";
-}) {
-  const className =
-    tone === "exact"
-      ? "bg-navy-900 text-white"
-      : tone === "comparable"
-        ? "border border-dashed border-accent/40 bg-surface text-navy-800"
-        : tone === "highlight"
-          ? "bg-cta/30 text-navy-900"
-          : "border border-border bg-white text-navy-800";
-
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold leading-tight ${className}`}
-    >
-      {children}
-    </span>
-  );
-}
-
 export function SearchResultProductCard({
   product,
   signedIn,
@@ -310,160 +289,37 @@ export function SearchResultProductCard({
   signedIn: boolean;
   redirectTo: string;
 }) {
-  const offerLabel = product.offerCount === 1 ? "1 offer" : `${product.offerCount} offers`;
   const conditions = conditionBadgeLabels(product.conditions);
-  const isExact = product.matchKind === "exact";
-  const isComparable = product.matchKind === "comparable";
-
-  const sourceCount = product.sourceIds.length;
-  const cardClass = isComparable ? "bg-surface/50" : "bg-panel";
+  const extraBadges: string[] = [];
+  if (product.matchKind === "exact") extraBadges.push("Exact match");
+  if (product.matchKind === "comparable") extraBadges.push("Comparable alternative");
+  for (const h of product.highlights.slice(0, 2)) {
+    const label = HIGHLIGHT_LABELS[h];
+    if (label && !extraBadges.includes(label)) extraBadges.push(label);
+  }
+  for (const c of conditions.slice(0, 2)) {
+    if (!extraBadges.includes(c)) extraBadges.push(c);
+  }
 
   return (
-    <article
-      className={`panel offer-card flex flex-col gap-3 p-4 sm:flex-row sm:items-stretch ${cardClass}`}
-    >
-      <Link
-        href={`/compare/${product.id}`}
-        className="main-result-image result-card-image relative mx-auto shrink-0 overflow-hidden border border-border sm:mx-0"
-      >
-        <Image
-          src={product.imageSrc}
-          alt={`${product.brandName} ${product.productName}`}
-          fill
-          className={productThumbClass(product.imageSrc)}
-          sizes="120px"
-        />
-      </Link>
-
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap gap-1.5">
-          {isExact ? <ResultBadge tone="exact">Exact match</ResultBadge> : null}
-          {isComparable ? <ResultBadge tone="comparable">Comparable alternative</ResultBadge> : null}
-          {product.rating != null ? (
-            <ResultBadge tone="highlight">★ {product.rating.toFixed(1)}</ResultBadge>
-          ) : null}
-          {product.highlights.slice(0, 2).map((h) => (
-            <ResultBadge key={h} tone="highlight">
-              {HIGHLIGHT_LABELS[h]}
-            </ResultBadge>
-          ))}
-          {conditions.slice(0, 2).map((c) => (
-            <ResultBadge key={c} tone="condition">
-              {c}
-            </ResultBadge>
-          ))}
-        </div>
-
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {product.brandName}
-            {product.modelNumber ? (
-              <span className="font-medium normal-case tracking-normal text-muted">
-                {" "}
-                · {product.modelNumber}
-              </span>
-            ) : null}
-          </p>
-          <Link
-            href={`/compare/${product.id}`}
-            className="mt-0.5 block text-base font-bold leading-snug text-navy-900 hover:text-link"
-          >
-            {product.productName}
-          </Link>
-        </div>
-
-        {product.attributes.length > 0 ? (
-          <p className="truncate text-xs text-muted">
-            {product.attributes
-              .map((a) => `${a.key} ${a.value}${a.unit ? ` ${a.unit}` : ""}`)
-              .join(" · ")}
-          </p>
-        ) : null}
-
-        <p className="text-xs text-muted">
-          {product.offerCount > 0 ? (
-            <span className="font-medium text-navy-800">
-              {offerLabel}
-              {sourceCount > 0
-                ? ` from ${sourceCount} ${sourceCount === 1 ? "source" : "sources"}`
-                : ""}
-            </span>
-          ) : (
-            <span className="font-medium text-navy-800">No offers</span>
-          )}
-          <span className="mx-1.5 text-border">·</span>
-          {freshnessText(product.freshnessMinutesAgo)}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 flex-col items-stretch justify-between gap-3 sm:w-40 sm:items-end">
-        <div className="sm:text-right">
-          {product.lowestTotalCost != null ? (
-            <>
-              <p className="text-[11px] font-medium text-muted">From</p>
-              <p className="text-lg price-text">
-                ${product.lowestTotalCost.toFixed(2)}
-              </p>
-            </>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-2 sm:w-full">
-          {signedIn ? (
-            <form
-              action={
-                product.isSaved
-                  ? unsaveProductAction.bind(null, product.id, redirectTo)
-                  : saveProductAction.bind(null, product.id, redirectTo)
-              }
-            >
-              <button
-                type="submit"
-                className={`w-full rounded-full border px-3 py-2 text-sm font-semibold ${
-                  product.isSaved
-                    ? "border-border bg-panel text-gray-700"
-                    : "border-border text-navy-900 hover:border-navy-800"
-                }`}
-              >
-                {product.isSaved ? "Saved ✓" : "Save"}
-              </button>
-            </form>
-          ) : (
-            <Link
-              href={`/login?next=${encodeURIComponent(redirectTo)}`}
-              className="w-full rounded-full border border-border px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:border-navy-800"
-            >
-              Save
-            </Link>
-          )}
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/compare/${product.id}`}
-              className="btn-cta min-w-0 flex-1 px-3 py-2 text-center text-sm"
-            >
-              View offers
-            </Link>
-            {product.bestListing ? (
-              <AddToCartButton
-                compact
-                listingId={product.bestListing.listingId}
-                productId={product.id}
-                title={product.productName}
-                brand={product.brandName}
-                imageUrl={product.imageSrc}
-                retailerName={product.bestListing.sourceName}
-                condition={formatConditionLabel(product.bestListing.condition)}
-                itemPrice={product.bestListing.price}
-                shipping={product.bestListing.shipping}
-                fees={product.bestListing.fees}
-                totalKnownCost={
-                  product.bestListing.price + product.bestListing.shipping + product.bestListing.fees
-                }
-              />
-            ) : null}
-            <AddToCompareButton productId={product.id} productName={product.productName} />
-          </div>
-        </div>
-      </div>
-    </article>
+    <ProductCard
+      productId={product.id}
+      href={`/compare/${product.id}`}
+      imageSrc={product.imageSrc}
+      brandName={product.brandName}
+      productName={product.productName}
+      subtitle={searchResultSubtitle(product)}
+      badge={searchResultBadge(product)}
+      rating={product.rating}
+      fromPrice={product.lowestTotalCost}
+      offerCount={product.offerCount}
+      sourceCount={product.sourceIds.length}
+      freshnessMinutesAgo={product.freshnessMinutesAgo}
+      bestListing={product.bestListing}
+      isSaved={product.isSaved}
+      signedIn={signedIn}
+      redirectTo={redirectTo}
+      extraBadges={extraBadges}
+    />
   );
 }

@@ -185,57 +185,39 @@ export default async function ClarifyPage({
           compact
         />
       ) : (
-        <div className="mb-5">
+        <div className="mb-5 space-y-3">
           {isDealsQuery ? (
-            <div className="mb-3 rounded-2xl border border-accent/30 bg-accent/10 p-4">
-              <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent">
-                  <DealsTagIcon />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-accent">Deals</p>
-                  <p className="mt-0.5 text-sm font-semibold text-navy-900">
-                    Find deal-worthy categories to compare
-                  </p>
-                  <p className="mt-0.5 text-sm text-muted">
-                    Tell us what type of deal you want so we can compare useful offers from approved
-                    sources.
-                  </p>
-                </div>
+            <aside
+              className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 shadow-[var(--shadow-panel)] sm:gap-4 sm:px-4"
+              aria-label="Deals"
+            >
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-border bg-panel text-accent sm:h-16 sm:w-16">
+                <DealsTagIcon />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-muted">Deals</p>
+                <p className="truncate text-sm font-bold text-navy-900 sm:text-base">
+                  Find deal-worthy categories to compare
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted sm:text-sm">
+                  Pick a department below, then answer a few questions so we can compare useful
+                  offers from approved sources.
+                </p>
               </div>
-              <div className="category-visual-grid mt-3">
-                {DEALS_CATEGORIES.slice(0, 4).map((slug) => (
-                  <div
-                    key={slug}
-                    className="relative overflow-hidden rounded-[10px] border border-border bg-[#F4F7FA]"
-                  >
-                    {categoryHasImage(slug) ? (
-                      <Image
-                        src={categoryImageSrc(slug)!}
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="h-12 w-12 object-cover"
-                        sizes="48px"
-                      />
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
+            </aside>
           ) : (
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
               Not sure which department?
             </p>
           )}
-          <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">
+          <div className="flex gap-2.5 overflow-x-auto pb-1">
             {(isDealsQuery ? DEALS_CATEGORIES : SUGGESTED_CATEGORIES).map((slug) => (
               <Link
                 key={slug}
                 href={`/search?category=${slug}&q=${encodeURIComponent(query)}`}
-                className="flex w-24 shrink-0 flex-col items-center gap-1.5 rounded-xl border border-border bg-surface p-2 text-center transition hover:border-navy-800"
+                className="flex w-[6.5rem] shrink-0 flex-col items-center gap-1.5 rounded-xl border border-border bg-panel p-2 text-center transition hover:border-navy-800"
               >
-                <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-border bg-panel">
+                <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-border bg-surface">
                   {categoryHasImage(slug) ? (
                     <Image
                       src={categoryImageSrc(slug)!}
@@ -246,7 +228,7 @@ export default async function ClarifyPage({
                     />
                   ) : null}
                 </div>
-                <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground">
+                <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-navy-900">
                   {isDealsQuery
                     ? `${categoryDisplayTitle(slug)} deals`
                     : categoryDisplayTitle(slug)}

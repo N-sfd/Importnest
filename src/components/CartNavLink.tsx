@@ -10,7 +10,7 @@ export function CartNavLink() {
 
   return (
     <Link href="/cart" className="header-action" aria-label={`Cart${count > 0 ? `, ${count} items` : ""}`}>
-      <span className="relative inline-flex overflow-visible p-0.5">
+      <span className="relative inline-flex overflow-visible p-1">
         <CartIcon />
         {count > 0 ? (
           <span className="header-action-badge">{count > 99 ? "99+" : count}</span>

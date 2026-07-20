@@ -1,6 +1,6 @@
 import { getCompareProduct, getCompareRows } from "@/lib/compare-data";
 import { formatConditionLabel, totalKnownCost } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { productImageFor } from "@/lib/product-images";
 
 export type CompareBasketItem = {
   id: string;
@@ -10,6 +10,7 @@ export type CompareBasketItem = {
   imageSrc: string;
   lowestKnownPrice: number | null;
   offerCount: number;
+  sourceCount: number;
   conditions: string[];
   lastCheckedMinutesAgo: number | null;
 };
@@ -28,6 +29,7 @@ export async function getCompareBasketItems(ids: string[]): Promise<CompareBaske
       const freshnessValues = rows
         .map((row) => row.listing.freshnessMinutesAgo)
         .filter((v): v is number => v != null);
+      const sourceCount = new Set(rows.map((row) => row.listing.sourceId)).size;
 
       return {
         id,
@@ -35,8 +37,10 @@ export async function getCompareBasketItems(ids: string[]): Promise<CompareBaske
         brandName: product.brand.name,
         categoryName: product.category.name,
         imageSrc: productImageFor(id, product.category.slug, product.modelName),
-        lowestKnownPrice: rows.length > 0 ? Math.min(...rows.map((row) => totalKnownCost(row.listing))) : null,
+        lowestKnownPrice:
+          rows.length > 0 ? Math.min(...rows.map((row) => totalKnownCost(row.listing))) : null,
         offerCount: rows.length,
+        sourceCount,
         conditions,
         lastCheckedMinutesAgo: freshnessValues.length > 0 ? Math.min(...freshnessValues) : null,
       };

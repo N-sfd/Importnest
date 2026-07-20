@@ -55,7 +55,14 @@ function withComparable(params: ResultsPageParams) {
   return `/search/results?${next.toString()}`;
 }
 
-export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) {
+export function NoSearchResultsPanel({
+  params,
+  hideCategoryVisual = false,
+}: {
+  params: ResultsPageParams;
+  /** When true, skip the compact category card (already shown in the results toolbar). */
+  hideCategoryVisual?: boolean;
+}) {
   const removable = REMOVABLE.find(({ key }) => {
     const v = params[key];
     if (!v) return false;
@@ -77,13 +84,15 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
       ).toString()}`
     : "/";
 
-  const relatedChips = RELATED_CATEGORY_CHIPS.filter(
-    (c) => c.slug !== params.category && c.slug !== "beauty-devices",
-  ).slice(0, 6);
+  const relatedChips = RELATED_CATEGORY_CHIPS.filter((c) => {
+    if (!params.category) return true;
+    const current = params.category === "beauty-devices" ? "beauty" : params.category;
+    return c.slug !== current;
+  }).slice(0, 6);
 
   return (
     <div className="space-y-4">
-      {params.category ? (
+      {params.category && !hideCategoryVisual ? (
         <CategoryVisualCard category={params.category} query={params.q} compact />
       ) : null}
 
@@ -93,8 +102,8 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
             Browse {categoryTitle}
           </h2>
           <p className="mt-1.5 text-sm text-muted">
-            No live listings matched this category with your current filters. Explore popular
-            products below, or try a different department.
+            No live listings matched this category with your current filters. Explore{" "}
+            {categoryTitle} product types below, or try a related department.
           </p>
           {removable ? (
             <div className="mt-4">
@@ -131,25 +140,27 @@ export function NoSearchResultsPanel({ params }: { params: ResultsPageParams }) 
         />
       )}
 
-      <section aria-labelledby="explore-departments-heading">
-        <h3
-          id="explore-departments-heading"
-          className="text-xs font-bold uppercase tracking-wide text-muted"
-        >
-          Explore other departments
-        </h3>
-        <div className="mt-2.5 flex flex-wrap gap-2">
-          {relatedChips.map((chip) => (
-            <Link
-              key={chip.slug}
-              href={`/search/results?category=${chip.slug}`}
-              className="rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-semibold text-navy-900 transition hover:border-navy-800 hover:bg-navy-100"
-            >
-              {chip.label}
-            </Link>
-          ))}
-        </div>
-      </section>
+      {!hideCategoryVisual ? (
+        <section aria-labelledby="explore-departments-heading">
+          <h3
+            id="explore-departments-heading"
+            className="text-xs font-bold uppercase tracking-wide text-muted"
+          >
+            Explore other departments
+          </h3>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {relatedChips.map((chip) => (
+              <Link
+                key={chip.slug}
+                href={`/search/results?category=${chip.slug}`}
+                className="rounded-full border border-border bg-panel px-3 py-1.5 text-xs font-semibold text-navy-900 transition hover:border-navy-800 hover:bg-navy-100"
+              >
+                {chip.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

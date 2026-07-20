@@ -91,6 +91,6 @@ describe("NoSearchResultsPanel — no source data (no category known)", () => {
       <NoSearchResultsPanel params={{ category: "accessories" }} />,
     );
     expect(html).toContain("Browse Accessories");
-    expect(html).toContain("Explore popular products below");
+    expect(html).toContain("Explore Accessories product types below");
   });
 });

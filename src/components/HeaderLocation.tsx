@@ -98,13 +98,13 @@ export function HeaderLocation() {
     <button
       type="button"
       onClick={() => setEditing(true)}
-      className="location-block rounded-lg px-1.5 py-1 text-left transition hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+      className="location-block rounded-lg px-1.5 py-1 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
     >
-      <span className="block truncate text-[11px] text-muted">Delivering to</span>
-      <span className="block truncate text-sm font-semibold text-navy-900">
+      <span className="block truncate text-[11px] text-white/60">Delivering to</span>
+      <span className="block truncate text-sm font-semibold text-white">
         {location.city} {location.zip}
       </span>
-      <span className="block text-[11px] font-medium text-link">Update location</span>
+      <span className="block text-[11px] font-medium text-cta">Update location</span>
     </button>
   );
 }

@@ -48,10 +48,18 @@ function Badge({
 
 /** Fixed-width label column so values line up at the same position on every card. */
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  const empty =
+    children == null ||
+    children === "" ||
+    (typeof children === "string" && !children.trim());
   return (
     <div className="flex items-baseline gap-2 text-sm">
       <span className="w-24 shrink-0 text-xs font-medium text-muted sm:w-28">{label}</span>
-      <span className="min-w-0 flex-1 text-foreground/85">{children}</span>
+      <span
+        className={`min-w-0 flex-1 text-foreground/85 ${empty ? "italic text-muted" : ""}`}
+      >
+        {empty ? "Not provided" : children}
+      </span>
     </div>
   );
 }
@@ -64,7 +72,7 @@ function RecommendationPanel({
   productId: string;
 }) {
   return (
-    <div className="rounded-2xl border border-cta/40 bg-cta/10 p-4 sm:p-5">
+    <div className="rounded-2xl border border-accent/25 bg-section-soft p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
@@ -196,15 +204,21 @@ function OfferCard({
             </h3>
             {isTop ? (
               <Badge tone="top">{recommendationLabel}</Badge>
-            ) : (
-              <Badge tone="neutral">{recommendation.label}</Badge>
-            )}
+            ) : null}
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
-            {isStaleFreshness(listing.freshnessMinutesAgo) ? (
-              <Badge tone="stale">Data may be outdated</Badge>
-            ) : (
-              <Badge tone="fresh">Updated recently</Badge>
-            )}
+            {(() => {
+              const minutes = listing.freshnessMinutesAgo;
+              if (isStaleFreshness(minutes)) {
+                return <Badge tone="stale">Data may be outdated</Badge>;
+              }
+              if (minutes != null && minutes < 15) {
+                return <Badge tone="fresh">Updated recently</Badge>;
+              }
+              if (minutes != null) {
+                return <Badge tone="neutral">{formatFreshness(minutes)}</Badge>;
+              }
+              return <Badge tone="stale">Freshness unknown</Badge>;
+            })()}
           </div>
           {listing.sourceTypeLabel ? (
             <>
@@ -233,7 +247,11 @@ function OfferCard({
           itemPrice={listing.price}
           shipping={listing.shipping}
           mandatoryFees={listing.mandatoryFees}
-          verifiedDiscount={listing.verifiedDiscount}
+          verifiedDiscount={
+            listing.verifiedDiscount != null && listing.verifiedDiscount > 0
+              ? listing.verifiedDiscount
+              : null
+          }
           totalKnownCost={total}
         />
         <FieldRow label="Delivery / pickup">{fulfillment}</FieldRow>
@@ -241,7 +259,7 @@ function OfferCard({
           <ProtectionDetails details={listing.protectionDetails} />
         </FieldRow>
         <FieldRow label="Freshness">
-          <Freshness minutesAgo={listing.freshnessMinutesAgo} />
+          <Freshness minutesAgo={listing.freshnessMinutesAgo} showRefreshHint />
         </FieldRow>
       </div>
 
@@ -310,7 +328,10 @@ export function PriorityTabs({
   const topId = panel ? rows[0]?.listing.id : undefined;
   const recommendationLabel = panel?.label ?? "";
   const anyStale = rows.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
-  const oldestMinutes = Math.max(0, ...rows.map((r) => r.listing.freshnessMinutesAgo ?? 0));
+  const knownAges = rows
+    .map((r) => r.listing.freshnessMinutesAgo)
+    .filter((v): v is number => v != null);
+  const oldestMinutes = knownAges.length > 0 ? Math.max(...knownAges) : null;
   const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
 
   if (rows.length === 0) {

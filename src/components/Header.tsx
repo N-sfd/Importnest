@@ -69,11 +69,9 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 overflow-visible">
-      <div className="header-top border-b border-border bg-white text-navy-900 overflow-visible">
-        <div className="header-top-inner header-container">
-          <div className="header-logo header-logo-wrapper shrink-0 overflow-visible">
-            <BrandLink logo="logo9" />
-          </div>
+      <div className="header-top">
+        <div className="header-top-inner">
+          <BrandLink logo="logo9" />
 
           <HeaderLocation />
 

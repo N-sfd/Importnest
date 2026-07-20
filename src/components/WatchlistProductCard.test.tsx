@@ -51,32 +51,32 @@ describe("WatchlistProductCard — every field present", () => {
 });
 
 describe("WatchlistProductCard — no price history", () => {
-  it("shows 'No history' instead of a fabricated price change", () => {
+  it("shows 'Not provided' instead of a fabricated price change", () => {
     const html = renderToStaticMarkup(
       <WatchlistProductCard item={makeItem({ priceChange: null, priceHistory: [] })} />,
     );
-    expect(html).toContain("No history");
+    expect(html).toContain("Not provided");
     expect(html).not.toContain("Down $");
     expect(html).not.toContain("Up $");
   });
 });
 
 describe("WatchlistProductCard — missing current price", () => {
-  it("shows an honest 'Unavailable' instead of $0.00", () => {
+  it("shows an honest 'Not provided' instead of $0.00", () => {
     const html = renderToStaticMarkup(<WatchlistProductCard item={makeItem({ currentPrice: null })} />);
-    expect(html).toContain("Unavailable");
+    expect(html).toContain("Not provided");
     expect(html).not.toContain("$0.00");
   });
 });
 
 describe("WatchlistProductCard — no alert set", () => {
-  it("shows 'Not set' for the target price and omits the Pause/Resume control", () => {
+  it("shows 'Not provided' for the target price and omits the Pause/Resume control", () => {
     const html = renderToStaticMarkup(
       <WatchlistProductCard
         item={makeItem({ alertId: null, alertType: null, targetPrice: null, status: "none" })}
       />,
     );
-    expect(html).toContain("Not set");
+    expect(html).toContain("Not provided");
     expect(html).not.toContain("Pause");
     expect(html).not.toContain("Resume");
     expect(html).toContain("No alert");

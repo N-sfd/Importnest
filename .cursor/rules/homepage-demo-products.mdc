@@ -1,0 +1,18 @@
+---
+description: Homepage demo product data must never be treated as live retailer facts
+globs: src/data/homepage-demo-products.ts,src/components/TopProductsSection.tsx,src/components/BestDealsSection.tsx,src/components/TopProductCard.tsx,src/components/DealProductCard.tsx,src/app/page.tsx
+alwaysApply: false
+---
+
+# Homepage demo data
+
+`src/data/homepage-demo-products.ts` is **homepage demo browse data only**.
+
+- Do not use it as live retailer data or for production ranking.
+- Demo prices, scores, offer counts, and discounts are seeded browse examples —
+  always labeled as demo in the UI.
+- Never wire demo ids into compare ranking, save/alerts persistence, cart lines,
+  or checkout as if they were real catalog SKUs.
+- Listing-backed Top Products / Best Deals cards must come from
+  `getPopularComparisons` / `getBestDeals` (approved listings + PriceHistory).
+- Demo tiles link to category/search browse — not fake product detail pages.
