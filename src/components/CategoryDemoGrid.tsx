@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { categoryDisplayTitle, normalizeCategoryKey } from "@/lib/category-visuals";
 import {
   getCategoryDemoProducts,
@@ -21,6 +23,8 @@ export function CategoryDemoGrid({
   /** primary = main browse grid when live results are empty; secondary = “More to explore” */
   prominence?: "primary" | "secondary";
 }) {
+  const searchParams = useSearchParams();
+  const activeSubtype = (searchParams.get("q") ?? "").trim().toLowerCase();
   const key = normalizeCategoryKey(categorySlug);
   const products = getCategoryDemoProducts(categorySlug).filter(
     (p) => normalizeCategoryKey(p.categorySlug) === key,
@@ -31,6 +35,7 @@ export function CategoryDemoGrid({
   const browseHref = `/search/results?category=${encodeURIComponent(categorySlug)}`;
   const subtypes = getCategoryDemoSubtypes(categorySlug);
   const headingId = prominence === "primary" ? "category-browse-heading" : "category-demo-heading";
+  const imageBySubtype = new Map(products.map((p) => [p.subtype.toLowerCase(), p.image]));
 
   return (
     <section className={prominence === "primary" ? "mt-2" : "mt-8"} aria-labelledby={headingId}>
@@ -49,17 +54,33 @@ export function CategoryDemoGrid({
         </Link>
       </div>
 
-      <ul className="mt-3 flex flex-wrap gap-2" aria-label={`${title} product types`}>
-        {subtypes.map((subtype) => (
-          <li key={subtype}>
-            <Link
-              href={`/search/results?q=${encodeURIComponent(subtype)}&category=${encodeURIComponent(categorySlug)}`}
-              className="inline-flex rounded-full border border-border bg-panel px-3 py-1 text-xs font-semibold capitalize text-navy-900 transition hover:border-accent hover:text-link"
-            >
-              {subtype}
-            </Link>
-          </li>
-        ))}
+      <ul className="category-subtype-strip mt-3" aria-label={`${title} product types`}>
+        {subtypes.map((subtype) => {
+          const thumb = imageBySubtype.get(subtype.toLowerCase());
+          const selected = activeSubtype === subtype.toLowerCase();
+          return (
+            <li key={subtype}>
+              <Link
+                href={`/search/results?q=${encodeURIComponent(subtype)}&category=${encodeURIComponent(categorySlug)}`}
+                className={`category-subtype-chip ${selected ? "category-subtype-chip-active" : ""}`}
+              >
+                {thumb ? (
+                  <span className="category-subtype-thumb">
+                    <Image
+                      src={thumb}
+                      alt=""
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="h-7 w-7 object-contain"
+                    />
+                  </span>
+                ) : null}
+                <span className="capitalize">{subtype}</span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
 
       <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

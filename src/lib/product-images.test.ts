@@ -180,7 +180,7 @@ describe("category demo thumbnails", () => {
     }
   });
 
-  it("uses distinct photos within every major category", () => {
+  it("uses distinct photo paths within every major category (no shared collage)", () => {
     for (const slug of categories) {
       const products = getCategoryDemoProducts(slug);
       const images = products.map((p) => p.image);
@@ -192,9 +192,30 @@ describe("category demo thumbnails", () => {
       expect(unique.size).toBe(images.length);
       for (const image of images) {
         expect(image).not.toContain("/demo-icons/");
+        expect(image).not.toContain("/images/categories/");
         expect(image).toMatch(/\.(png|jpe?g|webp)$/i);
         expect(image).toMatch(new RegExp(`/images/products/${slug}/`));
       }
+    }
+  });
+
+  it("maps kitchen subtypes to the expected dedicated files", () => {
+    const expected: Record<string, string> = {
+      cookware: "cookware.jpg",
+      dinnerware: "dinnerware.jpg",
+      utensils: "utensils.jpg",
+      blender: "blender.jpg",
+      "coffee machine": "coffee-machine.jpg",
+      kettle: "kettle.jpg",
+      "cutting board": "cutting-board.jpg",
+      "food storage": "food-storage.jpg",
+      bakeware: "bakeware.jpg",
+      organizer: "organizer.jpg",
+    };
+    for (const product of getCategoryDemoProducts("kitchen")) {
+      const file = expected[product.subtype];
+      expect(file).toBeTruthy();
+      expect(product.image).toBe(`/images/products/kitchen/${file}`);
     }
   });
 

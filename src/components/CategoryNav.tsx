@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { CategoryNavIcon } from "@/components/CategoryNavIcons";
 import {
   navDepartments,
   topNavLinks,
@@ -150,9 +151,7 @@ export function CategoryNav() {
           onClick={() => setOpen((v) => !v)}
           className="category-all"
         >
-          <span aria-hidden className="text-base leading-none">
-            ☰
-          </span>
+          <CategoryNavIcon label="All" />
           <span>All</span>
         </button>
 
@@ -171,7 +170,8 @@ export function CategoryNav() {
                   active ? "category-link-active" : ""
                 }`}
               >
-                {link.label}
+                <CategoryNavIcon label={link.label} />
+                <span>{link.label}</span>
               </Link>
             );
           })}

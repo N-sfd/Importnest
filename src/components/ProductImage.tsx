@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BRAND_FALLBACK_IMAGE,
-  categoryFallbackImage,
   getProductDisplayImage,
   productImageAlt,
   productThumbClass,
@@ -20,17 +19,19 @@ export type ProductImageProps = {
   title?: string | null;
   subtitle?: string | null;
   className?: string;
-  /** Extra classes for the wrapping frame (background / radius). */
   frameClassName?: string;
-  /** Visual size preset — maps to shared CSS helpers. */
   size?: "card" | "compact" | "result" | "summary" | "fill";
-  /** Next/Image sizes attribute when using fill. */
   sizes?: string;
   priority?: boolean;
-  /** Optional product bag used to rebuild the fallback chain. */
   product?: ProductImageSource;
 };
 
+/**
+ * Fallback chain for product cards.
+ * Intentionally skips /images/categories/* collages — those reuse one photo
+ * across an entire department and caused the “all kitchen cards look the same”
+ * bug when next/image fired a spurious onError.
+ */
 function buildFallbackChain(opts: {
   src?: string | null;
   category?: string | null;
@@ -42,20 +43,25 @@ function buildFallbackChain(opts: {
   const chain: string[] = [];
   const push = (value?: string | null) => {
     const v = value?.trim();
-    if (v && !chain.includes(v)) chain.push(v);
+    if (!v || chain.includes(v)) return;
+    // Never use department collages as product thumbnails.
+    if (v.includes("/images/categories/")) return;
+    chain.push(v);
   };
 
   push(opts.src);
-  if (opts.product) {
-    push(getProductDisplayImage(opts.product));
-  }
+  if (opts.product) push(getProductDisplayImage(opts.product));
   if (opts.subtype && opts.category) {
-    push(
-      subtypeFallbackImage(opts.category, opts.title, opts.subtitle, [opts.subtype]),
-    );
+    push(subtypeFallbackImage(opts.category, null, null, [opts.subtype]));
   }
-  push(subtypeFallbackImage(opts.category ?? undefined, opts.title, opts.subtitle, opts.subtype ? [opts.subtype] : null));
-  if (opts.category) push(categoryFallbackImage(opts.category));
+  push(
+    subtypeFallbackImage(
+      opts.category ?? undefined,
+      opts.title,
+      opts.subtitle,
+      opts.subtype ? [opts.subtype] : null,
+    ),
+  );
   push(BRAND_FALLBACK_IMAGE);
   return chain.length > 0 ? chain : [BRAND_FALLBACK_IMAGE];
 }
@@ -76,9 +82,14 @@ function frameClassFor(size: ProductImageProps["size"]) {
   }
 }
 
+function isLocalStatic(src: string) {
+  return src.startsWith("/images/") || src.startsWith("/brand/");
+}
+
 /**
  * Product thumbnail with automatic onError fallback:
- * src → subtype → category → brand mark. Never leaves a broken image icon.
+ * src → subtype → brand mark. Never leaves a broken icon; never swaps in a
+ * department collage that would make every card look identical.
  */
 export function ProductImage({
   src,
@@ -107,6 +118,12 @@ export function ProductImage({
     [src, category, subtype, title, subtitle, product],
   );
   const [index, setIndex] = useState(0);
+
+  // Reset when the intended product image changes (category navigation).
+  useEffect(() => {
+    setIndex(0);
+  }, [src, category, subtype, chain[0]]);
+
   const current = chain[Math.min(index, chain.length - 1)] ?? BRAND_FALLBACK_IMAGE;
   const resolvedAlt =
     alt?.trim() ||
@@ -120,11 +137,15 @@ export function ProductImage({
   return (
     <div className={`${frameClassFor(size)} ${frameClassName}`.trim()}>
       <Image
+        key={current}
         src={current}
         alt={resolvedAlt}
         fill
         priority={priority}
         sizes={sizes}
+        // Local product JPGs: skip optimizer so a transient optimize error
+        // cannot cascade into the shared category collage.
+        unoptimized={isLocalStatic(current)}
         className={`${productThumbClass(current)} ${className}`.trim()}
         onError={() => {
           setIndex((i) => (i + 1 < chain.length ? i + 1 : i));
