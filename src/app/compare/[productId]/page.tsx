@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
+import { ComparisonMethodologyPanel } from "@/components/ComparisonMethodologyPanel";
 import { TrackProductView } from "@/components/TrackProductView";
 import { CompareMobileStickyActions } from "@/components/CompareMobileStickyActions";
 import { PageShell } from "@/components/PageShell";
@@ -211,6 +212,8 @@ export default async function ComparePage({
       ) : null}
 
       <PriceHistorySection summary={priceHistory} />
+
+      <ComparisonMethodologyPanel />
 
       <section className="panel mt-4 p-4 sm:p-6">
         <h2 className="text-lg font-bold tracking-tight text-foreground">Buying options</h2>

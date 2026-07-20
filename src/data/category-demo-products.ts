@@ -30,8 +30,12 @@ const badgeCycle = ["Featured", "Popular pick", "Editor's pick", undefined] as c
  * A few categories have real, unused (not wired to any seeded product)
  * extra images sitting in public/images/home/ — cycle through those for
  * visual variety instead of repeating the single category hero image 8
- * times. Every other category still falls back to that one hero image
- * (see CategoryDemoGrid) — no new photos were fabricated to fill the gap.
+ * times.
+ *
+ * Every other category gets a distinct, clearly-generic line-icon SVG per
+ * sub-type instead (public/images/demo-icons/) rather than one repeated
+ * photo — these are abstract placeholders, not claimed product photos, and
+ * are assigned one-to-one below via each product's `image` field.
  */
 const EXTRA_IMAGES: Record<string, string[]> = {
   electronics: [
@@ -46,11 +50,87 @@ const EXTRA_IMAGES: Record<string, string[]> = {
   ],
 };
 
+const DEMO_ICON = (slug: string) => `/images/demo-icons/${slug}.svg`;
+
+/** One icon per product, in the same order as each category's entry list below. */
+const ICON_IMAGES: Record<string, string[]> = {
+  appliances: [
+    "microwave",
+    "toaster-oven",
+    "vacuum",
+    "slow-cooker",
+    "air-fryer",
+    "freezer",
+    "ac-unit",
+    "dehumidifier",
+  ].map(DEMO_ICON),
+  kitchen: [
+    "cookware-set",
+    "pour-over",
+    "knife-block",
+    "stand-mixer",
+    "cutting-board",
+    "kettle",
+    "food-storage",
+    "cast-iron-skillet",
+  ].map(DEMO_ICON),
+  footwear: [
+    "trail-runner",
+    "sneaker",
+    "hiking-boot",
+    "loafer",
+    "sandal",
+    "winter-boot",
+    "training-shoe",
+    "chukka-boot",
+  ].map(DEMO_ICON),
+  beauty: [
+    "cleansing-brush",
+    "hair-dryer",
+    "flat-iron",
+    "led-mirror",
+    "razor",
+    "facial-steamer",
+    "sonic-cleansing",
+    "nail-care",
+  ].map(DEMO_ICON),
+  accessories: [
+    "wallet",
+    "backpack",
+    "phone-case",
+    "travel-organizer",
+    "sunglasses",
+    "cable",
+    "crossbody-bag",
+    "watch-band",
+  ].map(DEMO_ICON),
+  outdoors: [
+    "daypack",
+    "tent",
+    "sleeping-bag",
+    "camp-stove",
+    "water-bottle",
+    "trekking-poles",
+    "lantern",
+    "camp-chair",
+  ].map(DEMO_ICON),
+  home: [
+    "blanket",
+    "table-lamp",
+    "storage-bins",
+    "throw-pillow",
+    "air-filter",
+    "wall-clock",
+    "diffuser",
+    "curtains",
+  ].map(DEMO_ICON),
+};
+
 function withBadges(
   categorySlug: string,
   entries: { title: string; brand: string; subtitle: string }[],
 ): CategoryDemoProduct[] {
-  const images = EXTRA_IMAGES[categorySlug];
+  const images = EXTRA_IMAGES[categorySlug] ?? ICON_IMAGES[categorySlug];
   return entries.map((e, i) => ({
     id: `demo-${categorySlug}-${i + 1}`,
     categorySlug,

@@ -58,6 +58,8 @@ export default async function ClarifyPage({
     redirect("/search");
   }
 
+  const isDealsQuery = query.toLowerCase().includes("deal");
+
   // Defensive re-check: an exact/explicit query landing here directly (e.g.
   // a stale bookmark, browser back) should still skip straight to a result
   // rather than asking unnecessary questions. A generic category term must
@@ -171,9 +173,18 @@ export default async function ClarifyPage({
         />
       ) : (
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Not sure which department?
-          </p>
+          {isDealsQuery ? (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-accent">Deals</p>
+              <p className="mt-0.5 text-sm text-muted">
+                Tell us what type of deal you want so we can compare useful offers.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Not sure which department?
+            </p>
+          )}
           <div className="mt-2 flex gap-2.5 overflow-x-auto pb-1">
             {SUGGESTED_CATEGORIES.map((slug) => (
               <Link
@@ -193,7 +204,9 @@ export default async function ClarifyPage({
                   ) : null}
                 </div>
                 <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground">
-                  {categoryDisplayTitle(slug)}
+                  {isDealsQuery
+                    ? `${categoryDisplayTitle(slug)} deals`
+                    : categoryDisplayTitle(slug)}
                 </span>
               </Link>
             ))}

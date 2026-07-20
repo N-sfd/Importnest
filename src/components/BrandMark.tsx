@@ -19,8 +19,8 @@ const SIZES = {
  * naive per-property target would suggest.
  */
 const HEADER_LOCKUP = {
-  sm: { textH: 15, iconH: 11, gap: 4 },
-  md: { textH: 22, iconH: 16, gap: 5 },
+  sm: { textH: 13, iconH: 10, gap: 3 },
+  md: { textH: 18, iconH: 13, gap: 4 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";
@@ -199,7 +199,7 @@ export function BrandLink({
         <BrandMark logo={logo} showWordmark layout="header" onDark={onDark} size="md" />
       </span>
       <span className="inline-flex leading-none sm:hidden">
-        <BrandMark logo={logo} showWordmark layout="header" onDark={onDark} size="sm" />
+        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="sm" />
       </span>
     </Link>
   );
