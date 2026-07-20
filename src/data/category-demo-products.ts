@@ -46,11 +46,11 @@ export const CATEGORY_DEMO_PRODUCTS: Record<string, CategoryDemoProduct[]> = {
   electronics: withBadges("electronics", [
     { title: "Vantage 13\" Ultrabook", brand: "Nordstream", subtitle: "Thin-and-light laptop for everyday work" },
     { title: "Crestline Noise-Cancelling Earbuds", brand: "Alto", subtitle: "Compact true-wireless earbuds" },
-    { title: "Marlow 4K Streaming Stick", brand: "Kindred", subtitle: "Streaming device for any TV" },
-    { title: "Solace Smartwatch SE", brand: "Everline", subtitle: "Fitness and notifications on your wrist" },
+    { title: "Harborline Over-Ear Headphones", brand: "Alto", subtitle: "Wireless headphones for travel and focus" },
+    { title: "Pixelbay Smart Phone SE", brand: "Kindred", subtitle: "Everyday smartphone with clear camera" },
+    { title: "Clearview 27\" Monitor", brand: "Nordstream", subtitle: "IPS monitor for desk setups" },
+    { title: "Solace Smart Watch SE", brand: "Everline", subtitle: "Fitness and notifications on your wrist" },
     { title: "Halcyon Tablet 10", brand: "Nordstream", subtitle: "Everyday tablet for browsing and media" },
-    { title: "Pilcrow Mechanical Keyboard", brand: "Alto", subtitle: "Compact keyboard for desk setups" },
-    { title: "Rivermark Portable SSD 1TB", brand: "Kindred", subtitle: "Fast portable storage" },
     { title: "Auralite Bluetooth Speaker", brand: "Everline", subtitle: "Compact speaker for home or travel" },
   ]),
   appliances: withBadges("appliances", [
@@ -60,7 +60,7 @@ export const CATEGORY_DEMO_PRODUCTS: Record<string, CategoryDemoProduct[]> = {
     { title: "Ashford Slow Cooker 6-Qt", brand: "Fernwood", subtitle: "Programmable slow cooker" },
     { title: "Larkspur Air Fryer", brand: "Hearthcrest", subtitle: "Compact air fryer for everyday cooking" },
     { title: "Dunmore Chest Freezer", brand: "Fernwood", subtitle: "Extra freezer storage for the garage" },
-    { title: "Birchfield Window AC Unit", brand: "Hearthcrest", subtitle: "Cooling for a single room" },
+    { title: "Birchfield Air Conditioner", brand: "Hearthcrest", subtitle: "Cooling for a single room" },
     { title: "Thornbury Dehumidifier", brand: "Fernwood", subtitle: "Moisture control for basements" },
   ]),
   kitchen: withBadges("kitchen", [

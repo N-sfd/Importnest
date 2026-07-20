@@ -9,16 +9,14 @@ export function CartNavLink() {
   const { count } = useCart();
 
   return (
-    <Link href="/cart" className="header-action">
-      <span className="relative inline-flex">
+    <Link href="/cart" className="header-action" aria-label={`Cart${count > 0 ? `, ${count} items` : ""}`}>
+      <span className="relative inline-flex overflow-visible p-0.5">
         <CartIcon />
         {count > 0 ? (
-          <span className="absolute -right-2 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cta px-1 text-[10px] font-bold text-white">
-            {count > 99 ? "99+" : count}
-          </span>
+          <span className="header-action-badge">{count > 99 ? "99+" : count}</span>
         ) : null}
       </span>
-      <span className="label">Cart</span>
+      <span className="label header-action-label">Cart</span>
     </Link>
   );
 }

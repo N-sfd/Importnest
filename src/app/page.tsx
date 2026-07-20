@@ -3,12 +3,10 @@ import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { BackendLinks } from "@/components/BackendLinks";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { HeroSearch } from "@/components/HeroSearch";
+import { HomePersonalizationRail } from "@/components/HomePersonalizationRail";
 import { HowItWorks } from "@/components/HowItWorks";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
-import { RecentSearches } from "@/components/RecentSearches";
-import { RecentlyViewedSection } from "@/components/RecentlyViewedSection";
-import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
 import {
   TopProductsSection,
@@ -108,90 +106,105 @@ export default async function HomePage() {
   const topProducts = withTopProductBadges(topProductsRaw);
 
   return (
-    <PageShell>
-      <RecentSearches items={recentSearches} />
-      <RecentlyViewedSection />
-      {user ? <SavedAlertsPreview items={watchlist} /> : null}
+    <PageShell width="wide">
+      <div className="flex items-start gap-8">
+        <div className="min-w-0 flex-1">
+          {/* 1. Hero / search */}
+          <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/10 blur-3xl"
+            />
 
-      {/* 2. Shop by Category */}
-      <section className="mt-10" aria-labelledby="shop-category-heading">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2
-              id="shop-category-heading"
-              className="text-xl font-bold tracking-tight text-navy-900"
-            >
-              Shop by Category
-            </h2>
-            <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
-          </div>
-          <Link
-            href="/search?category=electronics"
-            className="text-sm font-semibold text-link hover:underline"
-          >
-            View all
-          </Link>
-        </div>
-        <CategoryImageGrid items={categories} />
-      </section>
+            <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
+                  See the real total cost before you click buy.
+                </h1>
+                <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
+                  Search once. See{" "}
+                  <span className="font-semibold text-accent">Total Known Cost</span> — item +
+                  shipping + fees — from{" "}
+                  <Link
+                    href="#approved-sources"
+                    className="font-semibold text-link underline-offset-2 hover:underline"
+                  >
+                    approved retailers
+                  </Link>{" "}
+                  only.
+                </p>
 
-      {/* 3. Top Products — trending / most-compared */}
-      <TopProductsSection items={topProducts} signedIn={Boolean(user)} />
+                <HeroSearch />
+                <p className="relative mt-3 text-xs text-muted">
+                  Estimates are labeled. Sponsored placements never change organic ranking.
+                </p>
+              </div>
 
-      {/* 4. Best Deals — ranked by real discount, badge emphasized */}
-      <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
+              <TotalKnownCostHook />
+            </div>
+          </section>
 
-      {/* 5. Popular Comparisons */}
-      <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
+          {/* Mobile personalization under hero */}
+          <HomePersonalizationRail
+            recentSearches={recentSearches}
+            watchlist={watchlist}
+            showWatchlist={Boolean(user)}
+            placement="mobile"
+          />
 
-      {/* 6. See the real total cost before you click buy — headline + Total Known Cost widget */}
-      <section className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-navy-100 via-panel to-surface px-5 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 left-10 h-56 w-56 rounded-full bg-cta/10 blur-3xl"
-        />
-
-        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
-              See the real total cost before you click buy.
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-              Search once. See{" "}
-              <span className="font-semibold text-accent">Total Known Cost</span> — item + shipping +
-              fees — from{" "}
+          {/* 2. Shop by Category */}
+          <section className="mt-10" aria-labelledby="shop-category-heading">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2
+                  id="shop-category-heading"
+                  className="text-xl font-bold tracking-tight text-navy-900"
+                >
+                  Shop by Category
+                </h2>
+                <p className="mt-1 text-sm text-muted">Browse with clear category imagery</p>
+              </div>
               <Link
-                href="#approved-sources"
-                className="font-semibold text-link underline-offset-2 hover:underline"
+                href="/search?category=electronics"
+                className="text-sm font-semibold text-link hover:underline"
               >
-                approved retailers
-              </Link>{" "}
-              only.
-            </p>
+                View all
+              </Link>
+            </div>
+            <CategoryImageGrid items={categories} />
+          </section>
 
-            <HeroSearch />
-            <p className="relative mt-3 text-xs text-muted">
-              Estimates are labeled. Sponsored placements never change organic ranking.
-            </p>
+          {/* 3. Top Products */}
+          <TopProductsSection items={topProducts} signedIn={Boolean(user)} />
+
+          {/* 4. Best Deals */}
+          <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
+
+          {/* 5. Popular Comparisons */}
+          <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
+
+          {/* 6–7. How it works */}
+          <HowItWorks />
+
+          {/* 8. Approved sources */}
+          <div id="approved-sources" className="scroll-mt-24 mt-10">
+            <ApprovedSourcesStrip sources={sources} />
           </div>
 
-          <TotalKnownCostHook />
+          <BackendLinks className="mt-6" />
         </div>
-      </section>
 
-      {/* 7. How it works */}
-      <HowItWorks />
-
-      {/* 8. Approved sources / trust */}
-      <div id="approved-sources" className="scroll-mt-24 mt-10">
-        <ApprovedSourcesStrip sources={sources} />
+        <HomePersonalizationRail
+          recentSearches={recentSearches}
+          watchlist={watchlist}
+          showWatchlist={Boolean(user)}
+          placement="sidebar"
+        />
       </div>
-
-      <BackendLinks className="mt-6" />
     </PageShell>
   );
 }

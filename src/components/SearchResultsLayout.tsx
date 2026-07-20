@@ -324,7 +324,7 @@ export function SearchResultProductCard({
     >
       <Link
         href={`/compare/${product.id}`}
-        className="main-result-image relative mx-auto shrink-0 overflow-hidden border border-border sm:mx-0"
+        className="main-result-image result-card-image relative mx-auto shrink-0 overflow-hidden border border-border sm:mx-0"
       >
         <Image
           src={product.imageSrc}

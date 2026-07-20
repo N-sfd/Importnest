@@ -67,8 +67,8 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
   const user = await getAuthUser();
 
   return (
-    <header className="sticky top-0 z-40">
-      <div className="border-b border-border bg-white text-navy-900">
+    <header className="sticky top-0 z-40 overflow-visible">
+      <div className="header-top border-b border-border bg-white text-navy-900 overflow-visible">
         <div className="header-top-inner">
           <div className="header-logo shrink-0">
             <BrandLink logo="logo9" onDark={false} />

@@ -8,13 +8,14 @@ export function PageShell({
   hideHeaderSearch = false,
 }: {
   children: ReactNode;
-  width?: "default" | "narrow";
+  width?: "default" | "narrow" | "wide";
   hideHeaderSearch?: boolean;
 }) {
-  const maxWidth = width === "narrow" ? "max-w-3xl" : "max-w-[1200px]";
+  const maxWidth =
+    width === "narrow" ? "max-w-3xl" : width === "wide" ? "max-w-[1320px]" : "max-w-[1200px]";
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface text-foreground">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-surface text-foreground">
       <Header hideSearch={hideHeaderSearch} />
       <main className={`mx-auto w-full flex-1 px-3 py-6 sm:px-4 sm:py-8 ${maxWidth}`}>
         {children}

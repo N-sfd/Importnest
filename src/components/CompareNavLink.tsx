@@ -9,16 +9,18 @@ export function CompareNavLink() {
   const { count } = useCompareBasket();
 
   return (
-    <Link href="/compare/list" className="header-action">
-      <span className="relative inline-flex">
+    <Link
+      href="/compare/list"
+      className="header-action"
+      aria-label={`Compare${count > 0 ? `, ${count} items` : ""}`}
+    >
+      <span className="relative inline-flex overflow-visible p-0.5">
         <CompareIcon />
         {count > 0 ? (
-          <span className="absolute -right-2 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cta px-1 text-[10px] font-bold text-white">
-            {count > 99 ? "99+" : count}
-          </span>
+          <span className="header-action-badge">{count > 99 ? "99+" : count}</span>
         ) : null}
       </span>
-      <span className="label">Compare</span>
+      <span className="label header-action-label">Compare</span>
     </Link>
   );
 }

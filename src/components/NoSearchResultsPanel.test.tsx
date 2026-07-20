@@ -73,8 +73,10 @@ describe("NoSearchResultsPanel — user relaxes one filter", () => {
 describe("NoSearchResultsPanel — no source data (no category known)", () => {
   it("browses everything instead of a fabricated category when none was captured", () => {
     const html = renderToStaticMarkup(<NoSearchResultsPanel params={{ q: "unobtainium widget" }} />);
+    // Primary "Browse category" stays category-agnostic; department chips are separate.
     expect(html).toContain('href="/search/results"');
-    expect(html).not.toContain("category=appliances");
+    expect(html).toContain("Explore other departments");
+    expect(html).toMatch(/Browse category<\/a>/);
   });
 
   it("links to the real captured category when one exists", () => {
@@ -82,5 +84,13 @@ describe("NoSearchResultsPanel — no source data (no category known)", () => {
       <NoSearchResultsPanel params={{ q: "quiet dishwasher", category: "appliances" }} />,
     );
     expect(html).toContain('href="/search/results?category=appliances"');
+  });
+
+  it("shows a softer empty state for category-only browsing", () => {
+    const html = renderToStaticMarkup(
+      <NoSearchResultsPanel params={{ category: "accessories" }} />,
+    );
+    expect(html).toContain("Browse Accessories");
+    expect(html).toContain("Explore popular products below");
   });
 });

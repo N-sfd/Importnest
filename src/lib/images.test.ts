@@ -67,9 +67,14 @@ describe("subtypeFallbackImage", () => {
     expect(subtypeFallbackImage("footwear", "Glenmoor Chukka Boot")).toContain("chukka-boot");
   });
 
-  it("matches accessories and beauty subtypes", () => {
-    expect(subtypeFallbackImage("accessories", "Kestrel Laptop Backpack")).toContain("backpack");
-    expect(subtypeFallbackImage("beauty", "Rosemere Hair Dryer 1875W")).toContain("hair-dryer");
+  it("matches electronics subtypes including phone and headphones", () => {
+    expect(subtypeFallbackImage("electronics", "Pixelbay Smart Phone SE")).toContain("phone");
+    expect(subtypeFallbackImage("electronics", "Harborline Over-Ear Headphones")).toContain(
+      "headphones",
+    );
+    expect(subtypeFallbackImage("appliances", "Birchfield Air Conditioner")).toContain(
+      "air-conditioner",
+    );
   });
 });
 
@@ -100,8 +105,8 @@ describe("category demo thumbnails", () => {
     }
   });
 
-  it("uses distinct photos within footwear, beauty, accessories, and appliances", () => {
-    for (const slug of ["footwear", "beauty", "accessories", "appliances"] as const) {
+  it("uses distinct photos within footwear, beauty, accessories, appliances, and electronics", () => {
+    for (const slug of ["footwear", "beauty", "accessories", "appliances", "electronics"] as const) {
       const products = getCategoryDemoProducts(slug);
       const images = products.map((p) => p.image);
       expect(new Set(images).size).toBe(images.length);
