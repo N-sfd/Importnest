@@ -127,6 +127,11 @@ export function CategoryNav() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
   const q = searchParams.get("q");
+  const normalizedCategory = (category ?? "").trim().toLowerCase();
+  const isAllActive =
+    pathname === "/search/results" &&
+    !q?.trim() &&
+    (normalizedCategory === "" || normalizedCategory === "all");
 
   useEffect(() => {
     if (!open) return;
@@ -171,16 +176,38 @@ export function CategoryNav() {
   return (
     <div ref={rootRef} className="category-nav relative border-b border-black/10 text-white">
       <div className="category-nav-inner nav-container">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={() => setOpen((v) => !v)}
-          className="category-all"
-        >
-          <CategoryNavIcon label="All" />
-          <span>All</span>
-        </button>
+        <div className="category-all-group">
+          <Link
+            href="/search/results"
+            aria-current={isAllActive ? "page" : undefined}
+            className={`category-all ${isAllActive ? "category-all-active" : ""}`}
+          >
+            <CategoryNavIcon label="All" />
+            <span>All</span>
+          </Link>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={panelId}
+            aria-label="Browse all departments"
+            onClick={() => setOpen((v) => !v)}
+            className="category-all-toggle"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6l4 4 4-4" />
+            </svg>
+          </button>
+        </div>
 
         <div
           className={`category-nav-scroller ${canScrollLeft ? "category-nav-fade-left" : ""} ${

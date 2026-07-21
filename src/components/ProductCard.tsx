@@ -2,8 +2,13 @@ import Link from "next/link";
 import { ProductCardActions } from "@/components/ProductCardActions";
 import { ProductCardSaveButton } from "@/components/ProductCardSaveButton";
 import { ProductImage } from "@/components/ProductImage";
+import { colorSwatchStyle } from "@/lib/color-swatches";
 import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 import { productImageAlt } from "@/lib/product-images";
+
+function swatchCss(label: string): string {
+  return colorSwatchStyle(label).background;
+}
 
 export type ProductCardBadge = "Popular" | "Best deal" | "Top product" | "Featured";
 
@@ -26,6 +31,21 @@ export type ProductCardProps = {
   subtitle?: string | null;
   badge?: ProductCardBadge | string | null;
   rating?: number | null;
+  /** Real review count — only when provided by catalog. */
+  ratingCount?: number | null;
+  /** Spec rows for list view — real ProductAttribute values only. */
+  specAttributes?: { key: string; value: string; unit: string | null }[];
+  /** Color variants from catalog attributes — accessories/electronics. */
+  colorSwatches?: string[];
+  /** Category-intent badges (fitment, IPX, FDA, etc.) — real attributes only. */
+  intentBadges?: string[];
+  /** Honest availability signals from listings — never invent stock counts or ETAs. */
+  availability?: {
+    hasOffers: boolean;
+    hasPickup?: boolean;
+    hasFreeShipping?: boolean;
+    deliveryLabel?: string | null;
+  } | null;
   /** Lowest Total Known Cost — hidden when null. */
   fromPrice?: number | null;
   /** Prior price for strikethrough — only when real history / seeded demo exists. */
@@ -63,6 +83,8 @@ export type ProductCardProps = {
     currentLowestPrice: number | null;
     alert?: { threshold: string | null; isActive: boolean } | null;
   } | null;
+  /** Horizontal list layout for search results density toggle. */
+  compactList?: boolean;
 };
 
 function badgeToneClass(badge: string) {
@@ -96,6 +118,11 @@ export function ProductCard({
   subtitle,
   badge,
   rating,
+  ratingCount,
+  specAttributes = [],
+  colorSwatches = [],
+  intentBadges = [],
+  availability = null,
   fromPrice,
   previousPrice,
   offerCount,
@@ -113,6 +140,7 @@ export function ProductCard({
   metaNote,
   dealReason,
   priceAlert,
+  compactList = false,
 }: ProductCardProps) {
   const saveRedirect = redirectTo ?? href;
   const showOffers = offerCount != null && offerCount > 0;
@@ -140,7 +168,7 @@ export function ProductCard({
   const breakdownLine = bestListing ? shipFeesLine(bestListing) : null;
 
   return (
-    <article className="product-card group">
+    <article className={`product-card group ${compactList ? "product-card-list" : ""}`}>
       <div className="product-card-media-wrap">
         <Link
           href={href}
@@ -201,10 +229,72 @@ export function ProductCard({
               ★
             </span>
             <span>{rating.toFixed(1)}</span>
+            {ratingCount != null && ratingCount > 0 ? (
+              <span className="font-medium text-muted"> ({ratingCount})</span>
+            ) : null}
             {ratingNote ? (
               <span className="font-medium text-muted"> {ratingNote}</span>
             ) : null}
           </p>
+        ) : null}
+
+        {intentBadges.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {intentBadges.map((label) => (
+              <span key={label} className="product-card-intent-badge">
+                {label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {colorSwatches.length > 0 ? (
+          <ul className="product-card-swatches" aria-label="Available colors">
+            {colorSwatches.slice(0, 5).map((c) => (
+              <li key={c} title={c}>
+                <span
+                  className="product-card-swatch"
+                  style={
+                    // lazy import avoided — inline known swatches via CSS var fallback
+                    { background: swatchCss(c) }
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {availability ? (
+          <ul className="product-card-status" aria-label="Availability">
+            {availability.hasOffers ? (
+              <li className="product-card-status-ok">Offers available</li>
+            ) : (
+              <li className="product-card-status-warn">No live offers</li>
+            )}
+            {availability.hasFreeShipping ? (
+              <li className="product-card-status-ok">Free shipping</li>
+            ) : null}
+            {availability.hasPickup ? (
+              <li className="product-card-status-ok">Pickup available</li>
+            ) : null}
+            {availability.deliveryLabel?.trim() ? (
+              <li className="product-card-status-info">{availability.deliveryLabel.trim()}</li>
+            ) : null}
+          </ul>
+        ) : null}
+
+        {compactList && specAttributes.length > 0 ? (
+          <ul className="product-card-specs">
+            {specAttributes.slice(0, 5).map((a) => (
+              <li key={`${a.key}-${a.value}`}>
+                <span className="product-card-spec-key">{a.key}</span>
+                <span>
+                  {a.value}
+                  {a.unit ? ` ${a.unit}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : null}
 
         {showPrice ? (

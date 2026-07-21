@@ -46,19 +46,21 @@ export function PopularComparisonsSection({
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby="popular-comparisons-heading">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2
-            id="popular-comparisons-heading"
-            className="text-xl font-bold tracking-tight text-navy-900"
-          >
-            {title}
-          </h2>
-          <p className="mt-1 text-sm text-muted">{subtitle}</p>
+    <section aria-labelledby={title ? "popular-comparisons-heading" : undefined}>
+      {title ? (
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2
+              id="popular-comparisons-heading"
+              className="text-xl font-bold tracking-tight text-navy-900"
+            >
+              {title}
+            </h2>
+            {subtitle ? <p className="mt-1 text-sm text-muted">{subtitle}</p> : null}
+          </div>
         </div>
-      </div>
-      <ul className="section-grid mt-4">
+      ) : null}
+      <ul className={`section-grid ${title ? "mt-4" : ""}`}>
         {items.map((item) => (
           <li key={item.productId} className="min-w-0">
             <PopularComparisonCard item={item} signedIn={signedIn} />

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
+import { categoryFacetProfile } from "@/lib/category-facets";
 import { getProductDisplayImage } from "@/lib/product-images";
 import type { SearchIntent } from "@/lib/search-intent";
 
@@ -22,6 +23,14 @@ export type SearchResultsFilters = {
   availableOnly?: boolean;
   /** Only products with a pickup-tagged listing */
   pickupOnly?: boolean;
+  /** Only products with at least one $0 shipping listing (real shipping field). */
+  freeShippingOnly?: boolean;
+  /** Minimum averageRating when present — products without ratings are excluded. */
+  ratingMin?: number;
+  /** Exact ProductAttribute Color/Finish value when present in catalog. */
+  color?: string;
+  /** Category-specific attribute filters: ProductAttribute.key → value */
+  attributeFilters?: Record<string, string>;
   sourceId?: string;
   /** Soft preference: when false, require modelName word overlap with query */
   allowComparable?: boolean;
@@ -49,8 +58,16 @@ export type SearchResultProduct = {
   conditions: string[];
   /** Real seeded average rating — never fabricated at render time. */
   rating: number | null;
+  /** Real review/rating count from catalog — omit when null. */
+  ratingCount: number | null;
+  /** True when any approved listing has shipping === 0. */
+  hasFreeShipping: boolean;
   /** Compact key attributes for the card (≤3) */
   attributes: { key: string; value: string; unit: string | null }[];
+  /** Full attribute list for filtering and list-view specs. */
+  allAttributes: { key: string; value: string; unit: string | null }[];
+  /** Color / finish attribute values when present on the product. */
+  colors: string[];
   sourceIds: string[];
   isSaved: boolean;
   /** Set when a text query is present */
@@ -72,6 +89,20 @@ export type SearchResultsFacetOptions = {
   brands: { name: string; count: number }[];
   sources: { id: string; name: string; count: number }[];
   conditions: { value: string; label: string; count: number }[];
+  /** Aggregated Color/Finish attributes only — empty when catalog has none. */
+  colors: { value: string; count: number }[];
+  /** Category-profile attribute facets with live counts. */
+  dynamicAttributes: {
+    key: string;
+    param: string;
+    label: string;
+    swatch?: boolean;
+    values: { value: string; count: number }[];
+  }[];
+  /** Min/max Total Known Cost among facet-scoped products with offers. */
+  priceBounds: { min: number; max: number } | null;
+  freeShippingCount: number;
+  ratingCounts: { min4: number; min3: number };
 };
 
 export type SearchResultsPayload = {
@@ -199,6 +230,7 @@ type ProductAgg = {
   lowestTotalCost: number;
   freshestAt: Date;
   hasPickup: boolean;
+  hasFreeShipping: boolean;
   conditions: Set<string>;
   sourceIds: Set<string>;
   bestListing: NonNullable<SearchResultProduct["bestListing"]>;
@@ -211,6 +243,7 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
     if (!id) continue;
     const total = l.price + l.shipping + l.fees;
     const pickup = listingHasPickup(l.deliveryLabel);
+    const freeShip = l.shipping <= 0.009;
     const bestListing: ProductAgg["bestListing"] = {
       listingId: l.id,
       sourceName: l.source.name,
@@ -226,6 +259,7 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
         lowestTotalCost: total,
         freshestAt: l.freshnessCapturedAt,
         hasPickup: pickup,
+        hasFreeShipping: freeShip,
         conditions: new Set([l.condition]),
         sourceIds: new Set([l.sourceId]),
         bestListing,
@@ -239,6 +273,7 @@ function buildAggs(listings: ListingRow[]): Map<string, ProductAgg> {
     }
     if (l.freshnessCapturedAt > existing.freshestAt) existing.freshestAt = l.freshnessCapturedAt;
     existing.hasPickup = existing.hasPickup || pickup;
+    existing.hasFreeShipping = existing.hasFreeShipping || freeShip;
     existing.conditions.add(l.condition);
     existing.sourceIds.add(l.sourceId);
   }
@@ -293,7 +328,7 @@ export async function getSearchResults(
     include: {
       brand: true,
       category: true,
-      attributes: { take: 3, orderBy: { key: "asc" } },
+      attributes: { orderBy: { key: "asc" } },
     },
   });
 
@@ -321,9 +356,15 @@ export async function getSearchResults(
   // Card price + bestListing: only listings matching active condition/pickup filters,
   // so Add to Cart always uses the real offer backing the displayed card.
   const allAggs = buildAggs(listings);
-  const offerFilterActive = Boolean(filters.condition || filters.pickupOnly);
+  const offerFilterActive = Boolean(
+    filters.condition || filters.pickupOnly || filters.freeShippingOnly,
+  );
   const displayListings = offerFilterActive
-    ? listings.filter((l) => listingMatchesOfferFilters(l, filters))
+    ? listings.filter((l) => {
+        if (!listingMatchesOfferFilters(l, filters)) return false;
+        if (filters.freeShippingOnly && l.shipping > 0.009) return false;
+        return true;
+      })
     : listings;
   const aggs = buildAggs(displayListings);
   const saved = filters.savedProductIds ?? new Set<string>();
@@ -331,6 +372,15 @@ export async function getSearchResults(
   let rows: SearchResultProduct[] = products.map((p) => {
     const agg = aggs.get(p.id);
     const facetAgg = allAggs.get(p.id);
+    const allAttributes = p.attributes.map((a) => ({
+      key: a.key,
+      value: a.value,
+      unit: a.unit,
+    }));
+    const colors = p.attributes
+      .filter((a) => /^(color|finish|colour)$/i.test(a.key))
+      .map((a) => a.value.trim())
+      .filter(Boolean);
     return {
       id: p.id,
       brandName: p.brand.name,
@@ -347,13 +397,13 @@ export async function getSearchResults(
       offerCount: agg?.offerCount ?? 0,
       freshnessMinutesAgo: agg ? minutesSince(agg.freshestAt) : null,
       hasPickup: facetAgg?.hasPickup ?? false,
+      hasFreeShipping: facetAgg?.hasFreeShipping ?? false,
       conditions: facetAgg ? [...facetAgg.conditions] : [],
       rating: p.averageRating,
-      attributes: p.attributes.map((a) => ({
-        key: a.key,
-        value: a.value,
-        unit: a.unit,
-      })),
+      ratingCount: p.ratingCount,
+      attributes: allAttributes.slice(0, 3),
+      allAttributes,
+      colors,
       sourceIds: facetAgg ? [...facetAgg.sourceIds] : [],
       bestListing: agg?.bestListing ?? null,
       isSaved: saved.has(p.id),
@@ -371,6 +421,15 @@ export async function getSearchResults(
   // Facets from pre-filter universe (current query/category scope), then apply product filters
   const facetBase = products.map((p) => {
     const facetAgg = allAggs.get(p.id);
+    const allAttributes = p.attributes.map((a) => ({
+      key: a.key,
+      value: a.value,
+      unit: a.unit,
+    }));
+    const colors = p.attributes
+      .filter((a) => /^(color|finish|colour)$/i.test(a.key))
+      .map((a) => a.value.trim())
+      .filter(Boolean);
     return {
       id: p.id,
       brandName: p.brand.name,
@@ -383,9 +442,13 @@ export async function getSearchResults(
       offerCount: facetAgg?.offerCount ?? 0,
       freshnessMinutesAgo: null,
       hasPickup: facetAgg?.hasPickup ?? false,
+      hasFreeShipping: facetAgg?.hasFreeShipping ?? false,
       conditions: facetAgg ? [...facetAgg.conditions] : [],
       rating: p.averageRating,
-      attributes: [],
+      ratingCount: p.ratingCount,
+      attributes: allAttributes.slice(0, 3),
+      allAttributes,
+      colors,
       sourceIds: facetAgg ? [...facetAgg.sourceIds] : [],
       bestListing: null,
       isSaved: saved.has(p.id),
@@ -406,6 +469,27 @@ export async function getSearchResults(
   }
   if (filters.priceMax != null) {
     rows = rows.filter((p) => p.lowestTotalCost != null && p.lowestTotalCost <= filters.priceMax!);
+  }
+  if (filters.freeShippingOnly) {
+    rows = rows.filter((p) => p.offerCount > 0 && p.hasFreeShipping);
+  }
+  if (filters.ratingMin != null) {
+    rows = rows.filter((p) => p.rating != null && p.rating >= filters.ratingMin!);
+  }
+  if (filters.color) {
+    const wanted = filters.color.toLowerCase();
+    rows = rows.filter((p) => p.colors.some((c) => c.toLowerCase() === wanted));
+  }
+  if (filters.attributeFilters && Object.keys(filters.attributeFilters).length > 0) {
+    rows = rows.filter((p) =>
+      Object.entries(filters.attributeFilters!).every(([key, wanted]) =>
+        p.allAttributes.some(
+          (a) =>
+            a.key.toLowerCase() === key.toLowerCase() &&
+            a.value.toLowerCase() === wanted.toLowerCase(),
+        ),
+      ),
+    );
   }
   if (filters.condition) {
     // Require at least one listing matching the condition (already reflected in offerCount).
@@ -492,6 +576,12 @@ export async function getSearchResults(
   const brandCount = new Map<string, number>();
   const conditionCount = new Map<string, number>();
   const sourceProductCount = new Map<string, number>();
+  const colorCount = new Map<string, number>();
+  let freeShippingCount = 0;
+  let ratingMin4 = 0;
+  let ratingMin3 = 0;
+  let priceMinBound = Number.POSITIVE_INFINITY;
+  let priceMaxBound = 0;
 
   for (const p of facetRows) {
     const cat = categoryCount.get(p.categorySlug) ?? { name: p.categoryName, count: 0 };
@@ -503,6 +593,16 @@ export async function getSearchResults(
     }
     for (const s of p.sourceIds) {
       sourceProductCount.set(s, (sourceProductCount.get(s) ?? 0) + 1);
+    }
+    for (const color of p.colors) {
+      colorCount.set(color, (colorCount.get(color) ?? 0) + 1);
+    }
+    if (p.hasFreeShipping) freeShippingCount += 1;
+    if (p.rating != null && p.rating >= 4) ratingMin4 += 1;
+    if (p.rating != null && p.rating >= 3) ratingMin3 += 1;
+    if (p.lowestTotalCost != null) {
+      priceMinBound = Math.min(priceMinBound, p.lowestTotalCost);
+      priceMaxBound = Math.max(priceMaxBound, p.lowestTotalCost);
     }
   }
 
@@ -529,6 +629,16 @@ export async function getSearchResults(
         count,
       }))
       .sort((a, b) => b.count - a.count),
+    colors: [...colorCount.entries()]
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count),
+    dynamicAttributes: buildDynamicAttributeFacets(facetRows, filters.categorySlug),
+    priceBounds:
+      Number.isFinite(priceMinBound) && priceMaxBound >= priceMinBound
+        ? { min: Math.floor(priceMinBound), max: Math.ceil(priceMaxBound) }
+        : null,
+    freeShippingCount,
+    ratingCounts: { min4: ratingMin4, min3: ratingMin3 },
   };
 
   return {
@@ -537,6 +647,36 @@ export async function getSearchResults(
     facets,
     applied: filters,
   };
+}
+
+function buildDynamicAttributeFacets(
+  facetRows: SearchResultProduct[],
+  categorySlug?: string,
+): SearchResultsFacetOptions["dynamicAttributes"] {
+  const profile = categoryFacetProfile(categorySlug);
+  if (!profile) return [];
+
+  return profile.facets
+    .map((facet) => {
+      const counts = new Map<string, number>();
+      for (const p of facetRows) {
+        for (const a of p.allAttributes) {
+          if (a.key.toLowerCase() !== facet.key.toLowerCase()) continue;
+          counts.set(a.value, (counts.get(a.value) ?? 0) + 1);
+        }
+      }
+      const values = [...counts.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count);
+      return {
+        key: facet.key,
+        param: facet.param,
+        label: facet.label,
+        swatch: facet.swatch,
+        values,
+      };
+    })
+    .filter((f) => f.values.length > 0);
 }
 
 /**
@@ -597,10 +737,10 @@ function mapIntentSort(priority: SearchIntent["sortPriority"]): ResultsSort {
 }
 
 export const RESULTS_SORT_OPTIONS: { value: ResultsSort; label: string }[] = [
-  { value: "best_overall", label: "Best overall" },
-  { value: "lowest_cost", label: "Lowest total cost" },
-  { value: "fastest", label: "Fastest available" },
+  { value: "best_overall", label: "Best overall match" },
+  { value: "lowest_cost", label: "Total cost: Low to high" },
+  { value: "best_rated", label: "Customer rating" },
   { value: "best_value", label: "Best value" },
-  { value: "best_rated", label: "Best rated" },
+  { value: "fastest", label: "Fastest delivery" },
   { value: "recently_updated", label: "Recently updated" },
 ];

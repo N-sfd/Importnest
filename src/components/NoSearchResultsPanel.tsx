@@ -5,8 +5,10 @@ import {
   StatusPanel,
 } from "@/components/StatusPanel";
 import { CategoryVisualCard } from "@/components/CategoryVisualCard";
+import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
 import type { ResultsPageParams } from "@/components/SearchResultsLayout";
 import { categoryDisplayTitle } from "@/lib/category-visuals";
+import type { PopularComparison } from "@/lib/popular-comparisons";
 import { browseCategoryHref } from "@/lib/search-intent";
 
 /** Filter keys a shopper can clear one-at-a-time from the no-results panel. */
@@ -19,8 +21,25 @@ const REMOVABLE: { key: keyof ResultsPageParams; label: string }[] = [
   { key: "priceMin", label: "min price" },
   { key: "source", label: "retailer filter" },
   { key: "pickup", label: "pickup filter" },
+  { key: "freeShipping", label: "free shipping filter" },
+  { key: "ratingMin", label: "rating filter" },
+  { key: "color", label: "color filter" },
   { key: "saved", label: "saved-only filter" },
   { key: "available", label: "availability filter" },
+  { key: "attr_fitment", label: "fitment filter" },
+  { key: "attr_install", label: "installation filter" },
+  { key: "attr_ship_weight", label: "shipping weight filter" },
+  { key: "attr_material", label: "material filter" },
+  { key: "attr_finish", label: "finish filter" },
+  { key: "attr_power", label: "power source filter" },
+  { key: "attr_hair", label: "hair type filter" },
+  { key: "attr_skin", label: "skin type filter" },
+  { key: "attr_cert", label: "certification filter" },
+  { key: "attr_water", label: "weather / IPX filter" },
+  { key: "attr_weight", label: "weight filter" },
+  { key: "attr_activity", label: "activity filter" },
+  { key: "attr_color", label: "color filter" },
+  { key: "vehicleYear", label: "vehicle filter" },
 ];
 
 const RELATED_CATEGORY_CHIPS = [
@@ -42,6 +61,11 @@ function hrefWithout(params: ResultsPageParams, key: string) {
   if (key === "available") next.delete("available");
   if (key === "pickup") next.delete("pickup");
   if (key === "saved") next.delete("saved");
+  if (key === "vehicleYear") {
+    next.delete("vehicleYear");
+    next.delete("vehicleMake");
+    next.delete("vehicleModel");
+  }
   const qs = next.toString();
   return qs ? `/search/results?${qs}` : "/search/results";
 }
@@ -55,13 +79,27 @@ function withComparable(params: ResultsPageParams) {
   return `/search/results?${next.toString()}`;
 }
 
+function resetFiltersHref(params: ResultsPageParams) {
+  const next = new URLSearchParams();
+  if (params.q) next.set("q", params.q);
+  if (params.category) next.set("category", params.category);
+  const qs = next.toString();
+  return qs ? `/search/results?${qs}` : "/search/results";
+}
+
 export function NoSearchResultsPanel({
   params,
   hideCategoryVisual = false,
+  recommendations = [],
+  signedIn = false,
+  priceBounds = null,
 }: {
   params: ResultsPageParams;
-  /** When true, skip the compact category card (already shown in the results toolbar). */
   hideCategoryVisual?: boolean;
+  recommendations?: PopularComparison[];
+  signedIn?: boolean;
+  redirectTo?: string;
+  priceBounds?: { min: number; max: number } | null;
 }) {
   const removable = REMOVABLE.find(({ key }) => {
     const v = params[key];
@@ -90,6 +128,37 @@ export function NoSearchResultsPanel({
     return c.slug !== current;
   }).slice(0, 6);
 
+  const hasFacetFilters = REMOVABLE.some(({ key }) => {
+    const v = params[key];
+    if (!v) return false;
+    if (key === "pickup" || key === "saved" || key === "freeShipping") return v === "1";
+    if (key === "available") return v === "0";
+    if (key === "brands") return v !== "any";
+    return true;
+  });
+
+  const recommendTitle = categoryTitle
+    ? `Popular in ${categoryTitle}`
+    : "You might also like";
+
+  const strictMax = Number(params.priceMax || params.budgetMax);
+  const relaxMax =
+    priceBounds &&
+    Number.isFinite(strictMax) &&
+    strictMax > 0 &&
+    priceBounds.max > strictMax
+      ? Math.ceil(priceBounds.max)
+      : null;
+
+  function hrefWithRelaxedMax(max: number) {
+    const next = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (!v || k === "priceMax" || k === "budgetMax") continue;
+      next.set(k, v);
+    }
+    next.set("priceMax", String(max));
+    return `/search/results?${next.toString()}`;
+  }
   return (
     <div className="space-y-4">
       {params.category && !hideCategoryVisual ? (
@@ -99,31 +168,48 @@ export function NoSearchResultsPanel({
       {categoryOnly ? (
         <div className="rounded-2xl border border-border bg-panel p-5 shadow-[var(--shadow-panel)]">
           <h2 className="text-lg font-bold tracking-tight text-navy-900">
-            Browse {categoryTitle}
+            No exact matches for your filter choices
           </h2>
           <p className="mt-1.5 text-sm text-muted">
-            No live listings matched this category with your current filters. Explore{" "}
-            {categoryTitle} product types below, or try a related department.
+            No live listings matched {categoryTitle} with your current filters. Reset filters or
+            explore related departments below.
           </p>
-          {removable ? (
-            <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-2">
+            {hasFacetFilters ? (
+              <PrimaryAction href={resetFiltersHref(params)}>Reset filters</PrimaryAction>
+            ) : null}
+            {relaxMax != null ? (
+              <SecondaryAction href={hrefWithRelaxedMax(relaxMax)}>
+                No results under ${strictMax}. Show up to ${relaxMax}
+              </SecondaryAction>
+            ) : null}
+            {removable ? (
               <SecondaryAction href={hrefWithout(params, removable.key)}>
                 Remove {removable.label}
               </SecondaryAction>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       ) : (
         <StatusPanel
-          title="No matching product found"
+          title="No exact matches for your filter choices"
           description={
             params.q
-              ? `Nothing matched “${params.q}” with your current filters and preferences.`
-              : "Nothing matched your current filters. Try broadening your criteria."
+              ? `Nothing matched “${params.q}” with your current filters. Try resetting filters or broadening your search.`
+              : "Nothing matched your current filters. Try resetting filters or browsing a department."
           }
           actions={
             <>
-              <PrimaryAction href={editHref}>Edit search</PrimaryAction>
+              {hasFacetFilters ? (
+                <PrimaryAction href={resetFiltersHref(params)}>Reset filters</PrimaryAction>
+              ) : (
+                <PrimaryAction href={editHref}>Edit search</PrimaryAction>
+              )}
+              {relaxMax != null ? (
+                <SecondaryAction href={hrefWithRelaxedMax(relaxMax)}>
+                  No results under ${strictMax}. Show up to ${relaxMax}
+                </SecondaryAction>
+              ) : null}
               {removable ? (
                 <SecondaryAction href={hrefWithout(params, removable.key)}>
                   Remove {removable.label}
@@ -160,6 +246,15 @@ export function NoSearchResultsPanel({
             ))}
           </div>
         </section>
+      ) : null}
+
+      {recommendations.length > 0 ? (
+        <PopularComparisonsSection
+          items={recommendations}
+          signedIn={signedIn}
+          title={recommendTitle}
+          subtitle="Live totals from approved sources — never invented rankings"
+        />
       ) : null}
     </div>
   );

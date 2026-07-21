@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { SearchResultProductCard } from "@/components/SearchResultsLayout";
+import { countActiveResultFilters, SearchResultProductCard } from "@/components/SearchResultsLayout";
 import type { SearchResultProduct } from "@/lib/search-results";
 
 function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResultProduct {
@@ -16,9 +16,13 @@ function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResult
     offerCount: 3,
     freshnessMinutesAgo: 10,
     hasPickup: false,
+    hasFreeShipping: false,
     conditions: ["new"],
     rating: null,
+    ratingCount: null,
     attributes: [],
+    allAttributes: [],
+    colors: [],
     sourceIds: ["src-1"],
     isSaved: false,
     matchKind: "exact",
@@ -133,5 +137,22 @@ describe("SearchResultProductCard — Add to Cart visibility", () => {
     expect(html).not.toContain("Add to cart");
     expect(html).toContain("Save");
     expect(html).toContain("Compare");
+  });
+});
+
+describe("countActiveResultFilters — category=all is not an active filter", () => {
+  it("does not count category=all, category=, or a missing category as an active filter", () => {
+    expect(countActiveResultFilters({ category: "all" })).toBe(0);
+    expect(countActiveResultFilters({ category: "All" })).toBe(0);
+    expect(countActiveResultFilters({ category: "" })).toBe(0);
+    expect(countActiveResultFilters({})).toBe(0);
+  });
+
+  it("counts a real category as an active filter", () => {
+    expect(countActiveResultFilters({ category: "electronics" })).toBe(1);
+  });
+
+  it("still counts other active filters alongside an All browse", () => {
+    expect(countActiveResultFilters({ category: "all", priceMax: "100" })).toBe(1);
   });
 });

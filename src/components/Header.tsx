@@ -75,7 +75,13 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
 
           <HeaderLocation />
 
-          {hideSearch ? <div className="header-search" aria-hidden /> : <HeaderSearch />}
+          {hideSearch ? (
+            <div className="header-search" aria-hidden />
+          ) : (
+            <Suspense fallback={<div className="header-search" aria-hidden />}>
+              <HeaderSearch />
+            </Suspense>
+          )}
 
           <nav className="header-actions" aria-label="Account and shopping">
             <NavLink
