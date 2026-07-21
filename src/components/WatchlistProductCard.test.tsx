@@ -10,6 +10,7 @@ function makeItem(overrides: Partial<WatchlistItem> = {}): WatchlistItem {
     canonicalProductId: "cp-apex-ah4200",
     brandName: "Apex Home",
     productName: "Apex Quiet Dishwasher AH-4200",
+    categorySlug: "appliances",
     currentPrice: 849,
     targetPrice: 800,
     threshold: "800",

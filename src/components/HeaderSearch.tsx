@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { intentPillsFromQuery } from "@/lib/search-pills";
 
 function SparkleIcon({ className = "" }: { className?: string }) {
@@ -20,11 +21,18 @@ function SparkleIcon({ className = "" }: { className?: string }) {
 }
 
 /**
- * Header search with conversational AI affordance and live intent pills.
+ * Header search — preserves active `q` from the URL so shoppers can edit in place.
  */
 export function HeaderSearch() {
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const urlQ = searchParams.get("q") ?? "";
+  const [query, setQuery] = useState(urlQ);
   const pills = useMemo(() => intentPillsFromQuery(query), [query]);
+
+  useEffect(() => {
+    setQuery(urlQ);
+  }, [urlQ, pathname]);
 
   return (
     <div className="header-search">

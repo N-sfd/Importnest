@@ -81,6 +81,7 @@ export type WatchlistItem = {
   canonicalProductId: string;
   brandName: string;
   productName: string;
+  categorySlug: string;
   currentPrice: number | null;
   /** Parsed numeric target, when an alert exists */
   targetPrice: number | null;
@@ -127,12 +128,12 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
   const [savedProducts, alerts] = await Promise.all([
     prisma.savedProduct.findMany({
       where: { userId },
-      include: { canonicalProduct: { include: { brand: true } } },
+      include: { canonicalProduct: { include: { brand: true, category: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.alert.findMany({
       where: { userId },
-      include: { canonicalProduct: { include: { brand: true } } },
+      include: { canonicalProduct: { include: { brand: true, category: true } } },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -229,6 +230,7 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
       canonicalProductId: productId,
       brandName: canonicalProduct.brand.name,
       productName: canonicalProduct.modelName,
+      categorySlug: canonicalProduct.category.slug,
       currentPrice,
       targetPrice: parseThresholdPrice(alert?.threshold ?? null),
       threshold: alert?.threshold ?? null,

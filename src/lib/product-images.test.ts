@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getCategoryDemoProducts } from "@/data/category-demo-products";
 import {
   BRAND_FALLBACK_IMAGE,
+  getFallbackByProductId,
   getProductDisplayImage,
   imageForSubtype,
   productImageAlt,
@@ -65,10 +66,16 @@ describe("getProductDisplayImage", () => {
     ).toBe("/images/products/electronics/headphones.jpg");
   });
 
-  it("falls back to the brand mark when no product or subtype image exists", () => {
-    expect(getProductDisplayImage({ productId: "unknown-product", categorySlug: "appliances" })).toBe(
-      BRAND_FALLBACK_IMAGE,
-    );
+  it("rotates to a real category photo — not the brand mark — when the category is known but the subtype isn't", () => {
+    const image = getProductDisplayImage({ productId: "unknown-product", categorySlug: "appliances" });
+    expect(image).not.toBe(BRAND_FALLBACK_IMAGE);
+    expect(image).toMatch(/^\/images\/products\/appliances\//);
+  });
+
+  it("falls back to the brand mark only when the category itself is unrecognized", () => {
+    expect(
+      getProductDisplayImage({ productId: "unknown-product", categorySlug: "not-a-real-category" }),
+    ).toBe(BRAND_FALLBACK_IMAGE);
   });
 
   it("aliases beauty-devices to beauty subtype photos", () => {
@@ -162,6 +169,40 @@ describe("subtypeFallbackImage", () => {
     expect(subtypeFallbackImage("beauty", "Sleekline Hair Straightener")).toContain(
       "hair-straightener",
     );
+  });
+
+  it("resolves distinct images per subtype for Featured/Best deals card data", () => {
+    expect(subtypeFallbackImage("kitchen", "ChefLine Electric Kettle")).toContain("kettle");
+    expect(subtypeFallbackImage("electronics", "Nimbus Pro Tablet")).toContain("tablet");
+    expect(subtypeFallbackImage("electronics", "Nimbus Solace Smartwatch")).toContain("smartwatch");
+    expect(subtypeFallbackImage("automotive", "RoadPro Dash Cam 1080p")).toContain("dash-cam");
+    expect(subtypeFallbackImage("footwear", "Stride Summer Sandal")).toContain("sandal");
+    expect(subtypeFallbackImage("accessories", "CarryAll Leather Bifold Wallet")).toContain(
+      "wallet",
+    );
+    expect(subtypeFallbackImage("beauty-devices", "Verabelle LED Vanity Mirror")).toContain(
+      "led-mirror",
+    );
+  });
+});
+
+describe("getFallbackByProductId", () => {
+  it("is deterministic — the same product id always resolves to the same image", () => {
+    const first = getFallbackByProductId("kitchen", "cp-unknown-kitchen-item");
+    const second = getFallbackByProductId("kitchen", "cp-unknown-kitchen-item");
+    expect(first).toBe(second);
+    expect(first).toMatch(/^\/images\/products\/kitchen\//);
+  });
+
+  it("spreads different unknown product ids across the category's photo pool", () => {
+    const ids = ["cp-unknown-a", "cp-unknown-b", "cp-unknown-c", "cp-unknown-d", "cp-unknown-e"];
+    const images = new Set(ids.map((id) => getFallbackByProductId("kitchen", id)));
+    expect(images.size).toBeGreaterThan(1);
+  });
+
+  it("returns null for a category with no known fallback pool", () => {
+    expect(getFallbackByProductId("unknown-category", "cp-1")).toBeNull();
+    expect(getFallbackByProductId(undefined, "cp-1")).toBeNull();
   });
 });
 

@@ -222,7 +222,7 @@ export const HOMEPAGE_DEMO_DEALS: HomepageDemoDeal[] = [
 ];
 
 export function homepageDemoBrowseHref(categorySlug: string, query?: string) {
-  const params = new URLSearchParams({ category: normalizeCategorySlug(categorySlug) });
+  const params = new URLSearchParams({ category: normalizeCategorySlug(categorySlug) ?? categorySlug });
   if (query?.trim()) params.set("q", query.trim());
   return `/search?${params.toString()}`;
 }

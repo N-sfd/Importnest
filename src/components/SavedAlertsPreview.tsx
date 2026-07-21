@@ -19,7 +19,7 @@ function alertStatusClass(item: WatchlistItem): string {
 }
 
 function WatchlistTile({ item }: { item: WatchlistItem }) {
-  const imageSrc = productImageFor(item.canonicalProductId, undefined, item.productName);
+  const imageSrc = productImageFor(item.canonicalProductId, item.categorySlug, item.productName);
   const hasAlert = item.alertId != null;
 
   return (

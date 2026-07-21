@@ -90,9 +90,17 @@ const CANONICAL_URL_SLUG: Record<string, string> = {
  * Category.slug. Accepts any casing/separator/alias variant — "Beauty",
  * "Beauty Devices", "beauty_devices", and "beauty-devices" all resolve here.
  * Use this wherever a category slug is sent to the database or built into a link.
+ *
+ * "all" (any case), empty string, null, and undefined all mean "no category
+ * filter" — they resolve to `undefined` rather than a literal (and
+ * non-existent) "all" category slug that would silently return zero products.
  */
-export function normalizeCategorySlug(category: string): string {
-  const key = normalizeCategoryKey(category);
+export function normalizeCategorySlug(
+  category: string | null | undefined,
+): string | undefined {
+  const trimmed = category?.trim();
+  if (!trimmed || trimmed.toLowerCase() === "all") return undefined;
+  const key = normalizeCategoryKey(trimmed);
   return CANONICAL_URL_SLUG[key] ?? key;
 }
 

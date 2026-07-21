@@ -341,6 +341,31 @@ export function imageForSubtype(categorySlug: string, subtype: string): string |
 }
 
 /**
+ * Deterministic per-product fallback drawn from a category's known photo
+ * pool — used only once subtype/keyword matching has already failed, so
+ * unrelated products in the same category don't all collapse onto the same
+ * generic placeholder. Same productId always resolves to the same image
+ * (stable across renders); different unknown productIds spread across the pool.
+ */
+export function getFallbackByProductId(
+  categorySlug: string | undefined | null,
+  productId: string | undefined | null,
+): string | null {
+  if (!categorySlug) return null;
+  const key = normalizeCategoryKey(categorySlug);
+  const map = productImageFallbacks[key];
+  if (!map) return null;
+  const pool = [...new Set(Object.values(map))];
+  if (pool.length === 0 || !productId) return null;
+
+  let hash = 0;
+  for (let i = 0; i < productId.length; i++) {
+    hash = (hash * 31 + productId.charCodeAt(i)) >>> 0;
+  }
+  return pool[hash % pool.length]!;
+}
+
+/**
  * Resolve a stable display image for a product.
  * Accepts a product-like object (preferred) or a flat options bag.
  */
@@ -360,6 +385,11 @@ export function getProductDisplayImage(product: ProductImageSource): string {
   const title = titleFrom(product);
   const subtype = subtypeFallbackImage(categorySlug, title, product.subtitle, tagsFrom(product));
   if (subtype) return subtype;
+
+  // No subtype/keyword match — rotate across the category's known photos by
+  // product id instead of collapsing every unmatched product onto one icon.
+  const rotated = getFallbackByProductId(categorySlug, productId);
+  if (rotated) return rotated;
 
   return BRAND_FALLBACK_IMAGE;
 }
