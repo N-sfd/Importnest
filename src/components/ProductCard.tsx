@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { AddToCartButton } from "@/components/AddToCartButton";
-import { AddToCompareButton } from "@/components/AddToCompareButton";
+import { ProductCardActions } from "@/components/ProductCardActions";
+import { ProductCardSaveButton } from "@/components/ProductCardSaveButton";
 import { ProductImage } from "@/components/ProductImage";
-import { formatConditionLabel } from "@/lib/compare-view";
-import { formatFreshness, isFreshnessStale } from "@/lib/freshness";
+import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 import { productImageAlt } from "@/lib/product-images";
-import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
 export type ProductCardBadge = "Popular" | "Best deal" | "Top product" | "Featured";
 
@@ -54,6 +52,17 @@ export type ProductCardProps = {
   ratingNote?: string | null;
   /** Optional note after meta line (e.g. “browsing example”). */
   metaNote?: string | null;
+  /** Idealo-style deal rationale — only when backed by real history / multi-offer data. */
+  dealReason?: string | null;
+  /**
+   * When provided with signedIn, shows a compact Set price alert control.
+   * suggestedAlert is a prefilled target from real current TKC.
+   */
+  priceAlert?: {
+    suggestedAlert: string;
+    currentLowestPrice: number | null;
+    alert?: { threshold: string | null; isActive: boolean } | null;
+  } | null;
 };
 
 function badgeToneClass(badge: string) {
@@ -63,11 +72,19 @@ function badgeToneClass(badge: string) {
       ? "border border-border bg-white/95 text-navy-800"
       : "badge-savings";
   }
+  if (key.includes("top")) return "badge-top";
+  if (key.includes("popular")) return "badge-popular";
   return "badge-accent";
 }
 
+function shipFeesLine(listing: ProductCardListing): string | null {
+  const shipFees = listing.shipping + listing.fees;
+  if (shipFees <= 0.009) return null;
+  return `$${listing.price.toFixed(2)} + $${shipFees.toFixed(2)} ship/fees`;
+}
+
 /**
- * Professional comparison-site product card.
+ * Visual-first comparison-site product card.
  * Never invents price, offer, source, or rating values — omit when unavailable.
  */
 export function ProductCard({
@@ -94,44 +111,41 @@ export function ProductCard({
   primaryCtaLabel = "View offers",
   ratingNote,
   metaNote,
+  dealReason,
+  priceAlert,
 }: ProductCardProps) {
   const saveRedirect = redirectTo ?? href;
   const showOffers = offerCount != null && offerCount > 0;
   const showSources = sourceCount != null && sourceCount > 0;
   const showPrice = fromPrice != null;
   const showRating = rating != null;
-  /** Caller omitted the prop → hide; null → show “Freshness unknown”. */
   const hasFreshnessField = freshnessMinutesAgo !== undefined;
-  const stale = hasFreshnessField && isFreshnessStale(freshnessMinutesAgo);
+  const showFreshnessWarning = hasFreshnessField && needsFreshnessWarning(freshnessMinutesAgo);
   const subtitleText = subtitle?.trim() || null;
   const imageAlt = productImageAlt({
     title: `${brandName} ${productName}`,
     productName,
   });
-
-  const metaParts: string[] = [];
-  if (showOffers) {
-    metaParts.push(offerCount === 1 ? "1 offer" : `${offerCount} offers`);
-  }
-  if (showSources) {
-    metaParts.push(sourceCount === 1 ? "1 source" : `${sourceCount} sources`);
-  }
-  if (hasFreshnessField) {
-    metaParts.push(formatFreshness(freshnessMinutesAgo));
-  }
-  if (metaNote?.trim()) {
-    metaParts.push(metaNote.trim());
-  }
-
   const commerce = showCommerceActions;
+  const offerLabel = showOffers
+    ? offerCount === 1
+      ? "1 offer"
+      : `${offerCount} offers`
+    : null;
+  const sourceLabel = showSources
+    ? sourceCount === 1
+      ? "1 source"
+      : `${sourceCount} sources`
+    : null;
+  const breakdownLine = bestListing ? shipFeesLine(bestListing) : null;
 
   return (
     <article className="product-card group">
-      <Link
-        href={href}
-        className="relative mx-3 mt-3 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <div className="relative">
+      <div className="product-card-media-wrap">
+        <Link
+          href={href}
+          className="product-card-media focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        >
           <ProductImage
             src={imageSrc}
             alt={imageAlt}
@@ -139,52 +153,54 @@ export function ProductCard({
             title={productName}
             subtitle={subtitleText}
             size="card"
-            className="transition duration-300 group-hover:scale-[1.03]"
+            className="transition duration-300 group-hover:scale-[1.04]"
             sizes="(max-width:640px) 50vw, (max-width:1280px) 25vw, 20vw"
           />
           {badge ? (
             <span
-              className={`absolute left-2 top-2 z-10 rounded-full px-2.5 py-0.5 text-[10px] font-bold leading-tight ${badgeToneClass(badge)}`}
+              className={`product-card-badge absolute left-3 top-3 z-10 rounded-full px-2.5 py-1 text-[11px] font-bold leading-tight shadow-sm ${badgeToneClass(badge)}`}
             >
               {badge}
             </span>
           ) : null}
-        </div>
-      </Link>
+        </Link>
+        {commerce ? (
+          <ProductCardSaveButton
+            productId={productId}
+            isSaved={isSaved}
+            signedIn={signedIn}
+            redirectTo={saveRedirect}
+          />
+        ) : null}
+      </div>
 
       <div className="product-card-body">
+        <div className="min-w-0 space-y-1">
+          <p className="product-card-brand">{brandName}</p>
+          <Link href={href} className="product-card-title line-clamp-2 hover:text-link">
+            {productName}
+          </Link>
+          {subtitleText ? (
+            <p className="line-clamp-1 text-xs leading-relaxed text-muted">{subtitleText}</p>
+          ) : null}
+        </div>
+
         {extraBadges.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {extraBadges.slice(0, 3).map((label) => (
-              <span
-                key={label}
-                className="inline-flex rounded-full border border-border bg-white px-2 py-0.5 text-[10px] font-semibold text-navy-800"
-              >
+          <div className="flex flex-wrap gap-1">
+            {extraBadges.slice(0, 2).map((label) => (
+              <span key={label} className="product-card-chip">
                 {label}
               </span>
             ))}
           </div>
         ) : null}
 
-        <div className="min-w-0 space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-            {brandName}
-          </p>
-          <Link
-            href={href}
-            className="line-clamp-2 text-sm font-bold leading-snug text-navy-900 hover:text-link"
-          >
-            {productName}
-          </Link>
-          {subtitleText ? (
-            <p className="line-clamp-2 text-xs leading-relaxed text-muted">{subtitleText}</p>
-          ) : null}
-        </div>
-
         {showRating ? (
-          <p className="text-xs font-semibold text-navy-900">
-            <span aria-hidden="true">★ </span>
-            {rating.toFixed(1)}
+          <p className="product-card-rating">
+            <span className="product-card-rating-stars" aria-hidden="true">
+              ★
+            </span>
+            <span>{rating.toFixed(1)}</span>
             {ratingNote ? (
               <span className="font-medium text-muted"> {ratingNote}</span>
             ) : null}
@@ -192,94 +208,92 @@ export function ProductCard({
         ) : null}
 
         {showPrice ? (
-          <div className="flex flex-wrap items-baseline gap-2">
-            <p className="text-lg price-text">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
-                {commerce ? "From · TKC " : "From "}
+          <div className="product-card-price-block">
+            <div className="product-card-price-row">
+              <p className="product-card-price">
+                <span className="product-card-price-label">From · Total Known Cost</span>
+                <span className="product-card-price-value">${fromPrice.toFixed(2)}</span>
+              </p>
+              {previousPrice != null ? (
+                <p className="product-card-price-was">${previousPrice.toFixed(2)}</p>
+              ) : null}
+            </div>
+            <p className="product-card-tkc-badge" title="Item + shipping + mandatory fees from approved sources">
+              Includes ship + fees
+              <span className="product-card-tkc-info" aria-hidden="true">
+                ⓘ
               </span>
-              ${fromPrice.toFixed(2)}
             </p>
-            {previousPrice != null ? (
-              <p className="text-xs tabular-nums text-muted line-through">
-                ${previousPrice.toFixed(2)}
+            {breakdownLine ? (
+              <p className="product-card-tkc-breakdown">{breakdownLine}</p>
+            ) : null}
+            {previousPrice != null && fromPrice != null && previousPrice > fromPrice + 0.009 ? (
+              <p className="product-card-tkc-callout">
+                Lower Total Known Cost than recent tracked price (${previousPrice.toFixed(2)}).
               </p>
             ) : null}
           </div>
         ) : null}
 
-        {metaParts.length > 0 ? (
-          <p className="text-xs leading-relaxed text-muted">{metaParts.join(" · ")}</p>
+        {(offerLabel ||
+          sourceLabel ||
+          hasFreshnessField ||
+          metaNote?.trim() ||
+          dealReason?.trim() ||
+          offerCount === 0) ? (
+          <div className="product-card-meta">
+            {offerLabel ? <p className="product-card-meta-line">{offerLabel}</p> : null}
+            {sourceLabel ? <p className="product-card-meta-line">{sourceLabel}</p> : null}
+            {hasFreshnessField ? (
+              <p className="product-card-meta-line">
+                <span className="product-card-meta-label">Last checked</span>
+                {formatFreshness(freshnessMinutesAgo)}
+              </p>
+            ) : null}
+            {metaNote?.trim() ? (
+              <p className="product-card-meta-line">{metaNote.trim()}</p>
+            ) : null}
+            {dealReason?.trim() ? (
+              <div className="product-card-deal-reason">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-navy-800">
+                  Why this deal?
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-muted">{dealReason.trim()}</p>
+              </div>
+            ) : null}
+            {offerCount === 0 ? (
+              <p className="text-xs font-medium text-navy-800">No offers</p>
+            ) : null}
+            {showFreshnessWarning ? (
+              <p className="text-xs font-medium text-amber-800">{freshnessWarningLabel()}</p>
+            ) : null}
+          </div>
         ) : null}
-        {stale ? (
-          <p className="text-xs font-medium text-amber-800">Data may be outdated</p>
-        ) : null}
-        {offerCount === 0 ? (
-          <p className="text-xs font-medium text-navy-800">No offers</p>
-        ) : null}
 
-        <div className="product-card-actions">
-          {commerce ? (
-            <>
-              {signedIn ? (
-                <form
-                  action={
-                    isSaved
-                      ? unsaveProductAction.bind(null, productId, saveRedirect)
-                      : saveProductAction.bind(null, productId, saveRedirect)
-                  }
-                >
-                  <button
-                    type="submit"
-                    className={`flex min-h-9 w-full items-center justify-center rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                      isSaved
-                        ? "border-border bg-surface text-navy-800"
-                        : "border-border bg-white text-navy-900 hover:border-navy-800"
-                    }`}
-                  >
-                    {isSaved ? "Saved ✓" : "Save"}
-                  </button>
-                </form>
-              ) : (
-                <Link
-                  href={`/login?next=${encodeURIComponent(saveRedirect)}`}
-                  className="flex min-h-9 w-full items-center justify-center rounded-full border border-border bg-white px-3 py-2 text-sm font-semibold text-navy-900 hover:border-navy-800"
-                >
-                  Save
-                </Link>
-              )}
-
-              <AddToCompareButton productId={productId} productName={productName} labeled />
-
-              {bestListing ? (
-                <div className="product-card-action-wide">
-                  <AddToCartButton
-                    listingId={bestListing.listingId}
-                    productId={productId}
-                    title={productName}
-                    brand={brandName}
-                    imageUrl={imageSrc}
-                    retailerName={bestListing.sourceName}
-                    condition={formatConditionLabel(bestListing.condition)}
-                    itemPrice={bestListing.price}
-                    shipping={bestListing.shipping}
-                    fees={bestListing.fees}
-                    totalKnownCost={
-                      bestListing.price + bestListing.shipping + bestListing.fees
-                    }
-                    label="Add to cart"
-                  />
-                </div>
-              ) : null}
-            </>
-          ) : null}
-
-          <Link
+        {commerce ? (
+          <ProductCardActions
+            productId={productId}
+            productName={productName}
+            brandName={brandName}
+            imageSrc={imageSrc}
             href={href}
-            className="product-card-action-wide btn-cta flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm"
-          >
-            {primaryCtaLabel}
-          </Link>
-        </div>
+            bestListing={bestListing}
+            primaryCtaLabel={primaryCtaLabel}
+            signedIn={signedIn}
+            redirectTo={saveRedirect}
+            freshnessMinutesAgo={freshnessMinutesAgo}
+            priceAlert={priceAlert}
+          />
+        ) : (
+          <div className="product-card-actions">
+            <Link
+              href={href}
+              className="product-card-action-wide btn-cta flex min-h-10 items-center justify-center px-3 py-2.5 text-center text-sm font-semibold"
+            >
+              {primaryCtaLabel}
+            </Link>
+          </div>
+        )}
       </div>
     </article>
   );

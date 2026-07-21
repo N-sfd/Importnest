@@ -1,6 +1,6 @@
 import { ProductImage } from "@/components/ProductImage";
 import type { ReactNode } from "react";
-import { formatFreshness, isFreshnessStale } from "@/lib/freshness";
+import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 
 function MatchBadge({ label }: { label: string }) {
   const lower = label.toLowerCase();
@@ -50,7 +50,7 @@ export function ProductSummary({
   actions: ReactNode;
   categorySlug?: string | null;
 }) {
-  const stale = isFreshnessStale(lastCheckedMinutesAgo);
+  const showFreshnessWarning = needsFreshnessWarning(lastCheckedMinutesAgo);
   const modelText = modelNumber?.trim() || null;
 
   return (
@@ -101,8 +101,8 @@ export function ProductSummary({
             <span>{formatFreshness(lastCheckedMinutesAgo)}</span>
           </p>
 
-          {stale ? (
-            <p className="mt-1 text-xs font-medium text-amber-800">Data may be outdated</p>
+          {showFreshnessWarning ? (
+            <p className="mt-1 text-xs font-medium text-amber-800">{freshnessWarningLabel()}</p>
           ) : null}
 
           {lowestTotalKnownCost != null ? (

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { BackendLinks } from "@/components/BackendLinks";
 import { Freshness } from "@/components/Freshness";
 import { isPublicApprovedSource, retailerTrustFor } from "@/lib/approved-sources";
 import type { CompareSourceSummary } from "@/lib/compare-view";
@@ -48,8 +47,6 @@ export function BackendSourcesPanel({ sources }: { sources: CompareSourceSummary
           );
         })}
       </ul>
-
-      <BackendLinks className="mt-4 border-t border-border pt-4" compact />
     </div>
   );
 }

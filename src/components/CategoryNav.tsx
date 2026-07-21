@@ -32,13 +32,17 @@ function DepartmentPanel({
               onMouseEnter={() => onSelect(d.id)}
               onFocus={() => onSelect(d.id)}
               onClick={() => onSelect(d.id)}
-              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold transition ${
+              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition ${
                 d.id === active.id
                   ? "bg-navy-900 text-white"
                   : "text-foreground hover:bg-navy-100"
               }`}
             >
-              {d.name}
+              <CategoryNavIcon
+                deptId={d.id}
+                className={`category-nav-icon ${d.id === active.id ? "opacity-95" : "text-navy-800"}`}
+              />
+              <span className="min-w-0 flex-1">{d.name}</span>
               <span aria-hidden className="text-xs opacity-60">
                 ›
               </span>
@@ -114,8 +118,11 @@ function navLinkIsActive(
 export function CategoryNav() {
   const [open, setOpen] = useState(false);
   const [activeDept, setActiveDept] = useState(navDepartments[0]?.id ?? "home");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
@@ -141,6 +148,26 @@ export function CategoryNav() {
     };
   }, [open]);
 
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    function updateFades() {
+      if (!el) return;
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      setCanScrollLeft(scrollLeft > 4);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    }
+
+    updateFades();
+    el.addEventListener("scroll", updateFades, { passive: true });
+    window.addEventListener("resize", updateFades);
+    return () => {
+      el.removeEventListener("scroll", updateFades);
+      window.removeEventListener("resize", updateFades);
+    };
+  }, []);
+
   return (
     <div ref={rootRef} className="category-nav relative border-b border-black/10 text-white">
       <div className="category-nav-inner nav-container">
@@ -155,27 +182,34 @@ export function CategoryNav() {
           <span>All</span>
         </button>
 
-        <nav
-          aria-label="Departments"
-          className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        <div
+          className={`category-nav-scroller ${canScrollLeft ? "category-nav-fade-left" : ""} ${
+            canScrollRight ? "category-nav-fade-right" : ""
+          }`}
         >
-          {topNavLinks.map((link) => {
-            const active = navLinkIsActive(link.href, pathname, category, q);
-            return (
-              <Link
-                key={link.href + link.label}
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={`category-link ${link.featured ? "category-link-featured" : ""} ${
-                  active ? "category-link-active" : ""
-                }`}
-              >
-                <CategoryNavIcon label={link.label} />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+          <nav
+            ref={scrollerRef}
+            aria-label="Departments"
+            className="category-nav-links"
+          >
+            {topNavLinks.map((link) => {
+              const active = navLinkIsActive(link.href, pathname, category, q);
+              return (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`category-link ${link.featured ? "category-link-featured" : ""} ${
+                    active ? "category-link-active" : ""
+                  }`}
+                >
+                  <CategoryNavIcon label={link.label} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
       {open ? (

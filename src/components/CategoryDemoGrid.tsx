@@ -18,10 +18,13 @@ import { ProductImage } from "@/components/ProductImage";
 export function CategoryDemoGrid({
   categorySlug,
   prominence = "secondary",
+  showSubtypeChips = true,
 }: {
   categorySlug: string;
   /** primary = main browse grid when live results are empty; secondary = “More to explore” */
   prominence?: "primary" | "secondary";
+  /** When false, omit subtype chips (e.g. already shown in CategoryBrowseHeader). */
+  showSubtypeChips?: boolean;
 }) {
   const searchParams = useSearchParams();
   const activeSubtype = (searchParams.get("q") ?? "").trim().toLowerCase();
@@ -61,36 +64,38 @@ export function CategoryDemoGrid({
         </Link>
       </div>
 
-      <ul className="category-subtype-strip mt-3" aria-label={`${title} product types`}>
-        {subtypes.map((subtype) => {
-          const thumb = imageBySubtype.get(subtype.toLowerCase());
-          const selected = activeSubtype === subtype.toLowerCase();
-          return (
-            <li key={subtype}>
-              <Link
-                href={`/search/results?q=${encodeURIComponent(subtype)}&category=${encodeURIComponent(categorySlug)}`}
-                className={`category-subtype-chip ${selected ? "category-subtype-chip-active" : ""}`}
-              >
-                {thumb ? (
-                  <span className="category-subtype-thumb">
-                    <Image
-                      src={thumb}
-                      alt=""
-                      width={28}
-                      height={28}
-                      unoptimized
-                      className="h-7 w-7 object-contain"
-                    />
-                  </span>
-                ) : null}
-                <span className="capitalize">{subtype}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {showSubtypeChips ? (
+        <ul className="category-subtype-strip mt-3" aria-label={`${title} product types`}>
+          {subtypes.map((subtype) => {
+            const thumb = imageBySubtype.get(subtype.toLowerCase());
+            const selected = activeSubtype === subtype.toLowerCase();
+            return (
+              <li key={subtype}>
+                <Link
+                  href={`/search/results?q=${encodeURIComponent(subtype)}&category=${encodeURIComponent(categorySlug)}`}
+                  className={`category-subtype-chip ${selected ? "category-subtype-chip-active" : ""}`}
+                >
+                  {thumb ? (
+                    <span className="category-subtype-thumb">
+                      <Image
+                        src={thumb}
+                        alt=""
+                        width={28}
+                        height={28}
+                        unoptimized
+                        className="h-7 w-7 object-contain"
+                      />
+                    </span>
+                  ) : null}
+                  <span className="capitalize">{subtype}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
 
-      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <ul className="section-grid mt-4">
         {products.map((product) => (
           <li key={product.id} className="min-w-0">
             <Link

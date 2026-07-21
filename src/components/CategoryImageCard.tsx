@@ -37,7 +37,7 @@ export function CategoryImageCard({ name, desc, href, image }: CategoryImageCard
 
 export function CategoryImageGrid({ items }: { items: CategoryImageCardProps[] }) {
   return (
-    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="section-grid mt-4">
       {items.map((item) => (
         <CategoryImageCard key={item.name} {...item} />
       ))}

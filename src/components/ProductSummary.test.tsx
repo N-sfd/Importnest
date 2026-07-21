@@ -84,9 +84,9 @@ describe("ProductSummary — offer count wording", () => {
 });
 
 describe("ProductSummary — missing last-checked time", () => {
-  it("shows an honest 'freshness unknown' instead of a fabricated timestamp", () => {
+  it("shows an honest unknown last-checked instead of a fabricated timestamp", () => {
     const html = renderToStaticMarkup(<ProductSummary {...baseProps} lastCheckedMinutesAgo={null} />);
-    expect(html).toContain("Freshness unknown");
+    expect(html).toContain("Last checked unknown");
     expect(html).not.toContain("Updated");
   });
 });

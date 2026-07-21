@@ -108,9 +108,13 @@ export function CheckoutClient({ defaultEmail }: { defaultEmail: string }) {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-navy-900">Checkout</h1>
-        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-          Checkout demo — payment processing is not connected yet.
-        </p>
+        <div className="mt-2 space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
+          <p className="font-bold">Demo checkout — no payment is processed.</p>
+          <p className="text-xs leading-relaxed">
+            Importnest cart helps you prepare your purchase. Some items may be completed through
+            the retailer. This flow is for product testing only — no real purchase is made.
+          </p>
+        </div>
       </div>
 
       <section className="panel p-4 sm:p-5">

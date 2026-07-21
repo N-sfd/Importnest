@@ -194,6 +194,7 @@ export default async function ComparePage({
             alert={saveState?.alert ?? null}
             suggestedAlert={suggestedAlert}
             currentLowestPrice={lowestKnown}
+            lastCheckedMinutesAgo={freshnessMinutes}
             cartItem={summaryCartItem}
           />
           <AddToCompareButton productId={productId} productName={product.modelName} labeled />

@@ -1,4 +1,10 @@
-import { formatFreshness, getFreshnessState, isFreshnessStale, type FreshnessState } from "@/lib/freshness";
+import {
+  formatFreshness,
+  getFreshnessState,
+  needsFreshnessWarning,
+  freshnessWarningLabel,
+  type FreshnessState,
+} from "@/lib/freshness";
 
 const STATE_TEXT_CLASS: Record<FreshnessState, string> = {
   fresh: "text-muted",
@@ -8,10 +14,8 @@ const STATE_TEXT_CLASS: Record<FreshnessState, string> = {
 };
 
 /**
- * Compact, human-readable freshness indicator used anywhere a listing/source
- * "last synced" timestamp is shown. Always renders relative text (never a raw
- * minute count). Optional soft nudge when older data may need a refresh —
- * only enable on screens that actually offer a refresh control.
+ * Compact freshness indicator. Always shows soft relative time.
+ * Amber “May need refresh” only when data is truly old (6h+).
  */
 export function Freshness({
   minutesAgo,
@@ -20,23 +24,22 @@ export function Freshness({
 }: {
   minutesAgo: number | null | undefined;
   className?: string;
-  /** When true and stale, append “Tap refresh for latest” (compare page only). */
+  /** When true and a warning is warranted, append a soft refresh nudge. */
   showRefreshHint?: boolean;
 }) {
   const state = getFreshnessState(minutesAgo);
-  const stale = isFreshnessStale(minutesAgo);
+  const warn = needsFreshnessWarning(minutesAgo);
 
   return (
     <span
       className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs ${STATE_TEXT_CLASS[state]} ${className}`}
     >
       <span>{formatFreshness(minutesAgo)}</span>
-      {stale && showRefreshHint ? (
-        <span className="inline-flex items-center gap-1 font-medium text-muted">
-          · Tap refresh for latest
+      {warn ? (
+        <span className="inline-flex items-center gap-1 font-medium text-amber-800">
+          · {freshnessWarningLabel()}
+          {showRefreshHint ? <span className="font-normal text-muted">· Refresh price</span> : null}
         </span>
-      ) : stale ? (
-        <span className="font-medium text-amber-800">· Data may be outdated</span>
       ) : null}
     </span>
   );

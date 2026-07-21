@@ -199,18 +199,24 @@ function CartSummary({ items }: { items: CartItem[] }) {
 
       <p className="mt-3 text-xs text-muted">Excludes local sales tax.</p>
 
+      <div className="mt-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-navy-900">
+        <p className="font-semibold">Importnest cart helps you prepare your purchase.</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Some items may be completed through the retailer. Prefer to buy now? Use{" "}
+          <span className="font-semibold text-navy-900">Continue to retailer</span> on a product
+          page — purchase finishes on the retailer website.
+        </p>
+      </div>
+
       <div className="mt-4 space-y-3 border-t border-border pt-3">
         <div>
           <Link href="/checkout" className="btn-cta block min-h-11 px-4 py-2.5 text-center text-sm">
-            Checkout demo
+            Continue to demo checkout
           </Link>
-          <p className="mt-1 text-center text-[11px] leading-snug text-muted">
-            Demo checkout is for product-flow testing only. No payment is processed.
+          <p className="mt-1.5 text-center text-[11px] font-semibold leading-snug text-amber-900">
+            Demo checkout — no payment is processed.
           </p>
         </div>
-        <p className="text-center text-[11px] leading-snug text-muted">
-          Prefer to buy now? Use an item&apos;s <span className="font-semibold text-navy-900">Continue to retailer</span> button instead — purchase is completed on the retailer website. Importnest helps compare offers before you buy.
-        </p>
       </div>
     </aside>
   );

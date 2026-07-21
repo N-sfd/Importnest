@@ -9,7 +9,7 @@
  * Listing-backed homepage cards come from getPopularComparisons / getBestDeals.
  */
 
-import { categoryDisplayTitle } from "@/lib/category-visuals";
+import { categoryDisplayTitle, normalizeCategorySlug } from "@/lib/category-visuals";
 
 export type HomepageDemoTopProduct = {
   id: string;
@@ -222,7 +222,7 @@ export const HOMEPAGE_DEMO_DEALS: HomepageDemoDeal[] = [
 ];
 
 export function homepageDemoBrowseHref(categorySlug: string, query?: string) {
-  const params = new URLSearchParams({ category: categorySlug });
+  const params = new URLSearchParams({ category: normalizeCategorySlug(categorySlug) });
   if (query?.trim()) params.set("q", query.trim());
   return `/search?${params.toString()}`;
 }

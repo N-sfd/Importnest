@@ -42,9 +42,9 @@ export function HomeTrustCard() {
 }
 
 /**
- * Homepage personalization / trust rail.
- * Never shows empty “appear here as you shop” placeholders.
- * Sidebar always has useful content (trust at minimum).
+ * Homepage personalization rail.
+ * Never shows empty “appear here as you shop” placeholders — falls back to
+ * a trust card when there is no recent-activity data.
  */
 export function HomePersonalizationRail({
   recentSearches,
@@ -55,32 +55,10 @@ export function HomePersonalizationRail({
   recentSearches: RecentSearch[];
   watchlist: WatchlistItem[];
   showWatchlist: boolean;
-  placement: "sidebar" | "mobile" | "inline";
+  placement: "mobile" | "inline";
 }) {
   const hasRecent = recentSearches.length > 0;
   const hasWatchlist = showWatchlist && watchlist.length > 0;
-
-  if (placement === "sidebar") {
-    return (
-      <aside className="home-sidebar" aria-label="Shopping shortcuts">
-        <div className="home-sidebar-sticky">
-          {hasRecent ? (
-            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-              <RecentSearches items={recentSearches} compact />
-            </div>
-          ) : null}
-          <RecentlyViewedSection compact framed />
-          {hasWatchlist ? (
-            <div className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]">
-              <SavedAlertsPreview items={watchlist} compact limit={3} />
-            </div>
-          ) : null}
-          {/* Always useful — replaces empty recent-search placeholders */}
-          <HomeTrustCard />
-        </div>
-      </aside>
-    );
-  }
 
   if (placement === "inline") {
     return (
@@ -136,9 +114,9 @@ export function HomePersonalizationRail({
     );
   }
 
-  // Mobile: recently viewed only when data exists (component self-hides).
+  // Recently viewed — only when data exists (component self-hides).
   return (
-    <div className="mt-4 lg:hidden" aria-label="Recently viewed">
+    <div className="home-section" aria-label="Recently viewed">
       <RecentlyViewedSection compact framed />
     </div>
   );

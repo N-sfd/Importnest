@@ -35,9 +35,13 @@ export function PopularComparisonCard({
 export function PopularComparisonsSection({
   items,
   signedIn,
+  title = "Popular comparisons",
+  subtitle = "Live totals from approved retailers",
 }: {
   items: PopularComparison[];
   signedIn: boolean;
+  title?: string;
+  subtitle?: string;
 }) {
   if (items.length === 0) return null;
 
@@ -49,12 +53,12 @@ export function PopularComparisonsSection({
             id="popular-comparisons-heading"
             className="text-xl font-bold tracking-tight text-navy-900"
           >
-            Popular comparisons
+            {title}
           </h2>
-          <p className="mt-1 text-sm text-muted">Live totals from approved retailers</p>
+          <p className="mt-1 text-sm text-muted">{subtitle}</p>
         </div>
       </div>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <ul className="section-grid mt-4">
         {items.map((item) => (
           <li key={item.productId} className="min-w-0">
             <PopularComparisonCard item={item} signedIn={signedIn} />

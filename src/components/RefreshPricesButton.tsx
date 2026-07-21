@@ -34,7 +34,7 @@ export function RefreshPricesButton({
         disabled={pending}
         className="btn-cta shrink-0 px-3.5 py-2 text-sm disabled:opacity-60"
       >
-        {pending ? "Confirming…" : "Confirm current prices"}
+        {pending ? "Refreshing…" : "Refresh price"}
       </button>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
     </div>

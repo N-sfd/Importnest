@@ -60,8 +60,8 @@ export function CheckoutConfirmationClient() {
     <div>
       <StatusPanel
         tone="accent"
-        title="Order confirmed"
-        description="This is a demo order confirmation. No payment was processed."
+        title="Demo order confirmed"
+        description="Demo checkout — no payment is processed. Importnest helps you prepare a purchase; some items may be completed through the retailer."
       >
         <p className="mt-3 text-sm text-muted">Confirmation number</p>
         <p className="text-2xl font-extrabold tracking-tight text-navy-900">

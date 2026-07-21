@@ -7,8 +7,16 @@ export type FreshnessState = "fresh" | "aging" | "stale" | "unknown";
 
 /** Below this, data reads as freshly synced with no caveats. */
 export const FRESHNESS_FRESH_MINUTES = 15;
-/** Matches seeded RankingConfig.freshnessThresholdMinutes — at/above this is stale. */
+/**
+ * Ranking / eligibility threshold — at/above this, definitive rank labels are gated.
+ * Matches seeded RankingConfig.freshnessThresholdMinutes.
+ */
 export const FRESHNESS_STALE_MINUTES = 60;
+/**
+ * Shopper-facing warning threshold. Soft “Updated X ago” is always fine;
+ * amber “May need refresh” only past this age (or when unknown on compare screens).
+ */
+export const FRESHNESS_WARN_MINUTES = 6 * 60;
 
 export function getFreshnessState(minutes: number | null | undefined): FreshnessState {
   if (minutes == null) return "unknown";
@@ -18,19 +26,26 @@ export function getFreshnessState(minutes: number | null | undefined): Freshness
 }
 
 /**
- * True for "stale" and "unknown" ages alike — an unknown last-sync time is no
- * safer to assert a definitive ranking claim on than a known-old one. Callers
- * use this to gate both the "Data may be outdated" caveat and eligibility for
- * definitive ranking labels (Best overall / Lowest cost / Fastest).
+ * True for "stale" and "unknown" ages alike — used to gate definitive ranking
+ * labels (Best overall / Lowest cost / Fastest), not everyday UI warnings.
  */
 export function isFreshnessStale(minutes: number | null | undefined): boolean {
   const state = getFreshnessState(minutes);
   return state === "stale" || state === "unknown";
 }
 
-/** Human-readable relative freshness text. Never emits raw values like "2639m ago". */
+/**
+ * Whether to show a shopper-facing amber refresh warning.
+ * Relative “Updated …” text is always preferred; this only flags truly old data.
+ */
+export function needsFreshnessWarning(minutes: number | null | undefined): boolean {
+  if (minutes == null) return false;
+  return minutes >= FRESHNESS_WARN_MINUTES;
+}
+
+/** Soft relative freshness text. Prefer this over warning copy on product cards. */
 export function formatFreshness(minutes: number | null | undefined): string {
-  if (minutes == null) return "Freshness unknown";
+  if (minutes == null) return "Last checked unknown";
   if (minutes < 1) return "Updated just now";
   if (minutes < 60) {
     return minutes === 1 ? "Updated 1 minute ago" : `Updated ${minutes} minutes ago`;
@@ -43,4 +58,9 @@ export function formatFreshness(minutes: number | null | undefined): string {
 
   const days = Math.round(hours / 24);
   return days === 1 ? "Updated yesterday" : `Updated ${days} days ago`;
+}
+
+/** Short warning label when needsFreshnessWarning is true. */
+export function freshnessWarningLabel(): string {
+  return "May need refresh";
 }

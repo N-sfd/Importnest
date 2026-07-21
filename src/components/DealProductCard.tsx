@@ -4,21 +4,25 @@ import {
   homepageDemoCategoryLabel,
   type HomepageDemoDeal,
 } from "@/data/homepage-demo-products";
-import type { BestDealItem } from "@/lib/best-deals";
+import { whyThisDeal, type BestDealItem } from "@/lib/best-deals";
 
 /** Listing-backed Best Deal — discount badge only when PriceHistory supports it. */
 export function DealProductCard({
   item,
   imageSrc,
   signedIn,
+  redirectTo = "/",
 }: {
   item: BestDealItem;
   imageSrc: string;
   signedIn: boolean;
+  redirectTo?: string;
 }) {
   const category = homepageDemoCategoryLabel(item.categorySlug);
   const badge =
     item.discountPercent != null ? `Save ${item.discountPercent}%` : "Best deal";
+  const dealReason = whyThisDeal(item);
+  const suggestedAlert = Math.max(1, Math.floor(item.currentTotal * 0.95)).toFixed(2);
 
   return (
     <ProductCard
@@ -35,10 +39,21 @@ export function DealProductCard({
       offerCount={item.offerCount}
       sourceCount={item.sourceCount}
       freshnessMinutesAgo={item.freshnessMinutesAgo}
+      categorySlug={item.categorySlug}
       bestListing={item.bestListing}
       isSaved={item.isSaved}
       signedIn={signedIn}
-      redirectTo="/"
+      redirectTo={redirectTo}
+      dealReason={dealReason}
+      priceAlert={
+        signedIn
+          ? {
+              suggestedAlert,
+              currentLowestPrice: item.currentTotal,
+              alert: null,
+            }
+          : null
+      }
     />
   );
 }

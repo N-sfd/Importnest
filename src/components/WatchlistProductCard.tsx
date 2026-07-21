@@ -147,7 +147,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  From · TKC
+                  Current
                 </p>
                 <p className="mt-0.5 text-lg font-extrabold tabular-nums text-navy-900">
                   {item.currentPrice != null
@@ -157,10 +157,22 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Target price
+                  Target
                 </p>
                 <p className="mt-0.5 text-sm font-semibold tabular-nums text-navy-900">
                   {item.targetPrice != null ? `$${item.targetPrice.toFixed(2)}` : "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  Alert status
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-navy-900">
+                  {item.status === "watching" || item.status === "triggered"
+                    ? item.status === "triggered"
+                      ? "Triggered"
+                      : "Active"
+                    : statusLabel[item.status]}
                 </p>
               </div>
               <div>

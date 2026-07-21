@@ -17,15 +17,24 @@ export const categoryImages: Record<string, string> = {
 };
 
 export const categoryDescriptions: Record<string, string> = {
-  electronics: "Phones, audio, tablets, laptops, and smart devices.",
-  appliances: "Kitchen, laundry, cleaning, and home appliances.",
-  kitchen: "Cookware, coffee tools, food prep, and kitchen essentials.",
-  footwear: "Running shoes, casual shoes, and seasonal footwear.",
-  beauty: "Beauty devices, grooming tools, and personal-care products.",
-  accessories: "Chargers, cases, bags, organizers, and everyday add-ons.",
-  automotive: "Car accessories, tools, chargers, and maintenance products.",
-  outdoors: "Backpacks, camping gear, travel tools, and outdoor essentials.",
-  home: "Furniture, cleaning, storage, and smart-home products.",
+  electronics:
+    "Compare phones, laptops, tablets, headphones, cameras, and gaming accessories.",
+  appliances:
+    "Compare dishwashers, refrigerators, vacuums, microwaves, and laundry appliances.",
+  kitchen:
+    "Compare cookware, blenders, coffee makers, knives, and everyday kitchen essentials.",
+  footwear:
+    "Compare running shoes, sneakers, boots, sandals, and everyday footwear.",
+  beauty:
+    "Compare hair dryers, stylers, shavers, mirrors, and personal-care devices.",
+  accessories:
+    "Compare bags, chargers, cases, wallets, and everyday add-ons.",
+  automotive:
+    "Compare dash cams, mounts, chargers, mats, and car care essentials.",
+  outdoors:
+    "Compare backpacks, tents, coolers, bottles, and outdoor gear.",
+  home:
+    "Compare lighting, storage, textiles, and home essentials.",
 };
 
 const CATEGORY_TITLES: Record<string, string> = {
@@ -67,8 +76,24 @@ const CATEGORIES_WITH_IMAGE_FILES = new Set([
 ]);
 
 export function normalizeCategoryKey(category: string): string {
-  const raw = category.trim().toLowerCase();
+  const raw = category.trim().toLowerCase().replace(/[\s_]+/g, "-");
   return CATEGORY_ALIASES[raw] ?? raw;
+}
+
+/** Short internal key → canonical long-form slug used in URLs, nav, and the database. */
+const CANONICAL_URL_SLUG: Record<string, string> = {
+  beauty: "beauty-devices",
+};
+
+/**
+ * Canonical DB/URL-facing category slug (e.g. "beauty-devices"), matching
+ * Category.slug. Accepts any casing/separator/alias variant — "Beauty",
+ * "Beauty Devices", "beauty_devices", and "beauty-devices" all resolve here.
+ * Use this wherever a category slug is sent to the database or built into a link.
+ */
+export function normalizeCategorySlug(category: string): string {
+  const key = normalizeCategoryKey(category);
+  return CANONICAL_URL_SLUG[key] ?? key;
 }
 
 export function categoryDisplayTitle(category: string, title?: string): string {

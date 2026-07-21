@@ -38,10 +38,24 @@ export type BestDealItem = {
 export async function getBestDeals(
   limit = 6,
   savedProductIds: Set<string> = new Set(),
+  categorySlug?: string,
 ): Promise<BestDealItem[]> {
+  // Listing.canonicalProductId is a bare scalar FK (no `canonicalProduct`
+  // relation back on Listing), so category scoping must resolve product ids
+  // first rather than filtering through a nested relation that doesn't exist.
+  let categoryProductIds: string[] | null = null;
+  if (categorySlug) {
+    const productsInCategory = await prisma.canonicalProduct.findMany({
+      where: { category: { slug: categorySlug } },
+      select: { id: true },
+    });
+    categoryProductIds = productsInCategory.map((p) => p.id);
+    if (categoryProductIds.length === 0) return [];
+  }
+
   const listings = await prisma.listing.findMany({
     where: {
-      canonicalProductId: { not: null },
+      canonicalProductId: categoryProductIds ? { in: categoryProductIds } : { not: null },
       matches: { some: { status: "approved" } },
     },
     select: {
@@ -199,4 +213,23 @@ export async function getBestDeals(
       return a.currentTotal - b.currentTotal;
     })
     .slice(0, limit);
+}
+
+/**
+ * Real-data rationale for a Best Deal card.
+ * Returns null when there is no price-history drop and fewer than 2 offers —
+ * never invents a reason.
+ */
+export function whyThisDeal(item: {
+  discountPercent: number | null;
+  offerCount: number;
+  previousTotal: number | null;
+}): string | null {
+  if (item.discountPercent != null && item.discountPercent > 0 && item.previousTotal != null) {
+    return `${item.discountPercent}% lower than recent tracked price.`;
+  }
+  if (item.offerCount >= 2) {
+    return `Lowest Total Known Cost among ${item.offerCount} approved sources.`;
+  }
+  return null;
 }

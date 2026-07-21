@@ -34,10 +34,24 @@ export type PopularComparison = {
 export async function getPopularComparisons(
   limit = 4,
   savedProductIds: Set<string> = new Set(),
+  categorySlug?: string,
 ): Promise<PopularComparison[]> {
+  // Listing.canonicalProductId is a bare scalar FK (no `canonicalProduct`
+  // relation back on Listing), so category scoping must resolve product ids
+  // first rather than filtering through a nested relation that doesn't exist.
+  let categoryProductIds: string[] | null = null;
+  if (categorySlug) {
+    const productsInCategory = await prisma.canonicalProduct.findMany({
+      where: { category: { slug: categorySlug } },
+      select: { id: true },
+    });
+    categoryProductIds = productsInCategory.map((p) => p.id);
+    if (categoryProductIds.length === 0) return [];
+  }
+
   const listings = await prisma.listing.findMany({
     where: {
-      canonicalProductId: { not: null },
+      canonicalProductId: categoryProductIds ? { in: categoryProductIds } : { not: null },
       matches: { some: { status: "approved" } },
     },
     select: {

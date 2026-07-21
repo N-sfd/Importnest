@@ -144,7 +144,7 @@ export function BrandLink({
 }) {
   const headerSrc = ASSETS[logo].header;
   const aspect = ASSETS[logo].headerAspect;
-  const height = 32;
+  const height = 38;
   const width = Math.round(height * aspect);
 
   return (

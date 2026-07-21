@@ -34,7 +34,10 @@ export function BackendLinks({
   /** When true, omit the outer card chrome (e.g. nested under another panel). */
   compact?: boolean;
 }) {
-  if (process.env.NODE_ENV !== "development") return null;
+  const enabled =
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === "true";
+  if (!enabled) return null;
 
   const list = (
     <ul className="mt-3 grid gap-2 sm:grid-cols-2">

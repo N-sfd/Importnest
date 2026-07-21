@@ -19,7 +19,7 @@ import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 import type { Priority } from "@/lib/types";
 import { RefreshPricesButton } from "@/components/RefreshPricesButton";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
-import { formatFreshness } from "@/lib/freshness";
+import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 
 /** Single pill style shared by every card badge — only the tone color varies. */
 function Badge({
@@ -208,8 +208,8 @@ function OfferCard({
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
             {(() => {
               const minutes = listing.freshnessMinutesAgo;
-              if (isStaleFreshness(minutes)) {
-                return <Badge tone="stale">Data may be outdated</Badge>;
+              if (needsFreshnessWarning(minutes)) {
+                return <Badge tone="stale">{freshnessWarningLabel()}</Badge>;
               }
               if (minutes != null && minutes < 15) {
                 return <Badge tone="fresh">Updated recently</Badge>;
@@ -217,7 +217,7 @@ function OfferCard({
               if (minutes != null) {
                 return <Badge tone="neutral">{formatFreshness(minutes)}</Badge>;
               }
-              return <Badge tone="stale">Freshness unknown</Badge>;
+              return <Badge tone="neutral">Last checked unknown</Badge>;
             })()}
           </div>
           {listing.sourceTypeLabel ? (
@@ -239,6 +239,30 @@ function OfferCard({
           ) : null}
         </div>
       </div>
+
+      {/* Trust signals — Importnest is source-transparent */}
+      <ul className="offer-trust-strip mt-3" aria-label="Source confidence">
+        <li>
+          {listing.isAuthorizedSource ? (
+            <span className="offer-trust-pill offer-trust-pill-ok">Approved source</span>
+          ) : (
+            <span className="offer-trust-pill">Listed source</span>
+          )}
+        </li>
+        <li>
+          <span className="offer-trust-pill">{formatFreshness(listing.freshnessMinutesAgo)}</span>
+        </li>
+        <li>
+          <span className="offer-trust-pill">
+            {/affiliate/i.test(listing.sourceType) || /affiliate/i.test(listing.sourceTypeLabel)
+              ? "Affiliate link"
+              : listing.sourceTypeLabel || "Partner listing"}
+          </span>
+        </li>
+        <li>
+          <span className="offer-trust-pill offer-trust-pill-ok">Sponsored? No</span>
+        </li>
+      </ul>
 
       {/* Condition · Total known cost · Delivery/pickup · Protection · Freshness, one order on every card */}
       <div className="mt-3 space-y-2">
@@ -328,6 +352,7 @@ export function PriorityTabs({
   const topId = panel ? rows[0]?.listing.id : undefined;
   const recommendationLabel = panel?.label ?? "";
   const anyStale = rows.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
+  const anyWarn = rows.some((r) => needsFreshnessWarning(r.listing.freshnessMinutesAgo));
   const knownAges = rows
     .map((r) => r.listing.freshnessMinutesAgo)
     .filter((v): v is number => v != null);
@@ -352,22 +377,22 @@ export function PriorityTabs({
 
   return (
     <div>
-      {/* Recommendation summary */}
-      {anyStale ? (
+      {/* Soft freshness nudge — only when data is truly old */}
+      {anyWarn ? (
         <StatusBanner
           tone="info"
-          title={`Prices last checked: ${formatFreshness(oldestMinutes).replace(/^Updated /i, "")}`}
-          description="Totals still reflect the last sync. Refresh for the latest item, shipping, and fee figures before you buy."
+          title={formatFreshness(oldestMinutes)}
+          description={`${freshnessWarningLabel()}. Totals still reflect the last sync — refresh for the latest item, shipping, and fee figures before you buy.`}
           action={<RefreshPricesButton productId={productId} />}
         />
       ) : null}
 
       {panel ? (
-        <div className={anyStale ? "mt-4" : ""}>
+        <div className={anyWarn || anyStale ? "mt-4" : ""}>
           <RecommendationPanel model={panel} productId={productId} />
         </div>
       ) : (
-        <div className={anyStale ? "mt-4" : ""}>
+        <div className={anyWarn || anyStale ? "mt-4" : ""}>
           <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-muted">
             {NO_RECOMMENDATION_TEXT}
           </p>

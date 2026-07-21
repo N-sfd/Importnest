@@ -35,9 +35,9 @@ const HIGHLIGHT_LABELS: Record<ResultHighlight, string> = {
 
 function searchResultBadge(product: SearchResultProduct): ProductCardBadge | null {
   if (product.highlights.includes("lowest_cost")) return "Best deal";
-  if (product.highlights.includes("best_value")) return "Featured";
-  if (product.matchKind === "exact") return "Featured";
+  if (product.highlights.includes("best_value")) return "Top product";
   if (product.offerCount >= 3) return "Popular";
+  if (product.matchKind === "exact") return "Top product";
   return null;
 }
 

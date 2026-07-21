@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
-import { BackendLinks } from "@/components/BackendLinks";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
+import { DealProductCard } from "@/components/DealProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
 import { HomePersonalizationRail } from "@/components/HomePersonalizationRail";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -13,7 +13,7 @@ import { BestDealsSection } from "@/components/BestDealsSection";
 import { getAuthUser } from "@/lib/auth";
 import { getBestDeals } from "@/lib/best-deals";
 import { categoryDescriptionFor } from "@/lib/category-visuals";
-import { categoryImageFor } from "@/lib/images";
+import { categoryImageFor, homeDealImageFor } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 import { getRecentSearches } from "@/lib/recent-searches";
@@ -109,97 +109,164 @@ export default async function HomePage() {
   const popular = popularPool
     .filter((p) => !topIds.has(p.productId) && !bestIds.has(p.productId))
     .slice(0, 4);
+  const popularIds = new Set(popular.map((p) => p.productId));
+  const todaysDeals = bestPool
+    .filter((d) => !topIds.has(d.productId) && !bestIds.has(d.productId) && !popularIds.has(d.productId))
+    .slice(0, 8);
 
   return (
     <PageShell width="wide">
-      <div className="home-grid">
-        <div className="home-main">
-          {/* Main search hero */}
-          <section className="home-band" aria-labelledby="home-search-heading">
-            <p className="text-sm font-semibold text-accent">Importnest</p>
-            <h1
-              id="home-search-heading"
-              className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl"
-            >
-              Compare prices. See the real total cost.
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
-              Search approved retailers, then compare Total Known Cost — item + shipping + fees —
-              before you buy.
-            </p>
-            <HeroSearch className="mt-5" />
-          </section>
-
-          {/* Shop by Category */}
-          <section className="home-section" aria-labelledby="shop-category-heading">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2
-                  id="shop-category-heading"
-                  className="text-xl font-bold tracking-tight text-navy-900 sm:text-2xl"
-                >
-                  Shop by Category
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  Browse image-rich departments — then compare offers
-                </p>
-              </div>
-              <Link
-                href="/search?category=electronics"
-                className="text-sm font-semibold text-link hover:underline"
-              >
-                View all
-              </Link>
-            </div>
-            <CategoryImageGrid items={categories} />
-          </section>
-
-          {/* Top Products */}
-          <div className="home-section">
-            <TopProductsSection items={topProducts} signedIn={Boolean(user)} />
-          </div>
-
-          {/* Best Deals */}
-          <div className="home-section">
-            <div className="home-band !mb-0">
-              <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
-            </div>
-          </div>
-
-          {/* Popular Comparisons */}
-          <div className="home-section">
-            <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
-          </div>
-
-          {/* Compare smarter */}
-          <section
-            className="home-section section-soft px-5 py-7 sm:px-8 sm:py-8"
-            aria-labelledby="compare-smarter-heading"
+      <div className="home-main">
+        {/* Main search hero */}
+        <section className="home-band" aria-labelledby="home-search-heading">
+          <p className="text-sm font-semibold text-accent">Importnest</p>
+          <h1
+            id="home-search-heading"
+            className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl"
           >
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:items-center">
-              <div>
-                <h2
-                  id="compare-smarter-heading"
-                  className="text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl"
+            Search once. Compare every approved offer.
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
+            Search approved retailers, then compare Total Known Cost — item + shipping + fees —
+            before you buy.
+          </p>
+          <HeroSearch className="mt-5" />
+        </section>
+
+        {/* Shop by Category */}
+        <section className="home-section" aria-labelledby="shop-category-heading">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2
+                id="shop-category-heading"
+                className="text-xl font-bold tracking-tight text-navy-900 sm:text-2xl"
+              >
+                Shop by Category
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Browse image-rich departments — then compare offers
+              </p>
+            </div>
+            <Link
+              href="/search?category=electronics"
+              className="text-sm font-semibold text-link hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <CategoryImageGrid items={categories} />
+        </section>
+
+        {/* Top Products */}
+        <div className="home-section">
+          <TopProductsSection items={topProducts} signedIn={Boolean(user)} />
+        </div>
+
+        {/* Best Deals */}
+        <div className="home-section">
+          <div className="home-band !mb-0">
+            <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
+          </div>
+        </div>
+
+        {/* Popular Comparisons */}
+        <div className="home-section">
+          <PopularComparisonsSection items={popular} signedIn={Boolean(user)} />
+        </div>
+
+        {/* Today’s deals */}
+        <section className="home-section" aria-labelledby="todays-deals-heading">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2
+                id="todays-deals-heading"
+                className="text-xl font-bold tracking-tight text-navy-900 sm:text-2xl"
+              >
+                Today&apos;s deals
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Browse live offers with real Total Known Cost — never invented discounts.
+              </p>
+            </div>
+            <Link
+              href="/search?q=deals"
+              className="text-sm font-semibold text-link hover:underline"
+            >
+              View all deals
+            </Link>
+          </div>
+
+          {todaysDeals.length > 0 ? (
+            <ul className="section-grid mt-4">
+              {todaysDeals.map((item) => (
+                <li key={item.productId} className="min-w-0">
+                  <DealProductCard
+                    item={item}
+                    imageSrc={homeDealImageFor(item.productId, item.categorySlug, item.productName)}
+                    signedIn={Boolean(user)}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-border bg-section-soft px-5 py-6 sm:px-7 sm:py-7">
+              <p className="text-sm font-semibold text-navy-900">
+                Looking for savings backed by approved sources?
+              </p>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
+                Jump into deals search to compare item + shipping + fees across retailers. Sponsored
+                placements never change organic ranking.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/search?q=deals" className="btn-cta px-4 py-2.5 text-sm">
+                  Shop today&apos;s deals
+                </Link>
+                <Link
+                  href="/search/results?category=electronics"
+                  className="rounded-full border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-navy-800"
                 >
-                  Compare smarter. Shop confidently.
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted">
-                  Still looking? Search again across{" "}
-                  <Link
-                    href="#approved-sources"
-                    className="font-semibold text-link underline-offset-2 hover:underline"
-                  >
-                    approved retailers
-                  </Link>{" "}
-                  and refine by category, budget, or model.
-                </p>
-              </div>
-              <div className="min-w-0">
-                <HeroSearch className="mt-0" />
+                  Electronics deals
+                </Link>
+                <Link
+                  href="/search/results?category=appliances"
+                  className="rounded-full border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-navy-800"
+                >
+                  Appliance deals
+                </Link>
               </div>
             </div>
-          </section>
+          )}
+        </section>
+
+        {/* Compare prices. See the real total cost. */}
+        <section
+          className="home-section section-soft px-5 py-7 sm:px-8 sm:py-8"
+          aria-labelledby="compare-smarter-heading"
+        >
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:items-center">
+            <div>
+              <h2
+                id="compare-smarter-heading"
+                className="text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl"
+              >
+                Compare prices. See the real total cost.
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Still looking? Search again across{" "}
+                <Link
+                  href="#approved-sources"
+                  className="font-semibold text-link underline-offset-2 hover:underline"
+                >
+                  approved retailers
+                </Link>{" "}
+                and refine by category, budget, or model.
+              </p>
+            </div>
+            <div className="min-w-0">
+              <HeroSearch className="mt-0" />
+            </div>
+          </div>
+        </section>
 
           {/* Price alerts / Track Total Known Cost */}
           <section className="home-section" aria-labelledby="track-cost-heading">
@@ -232,7 +299,7 @@ export default async function HomePage() {
               <TotalKnownCostHook />
             </div>
 
-            <div className="mt-6 lg:hidden">
+            <div className="mt-6">
               <HomePersonalizationRail
                 recentSearches={recentSearches}
                 watchlist={watchlist}
@@ -254,22 +321,9 @@ export default async function HomePage() {
             <HowItWorks />
           </div>
 
-          {/* Approved sources */}
-          <div id="approved-sources" className="home-section scroll-mt-24">
-            <ApprovedSourcesStrip sources={sources} />
-          </div>
-
-          <BackendLinks className="mt-2" />
-        </div>
-
-        {/* Desktop sidebar — always useful (trust + optional recent/watchlist) */}
-        <div className="hidden min-w-0 lg:block">
-          <HomePersonalizationRail
-            recentSearches={recentSearches}
-            watchlist={watchlist}
-            showWatchlist={Boolean(user)}
-            placement="sidebar"
-          />
+        {/* Approved sources */}
+        <div id="approved-sources" className="home-section scroll-mt-24">
+          <ApprovedSourcesStrip sources={sources} />
         </div>
       </div>
     </PageShell>

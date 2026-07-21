@@ -165,3 +165,114 @@ export function getCategoryDemoProducts(categorySlug: string, limit = 10): Categ
 export function getCategoryDemoSubtypes(categorySlug: string): string[] {
   return getCategoryDemoProducts(categorySlug, 20).map((p) => p.subtype);
 }
+
+/** Friendly chip labels for category browse (e.g. smartphone → Phones). */
+const SUBTYPE_CHIP_LABELS: Record<string, string> = {
+  smartphone: "Phones",
+  laptop: "Laptops",
+  tablet: "Tablets",
+  headphones: "Headphones",
+  earbuds: "Earbuds",
+  monitor: "Monitors",
+  smartwatch: "Smartwatches",
+  speaker: "Speakers",
+  camera: "Cameras",
+  "gaming accessory": "Gaming",
+  dishwasher: "Dishwashers",
+  refrigerator: "Refrigerators",
+  microwave: "Microwaves",
+  "toaster oven": "Toaster ovens",
+  "air fryer": "Air fryers",
+  "coffee maker": "Coffee makers",
+  vacuum: "Vacuums",
+  "air purifier": "Air purifiers",
+  dehumidifier: "Dehumidifiers",
+  "washing machine": "Washers",
+  cookware: "Cookware",
+  dinnerware: "Dinnerware",
+  utensils: "Utensils",
+  blender: "Blenders",
+  "coffee machine": "Coffee machines",
+  kettle: "Kettles",
+  "cutting board": "Cutting boards",
+  "food storage": "Food storage",
+  bakeware: "Bakeware",
+  organizer: "Organizers",
+  "running shoe": "Running",
+  sneaker: "Sneakers",
+  "hiking boot": "Hiking boots",
+  sandal: "Sandals",
+  loafer: "Loafers",
+  "winter boot": "Winter boots",
+  "training shoe": "Training",
+  "casual shoe": "Casual",
+  "dress shoe": "Dress shoes",
+  "slip-on shoe": "Slip-ons",
+  "hair dryer": "Hair dryers",
+  "curling iron": "Curling irons",
+  "hair straightener": "Straighteners",
+  "electric shaver": "Shavers",
+  "facial cleansing brush": "Facial brushes",
+  "skincare fridge": "Skincare fridges",
+  "led mirror": "LED mirrors",
+  "massage tool": "Massage tools",
+  "manicure kit": "Manicure kits",
+  "grooming kit": "Grooming kits",
+  wallet: "Wallets",
+  backpack: "Backpacks",
+  "phone case": "Phone cases",
+  sunglasses: "Sunglasses",
+  "watch band": "Watch bands",
+  "charging cable": "Cables",
+  "travel organizer": "Organizers",
+  "crossbody bag": "Crossbody",
+  "laptop sleeve": "Laptop sleeves",
+  "wireless charger": "Chargers",
+  "dash cam": "Dash cams",
+  "phone mount": "Phone mounts",
+  "battery charger": "Chargers",
+  "floor mats": "Floor mats",
+  "tire inflator": "Inflators",
+  "car vacuum": "Car vacuums",
+  "seat cover": "Seat covers",
+  "jump starter": "Jump starters",
+  "windshield wipers": "Wipers",
+  "tool kit": "Tool kits",
+  tent: "Tents",
+  "camping lantern": "Lanterns",
+  cooler: "Coolers",
+  "hiking bottle": "Bottles",
+  "sleeping bag": "Sleeping bags",
+  "outdoor chair": "Chairs",
+  "picnic blanket": "Picnic",
+  "travel bag": "Travel bags",
+  "portable stove": "Stoves",
+  blanket: "Blankets",
+  "table lamp": "Lamps",
+  "storage bins": "Storage",
+  "throw pillows": "Pillows",
+  "wall clock": "Clocks",
+  curtains: "Curtains",
+  diffuser: "Diffusers",
+  rug: "Rugs",
+  "home air purifier": "Air purifiers",
+};
+
+export type CategorySubtypeChip = {
+  subtype: string;
+  label: string;
+  image: string;
+};
+
+export function getCategorySubtypeChips(categorySlug: string): CategorySubtypeChip[] {
+  return getCategoryDemoProducts(categorySlug, 20).map((p) => {
+    const key = p.subtype.toLowerCase();
+    return {
+      subtype: p.subtype,
+      label:
+        SUBTYPE_CHIP_LABELS[key] ??
+        p.subtype.replace(/\b\w/g, (c) => c.toUpperCase()),
+      image: p.image,
+    };
+  });
+}

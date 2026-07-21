@@ -80,7 +80,7 @@ export function BestDealsSection({
         </Link>
       </div>
 
-      <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
+      <ul className="section-grid mt-4">
         {cards.map((card) =>
           card.kind === "listing" ? (
             <li key={card.item.productId} className="min-w-0">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { CartProvider } from "@/components/CartProvider";
 import { CompareBasketProvider } from "@/components/CompareBasketProvider";
+import { DevToolsModal } from "@/components/DevToolsModal";
 import { RecentlyViewedProvider } from "@/components/RecentlyViewedProvider";
 import { themeInitScript } from "@/components/ThemeToggle";
 import "./globals.css";
@@ -55,7 +56,10 @@ export default function RootLayout({
       <body className="min-h-full bg-surface font-sans text-foreground antialiased">
         <CompareBasketProvider>
           <CartProvider>
-            <RecentlyViewedProvider>{children}</RecentlyViewedProvider>
+            <RecentlyViewedProvider>
+              {children}
+              <DevToolsModal />
+            </RecentlyViewedProvider>
           </CartProvider>
         </CompareBasketProvider>
       </body>

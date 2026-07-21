@@ -41,10 +41,13 @@ export function SearchResultsToolbar({
   params,
   total,
   sort,
+  hideCategoryVisual = false,
 }: {
   params: ResultsPageParams;
   total: number;
   sort: ResultsSort;
+  /** When true, skip the compact category collage (CategoryBrowseHeader already covers it). */
+  hideCategoryVisual?: boolean;
 }) {
   const router = useRouter();
   const chips = prefsChips(params);
@@ -77,21 +80,35 @@ export function SearchResultsToolbar({
 
   const heading =
     params.q?.trim() || (categoryTitle ? categoryTitle : "All products");
+  const isCategoryBrowse = Boolean(params.category) && !params.q?.trim();
 
   return (
     <div className="space-y-4 border-b border-border pb-4">
-      {params.category ? (
+      {params.category && !hideCategoryVisual ? (
         <CategoryVisualCard category={params.category} query={params.q} compact />
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {params.q?.trim() ? "Search" : categoryTitle ? "Category" : "Search"}
-          </p>
-          <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
-            {heading}
-          </h1>
-          <p className="mt-1 text-sm text-muted" aria-live="polite">
+          {!isCategoryBrowse || params.q?.trim() ? (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {params.q?.trim() ? "Search" : categoryTitle ? "Category" : "Search"}
+              </p>
+              {params.category && hideCategoryVisual ? (
+                <h2 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
+                  {heading}
+                </h2>
+              ) : (
+                <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
+                  {heading}
+                </h1>
+              )}
+            </>
+          ) : null}
+          <p
+            className={`${isCategoryBrowse && !params.q?.trim() ? "" : "mt-1"} text-sm text-muted`}
+            aria-live="polite"
+          >
             {total} matching live product{total === 1 ? "" : "s"}
           </p>
         </div>
