@@ -1,14 +1,27 @@
-import Image from "next/image";
+import { ProductImage } from "@/components/ProductImage";
 import type { ReactNode } from "react";
-import { formatFreshness } from "@/lib/freshness";
-import { productThumbClass } from "@/lib/images";
+import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
+
+function MatchBadge({ label }: { label: string }) {
+  const lower = label.toLowerCase();
+  const tone =
+    lower.startsWith("exact match")
+      ? "badge-savings"
+      : lower.startsWith("comparable")
+        ? "bg-amber-100 text-amber-900"
+        : "bg-surface text-muted border border-border";
+
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${tone}`}>
+      {label}
+    </span>
+  );
+}
 
 /**
- * Compact identity strip for the top of the comparison page — image, brand,
- * name, model number, match status, offer count, and last-checked time, plus
- * whatever Save/alert controls the caller wants to show. Deliberately small:
- * no marketing copy, no oversized imagery. Fields the product doesn't have
- * (e.g. no model number) are omitted rather than shown as a fake placeholder.
+ * Product identity strip for the comparison page — image, brand, name, model,
+ * match badge, offer/source counts, freshness, and Save / alert / cart / compare
+ * actions. Missing fields are omitted; never invents prices or ratings.
  */
 export function ProductSummary({
   imageSrc,
@@ -17,9 +30,11 @@ export function ProductSummary({
   modelNumber,
   matchStatusLabel,
   offerCount,
+  sourceCount,
   lastCheckedMinutesAgo,
   lowestTotalKnownCost,
   actions,
+  categorySlug,
 }: {
   imageSrc: string;
   brandName: string;
@@ -27,56 +42,85 @@ export function ProductSummary({
   modelNumber?: string | null;
   matchStatusLabel: string;
   offerCount: number;
+  /** Distinct approved sources with a listing — omit when unknown. */
+  sourceCount?: number | null;
   lastCheckedMinutesAgo: number | null;
   /** Live lowest Total Known Cost across compared offers, when available. */
   lowestTotalKnownCost?: number | null;
   actions: ReactNode;
+  categorySlug?: string | null;
 }) {
+  const showFreshnessWarning = needsFreshnessWarning(lastCheckedMinutesAgo);
+  const modelText = modelNumber?.trim() || null;
+
   return (
-    <section className="panel flex flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4">
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-white sm:h-24 sm:w-24">
-        <Image
+    <section className="panel compare-product-summary p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+        <ProductImage
           src={imageSrc}
           alt={productName}
-          fill
-          className={productThumbClass(imageSrc)}
-          sizes="96px"
+          title={productName}
+          category={categorySlug}
+          size="summary"
+          priority
+          sizes="144px"
         />
-      </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{brandName}</p>
-        <h1 className="truncate text-base font-bold leading-snug text-navy-900 sm:text-lg">
-          {productName}
-        </h1>
-        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
-          {modelNumber ? (
-            <>
-              <span>Model {modelNumber}</span>
-              <span aria-hidden="true">·</span>
-            </>
-          ) : null}
-          <span className="font-medium text-navy-900">{matchStatusLabel}</span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {offerCount} {offerCount === 1 ? "offer" : "offers"}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>{formatFreshness(lastCheckedMinutesAgo)}</span>
-        </p>
-        {lowestTotalKnownCost != null ? (
-          <p className="mt-2 text-sm">
-            <span className="text-xs font-bold uppercase tracking-wider text-accent">
-              Lowest Total Known Cost
-            </span>
-            <span className="ml-2 text-lg font-extrabold tabular-nums text-navy-900">
-              ${lowestTotalKnownCost.toFixed(2)}
-            </span>
+        <div className="min-w-0 flex-1 text-center sm:text-left">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{brandName}</p>
+          <h1 className="mt-0.5 text-lg font-bold leading-snug text-navy-900 sm:text-xl">
+            {productName}
+          </h1>
+
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+            <MatchBadge label={matchStatusLabel} />
+            {modelText ? (
+              <span className="text-sm text-muted">
+                Model <span className="font-medium text-navy-900">{modelText}</span>
+              </span>
+            ) : null}
+          </div>
+
+          <p className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-sm text-muted sm:justify-start">
+            {offerCount > 0 ? (
+              <span>
+                {offerCount} {offerCount === 1 ? "offer" : "offers"}
+              </span>
+            ) : (
+              <span>No offers</span>
+            )}
+            {sourceCount != null && sourceCount > 0 ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {sourceCount} {sourceCount === 1 ? "source" : "sources"}
+                </span>
+              </>
+            ) : null}
+            <span aria-hidden="true">·</span>
+            <span>{formatFreshness(lastCheckedMinutesAgo)}</span>
           </p>
-        ) : null}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          {showFreshnessWarning ? (
+            <p className="mt-1 text-xs font-medium text-amber-800">{freshnessWarningLabel()}</p>
+          ) : null}
+
+          {lowestTotalKnownCost != null ? (
+            <p className="mt-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-accent">
+                From · Total Known Cost
+              </span>
+              <span className="ml-2 text-xl price-text sm:text-2xl">
+                ${lowestTotalKnownCost.toFixed(2)}
+              </span>
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:max-w-xs sm:justify-end lg:max-w-sm">
+          {actions}
+        </div>
+      </div>
     </section>
   );
 }

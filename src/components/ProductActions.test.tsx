@@ -33,7 +33,7 @@ describe("ProductActions — compact button states", () => {
     expect(html).not.toContain("Edit alert");
   });
 
-  it("shows 'Edit alert' when an alert already exists", () => {
+  it("shows 'Edit price alert' when an alert already exists", () => {
     const html = renderToStaticMarkup(
       <ProductActions
         {...baseProps}
@@ -41,6 +41,6 @@ describe("ProductActions — compact button states", () => {
         alert={{ threshold: "45.00", isActive: true }}
       />,
     );
-    expect(html).toContain("Edit alert");
+    expect(html).toContain("Edit price alert");
   });
 });

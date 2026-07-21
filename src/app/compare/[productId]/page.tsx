@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
 import { BackendSourcesPanel } from "@/components/BackendSourcesPanel";
 import { ComparisonMethodologyPanel } from "@/components/ComparisonMethodologyPanel";
@@ -21,7 +22,8 @@ import {
   totalKnownCost,
   type CompareFilters,
 } from "@/lib/compare-data";
-import { formatMatchStatus } from "@/lib/compare-view";
+import { formatConditionLabel, formatMatchStatus } from "@/lib/compare-view";
+import { isPublicApprovedSource } from "@/lib/approved-sources";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Priority } from "@/lib/types";
 import { productImageFor } from "@/lib/images";
@@ -135,6 +137,7 @@ export default async function ComparePage({
     ).toString()}`,
   }));
   const sources = await getProductSourceSummaries(productId);
+  const visibleSources = sources.filter((s) => isPublicApprovedSource(s.sourceId));
   const bestMatch = product.matches[0];
   const freshest = await prisma.listing.findFirst({
     where: { canonicalProductId: productId },
@@ -149,13 +152,64 @@ export default async function ComparePage({
     lowestKnown != null ? Math.max(1, Math.floor(lowestKnown * 0.95)).toFixed(2) : "";
   const priceHistory = await getProductPriceHistory(productId, lowestKnown);
 
+  // Top-ranked listing snapshot for the identity-strip Add to cart button —
+  // omitted entirely (no button) when there are no approved offers at all.
+  const topListing = rows[0]?.listing;
+  const productImage = productImageFor(productId, product.category.slug, product.modelName);
+  const summaryCartItem = topListing
+    ? {
+        listingId: topListing.id,
+        productId,
+        title: product.modelName,
+        brand: product.brand.name,
+        imageUrl: productImage,
+        retailerName: topListing.sourceName,
+        condition: formatConditionLabel(topListing.condition),
+        itemPrice: topListing.price,
+        shipping: topListing.shipping,
+        fees: topListing.mandatoryFees,
+        totalKnownCost: totalKnownCost(topListing),
+      }
+    : undefined;
+
+  const summaryActions = (
+    <div className="flex flex-wrap items-start justify-center gap-2 sm:justify-end">
+      {!authUser ? (
+        <>
+          {summaryCartItem ? <AddToCartButton {...summaryCartItem} /> : null}
+          <AddToCompareButton productId={productId} productName={product.modelName} labeled />
+          <Link
+            href={`/login?next=${encodeURIComponent(redirectTo)}`}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-link hover:underline"
+          >
+            Sign in to save or set a price alert
+          </Link>
+        </>
+      ) : (
+        <>
+          <ProductActions
+            productId={productId}
+            redirectTo={redirectTo}
+            isSaved={Boolean(saveState?.isSaved)}
+            alert={saveState?.alert ?? null}
+            suggestedAlert={suggestedAlert}
+            currentLowestPrice={lowestKnown}
+            lastCheckedMinutesAgo={freshnessMinutes}
+            cartItem={summaryCartItem}
+          />
+          <AddToCompareButton productId={productId} productName={product.modelName} labeled />
+        </>
+      )}
+    </div>
+  );
+
   return (
     <PageShell>
       <TrackProductView
         productId={productId}
         productName={product.modelName}
         brandName={product.brand.name}
-        imageSrc={productImageFor(productId)}
+        imageSrc={productImage}
       />
       <nav className="mb-3 text-xs text-muted">
         <Link href="/" className="text-link hover:underline">
@@ -173,36 +227,17 @@ export default async function ComparePage({
       </nav>
 
       <ProductSummary
-        imageSrc={productImageFor(productId)}
+        imageSrc={productImage}
         brandName={product.brand.name}
         productName={product.modelName}
         modelNumber={product.modelNumber}
         matchStatusLabel={matchStatusLabel}
         offerCount={rows.length}
+        sourceCount={new Set(rows.map((r) => r.listing.sourceId)).size}
         lastCheckedMinutesAgo={freshnessMinutes}
         lowestTotalKnownCost={lowestKnown}
-        actions={
-          <div className="flex flex-wrap items-start gap-3">
-            {!authUser ? (
-              <Link
-                href={`/login?next=${encodeURIComponent(redirectTo)}`}
-                className="text-sm font-medium text-link hover:underline"
-              >
-                Sign in to save this product or set a price alert
-              </Link>
-            ) : (
-              <ProductActions
-                productId={productId}
-                redirectTo={redirectTo}
-                isSaved={Boolean(saveState?.isSaved)}
-                alert={saveState?.alert ?? null}
-                suggestedAlert={suggestedAlert}
-                currentLowestPrice={lowestKnown}
-              />
-            )}
-            <AddToCompareButton productId={productId} productName={product.modelName} />
-          </div>
-        }
+        categorySlug={product.category.slug}
+        actions={summaryActions}
       />
 
       {comparable === "1" ? (
@@ -211,45 +246,64 @@ export default async function ComparePage({
         </p>
       ) : null}
 
-      <PriceHistorySection summary={priceHistory} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,20rem)] lg:items-start">
+        <div className="min-w-0 space-y-4">
+          <section className="panel p-4 sm:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">Buying options</h2>
+                <p className="mt-1 text-sm text-muted">
+                  Ranked by Total Known Cost and your selected priority — costs break down per offer.
+                </p>
+              </div>
+            </div>
+            {hasFilters && rows.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface px-4 py-10 text-center">
+                <p className="text-sm text-muted">
+                  No listings match your budget, condition, or delivery preferences.
+                </p>
+                <Link
+                  href={`/compare/${productId}`}
+                  className="btn-cta mt-4 inline-block px-5 py-2.5 text-sm"
+                >
+                  Clear filters
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <PriorityTabs
+                  productId={productId}
+                  productName={product.modelName}
+                  brandName={product.brand.name}
+                  productImageSrc={productImage}
+                  rows={rows}
+                  priority={effectivePriority}
+                  priorityOptions={priorityOptions}
+                  panel={panel}
+                />
+              </div>
+            )}
+          </section>
+        </div>
 
-      <ComparisonMethodologyPanel />
-
-      <section className="panel mt-4 p-4 sm:p-6">
-        <h2 className="text-lg font-bold tracking-tight text-foreground">Buying options</h2>
-        {hasFilters && rows.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface px-4 py-10 text-center">
-            <p className="text-sm text-muted">
-              No listings match your budget, condition, or delivery preferences.
-            </p>
-            <Link href={`/compare/${productId}`} className="btn-cta mt-4 inline-block px-5 py-2.5 text-sm">
-              Clear filters
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-4">
-            <PriorityTabs
-              productId={productId}
-              rows={rows}
-              priority={effectivePriority}
-              priorityOptions={priorityOptions}
-              panel={panel}
-            />
-          </div>
-        )}
-      </section>
-
-      <BackendSourcesPanel sources={sources} />
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <ComparisonMethodologyPanel compact />
+          <PriceHistorySection summary={priceHistory} hideWhenEmpty />
+          {visibleSources.length > 0 ? <BackendSourcesPanel sources={sources} /> : null}
+        </aside>
+      </div>
 
       {relatedProducts.length > 0 ? (
         <section className="mt-10">
           <h2 className="text-xl font-bold tracking-tight text-navy-900">Related alternatives</h2>
           <p className="mt-1 text-sm text-muted">Other approved products in {product.category.name}</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {relatedProducts.map((item) => (
-              <PopularComparisonCard key={item.productId} item={item} signedIn={Boolean(authUser)} />
+              <li key={item.productId} className="min-w-0">
+                <PopularComparisonCard item={item} signedIn={Boolean(authUser)} />
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ) : null}
 

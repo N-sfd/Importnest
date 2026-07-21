@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { productImageFor } from "@/lib/product-images";
 
 export type BestDealItem = {
   productId: string;
   brandName: string;
   productName: string;
+  categorySlug: string;
   imageSrc: string;
   currentTotal: number;
   /** Previous daily Total Known Cost when real PriceHistory supports it. */
@@ -14,8 +15,20 @@ export type BestDealItem = {
   discountPercent: number | null;
   dealBadge: string;
   offerCount: number;
+  sourceCount: number;
   isSaved: boolean;
   freshnessMinutesAgo: number;
+  /** Real seeded average rating — never fabricated. */
+  rating: number | null;
+  /** The specific listing backing currentTotal — used to add this exact offer to cart without inventing data. */
+  bestListing: {
+    listingId: string;
+    sourceName: string;
+    condition: string;
+    price: number;
+    shipping: number;
+    fees: number;
+  };
 };
 
 /**
@@ -25,10 +38,24 @@ export type BestDealItem = {
 export async function getBestDeals(
   limit = 6,
   savedProductIds: Set<string> = new Set(),
+  categorySlug?: string,
 ): Promise<BestDealItem[]> {
+  // Listing.canonicalProductId is a bare scalar FK (no `canonicalProduct`
+  // relation back on Listing), so category scoping must resolve product ids
+  // first rather than filtering through a nested relation that doesn't exist.
+  let categoryProductIds: string[] | null = null;
+  if (categorySlug) {
+    const productsInCategory = await prisma.canonicalProduct.findMany({
+      where: { category: { slug: categorySlug } },
+      select: { id: true },
+    });
+    categoryProductIds = productsInCategory.map((p) => p.id);
+    if (categoryProductIds.length === 0) return [];
+  }
+
   const listings = await prisma.listing.findMany({
     where: {
-      canonicalProductId: { not: null },
+      canonicalProductId: categoryProductIds ? { in: categoryProductIds } : { not: null },
       matches: { some: { status: "approved" } },
     },
     select: {
@@ -37,15 +64,19 @@ export async function getBestDeals(
       price: true,
       shipping: true,
       fees: true,
+      condition: true,
       freshnessCapturedAt: true,
+      source: { select: { name: true } },
     },
   });
 
   type Agg = {
     listingIds: string[];
     offerCount: number;
+    sourceNames: Set<string>;
     currentTotal: number;
     freshestAt: Date;
+    bestListing: BestDealItem["bestListing"];
   };
 
   const byProduct = new Map<string, Agg>();
@@ -53,19 +84,33 @@ export async function getBestDeals(
     const id = listing.canonicalProductId;
     if (!id) continue;
     const total = listing.price + listing.shipping + listing.fees;
+    const bestListing: BestDealItem["bestListing"] = {
+      listingId: listing.id,
+      sourceName: listing.source.name,
+      condition: listing.condition,
+      price: listing.price,
+      shipping: listing.shipping,
+      fees: listing.fees,
+    };
     const existing = byProduct.get(id);
     if (!existing) {
       byProduct.set(id, {
         listingIds: [listing.id],
         offerCount: 1,
+        sourceNames: new Set([listing.source.name]),
         currentTotal: total,
         freshestAt: listing.freshnessCapturedAt,
+        bestListing,
       });
       continue;
     }
     existing.listingIds.push(listing.id);
     existing.offerCount += 1;
-    existing.currentTotal = Math.min(existing.currentTotal, total);
+    existing.sourceNames.add(listing.source.name);
+    if (total < existing.currentTotal) {
+      existing.currentTotal = total;
+      existing.bestListing = bestListing;
+    }
     if (listing.freshnessCapturedAt > existing.freshestAt) {
       existing.freshestAt = listing.freshnessCapturedAt;
     }
@@ -112,7 +157,7 @@ export async function getBestDeals(
 
   const products = await prisma.canonicalProduct.findMany({
     where: { id: { in: productIds } },
-    include: { brand: true },
+    include: { brand: true, category: true },
   });
   const productById = new Map(products.map((p) => [p.id, p]));
 
@@ -141,14 +186,18 @@ export async function getBestDeals(
         productId: id,
         brandName: product.brand.name,
         productName: product.modelName,
-        imageSrc: productImageFor(id),
+        categorySlug: product.category.slug,
+        imageSrc: productImageFor(id, product.category.slug, product.modelName),
         currentTotal: agg.currentTotal,
         previousTotal: discountPercent != null ? previousTotal : null,
         discountPercent,
         dealBadge,
         offerCount: agg.offerCount,
+        sourceCount: agg.sourceNames.size,
         isSaved: savedProductIds.has(id),
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
+        rating: product.averageRating,
+        bestListing: agg.bestListing,
       },
     ];
   });
@@ -164,4 +213,23 @@ export async function getBestDeals(
       return a.currentTotal - b.currentTotal;
     })
     .slice(0, limit);
+}
+
+/**
+ * Real-data rationale for a Best Deal card.
+ * Returns null when there is no price-history drop and fewer than 2 offers —
+ * never invents a reason.
+ */
+export function whyThisDeal(item: {
+  discountPercent: number | null;
+  offerCount: number;
+  previousTotal: number | null;
+}): string | null {
+  if (item.discountPercent != null && item.discountPercent > 0 && item.previousTotal != null) {
+    return `${item.discountPercent}% lower than recent tracked price.`;
+  }
+  if (item.offerCount >= 2) {
+    return `Lowest Total Known Cost among ${item.offerCount} approved sources.`;
+  }
+  return null;
 }

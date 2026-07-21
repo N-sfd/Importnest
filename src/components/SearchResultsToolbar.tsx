@@ -4,11 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CategoryVisualCard } from "@/components/CategoryVisualCard";
 import type { ResultsPageParams } from "@/components/SearchResultsLayout";
+import { categoryDisplayTitle } from "@/lib/category-visuals";
 import { RESULTS_SORT_OPTIONS, type ResultsSort } from "@/lib/search-results";
 
 function prefsChips(params: ResultsPageParams): { label: string; clearKey: string }[] {
   const chips: { label: string; clearKey: string }[] = [];
-  if (params.category) chips.push({ label: `Category: ${params.category}`, clearKey: "category" });
+  if (params.category)
+    chips.push({
+      label: `Category: ${categoryDisplayTitle(params.category)}`,
+      clearKey: "category",
+    });
   if (params.brand) chips.push({ label: `Brand: ${params.brand}`, clearKey: "brand" });
   else if (params.brands && params.brands !== "any")
     chips.push({ label: `Brands: ${params.brands}`, clearKey: "brands" });
@@ -36,13 +41,17 @@ export function SearchResultsToolbar({
   params,
   total,
   sort,
+  hideCategoryVisual = false,
 }: {
   params: ResultsPageParams;
   total: number;
   sort: ResultsSort;
+  /** When true, skip the compact category collage (CategoryBrowseHeader already covers it). */
+  hideCategoryVisual?: boolean;
 }) {
   const router = useRouter();
   const chips = prefsChips(params);
+  const categoryTitle = params.category ? categoryDisplayTitle(params.category) : null;
 
   function hrefWithout(key: string) {
     const next = new URLSearchParams();
@@ -69,20 +78,38 @@ export function SearchResultsToolbar({
     router.push(`/search/results?${next.toString()}`);
   }
 
+  const heading =
+    params.q?.trim() || (categoryTitle ? categoryTitle : "All products");
+  const isCategoryBrowse = Boolean(params.category) && !params.q?.trim();
+
   return (
     <div className="space-y-4 border-b border-border pb-4">
-      {params.category ? (
-        <CategoryVisualCard category={params.category} compact />
+      {params.category && !hideCategoryVisual ? (
+        <CategoryVisualCard category={params.category} query={params.q} compact />
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Search</p>
-          <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
-            {params.q?.trim() ||
-              (params.category ? `Category: ${params.category}` : "All products")}
-          </h1>
-          <p className="mt-1 text-sm text-muted" aria-live="polite">
-            {total} matching product{total === 1 ? "" : "s"}
+          {!isCategoryBrowse || params.q?.trim() ? (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {params.q?.trim() ? "Search" : categoryTitle ? "Category" : "Search"}
+              </p>
+              {params.category && hideCategoryVisual ? (
+                <h2 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
+                  {heading}
+                </h2>
+              ) : (
+                <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl">
+                  {heading}
+                </h1>
+              )}
+            </>
+          ) : null}
+          <p
+            className={`${isCategoryBrowse && !params.q?.trim() ? "" : "mt-1"} text-sm text-muted`}
+            aria-live="polite"
+          >
+            {total} matching live product{total === 1 ? "" : "s"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -110,7 +137,7 @@ export function SearchResultsToolbar({
         </div>
       </div>
 
-      {chips.length > 0 && (
+      {chips.length > 0 ? (
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
             Captured preferences
@@ -132,7 +159,7 @@ export function SearchResultsToolbar({
             ))}
           </ul>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

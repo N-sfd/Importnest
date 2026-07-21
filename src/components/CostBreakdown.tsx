@@ -41,7 +41,7 @@ function Row({
       </dt>
       <dd
         className={`flex items-center gap-1.5 tabular-nums ${
-          strong ? "text-base font-extrabold text-price" : "text-sm text-foreground/80"
+          strong ? "text-base price-text" : "text-sm text-foreground/80"
         } ${isMissing ? "font-normal italic text-muted" : ""}`}
       >
         {text}

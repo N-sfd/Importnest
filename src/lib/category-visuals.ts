@@ -17,15 +17,24 @@ export const categoryImages: Record<string, string> = {
 };
 
 export const categoryDescriptions: Record<string, string> = {
-  electronics: "Phones, audio, tablets, laptops, and smart devices.",
-  appliances: "Kitchen, laundry, cleaning, and home appliances.",
-  kitchen: "Cookware, coffee tools, food prep, and kitchen essentials.",
-  footwear: "Running shoes, casual shoes, and seasonal footwear.",
-  beauty: "Beauty devices, grooming tools, and personal-care products.",
-  accessories: "Chargers, cases, bags, organizers, and everyday add-ons.",
-  automotive: "Car accessories, tools, chargers, and maintenance products.",
-  outdoors: "Backpacks, camping gear, travel tools, and outdoor essentials.",
-  home: "Furniture, cleaning, storage, and smart-home products.",
+  electronics:
+    "Compare phones, laptops, tablets, headphones, cameras, and gaming accessories.",
+  appliances:
+    "Compare dishwashers, refrigerators, vacuums, microwaves, and laundry appliances.",
+  kitchen:
+    "Compare cookware, blenders, coffee makers, knives, and everyday kitchen essentials.",
+  footwear:
+    "Compare running shoes, sneakers, boots, sandals, and everyday footwear.",
+  beauty:
+    "Compare hair dryers, stylers, shavers, mirrors, and personal-care devices.",
+  accessories:
+    "Compare bags, chargers, cases, wallets, and everyday add-ons.",
+  automotive:
+    "Compare dash cams, mounts, chargers, mats, and car care essentials.",
+  outdoors:
+    "Compare backpacks, tents, coolers, bottles, and outdoor gear.",
+  home:
+    "Compare lighting, storage, textiles, and home essentials.",
 };
 
 const CATEGORY_TITLES: Record<string, string> = {
@@ -33,7 +42,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   appliances: "Appliances",
   kitchen: "Kitchen",
   footwear: "Footwear",
-  beauty: "Beauty",
+  beauty: "Beauty Devices",
   accessories: "Accessories",
   automotive: "Automotive",
   outdoors: "Outdoors",
@@ -67,8 +76,24 @@ const CATEGORIES_WITH_IMAGE_FILES = new Set([
 ]);
 
 export function normalizeCategoryKey(category: string): string {
-  const raw = category.trim().toLowerCase();
+  const raw = category.trim().toLowerCase().replace(/[\s_]+/g, "-");
   return CATEGORY_ALIASES[raw] ?? raw;
+}
+
+/** Short internal key → canonical long-form slug used in URLs, nav, and the database. */
+const CANONICAL_URL_SLUG: Record<string, string> = {
+  beauty: "beauty-devices",
+};
+
+/**
+ * Canonical DB/URL-facing category slug (e.g. "beauty-devices"), matching
+ * Category.slug. Accepts any casing/separator/alias variant — "Beauty",
+ * "Beauty Devices", "beauty_devices", and "beauty-devices" all resolve here.
+ * Use this wherever a category slug is sent to the database or built into a link.
+ */
+export function normalizeCategorySlug(category: string): string {
+  const key = normalizeCategoryKey(category);
+  return CANONICAL_URL_SLUG[key] ?? key;
 }
 
 export function categoryDisplayTitle(category: string, title?: string): string {
@@ -97,4 +122,39 @@ export function categoryHasImage(category: string): boolean {
 
 export function categoryImageAlt(category: string, title?: string): string {
   return `${categoryDisplayTitle(category, title)} category image`;
+}
+
+/** Stable list of shoppable category slugs (canonical keys). */
+export const SHOP_CATEGORY_SLUGS = [
+  "electronics",
+  "appliances",
+  "kitchen",
+  "footwear",
+  "beauty",
+  "accessories",
+  "automotive",
+  "outdoors",
+  "home",
+] as const;
+
+export type ShopCategorySlug = (typeof SHOP_CATEGORY_SLUGS)[number];
+
+/** Related departments for category browse chips — excludes the current category. */
+const RELATED_BY_CATEGORY: Record<string, ShopCategorySlug[]> = {
+  electronics: ["appliances", "accessories", "home", "kitchen"],
+  appliances: ["kitchen", "home", "electronics", "beauty"],
+  kitchen: ["appliances", "home", "beauty", "accessories"],
+  footwear: ["accessories", "outdoors", "beauty", "home"],
+  beauty: ["accessories", "electronics", "kitchen", "home"],
+  accessories: ["electronics", "footwear", "automotive", "beauty"],
+  automotive: ["electronics", "outdoors", "accessories", "home"],
+  outdoors: ["footwear", "automotive", "home", "accessories"],
+  home: ["appliances", "kitchen", "outdoors", "electronics"],
+};
+
+export function relatedCategorySlugs(category: string, limit = 6): ShopCategorySlug[] {
+  const key = normalizeCategoryKey(category);
+  const preferred = RELATED_BY_CATEGORY[key] ?? [];
+  const rest = SHOP_CATEGORY_SLUGS.filter((s) => s !== key && !preferred.includes(s));
+  return [...preferred, ...rest].filter((s) => s !== key).slice(0, limit);
 }

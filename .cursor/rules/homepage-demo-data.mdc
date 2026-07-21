@@ -19,5 +19,6 @@ pages don't feel empty while the real catalog is small.
 - Demo tiles link to `/search?category=<slug>` (browse the real category),
   never to a fake product detail page.
 - Demo tiles reuse each category's existing hero image
-  (`public/images/categories/<slug>.png`) rather than fabricating dozens of
-  distinct product photos.
+  (`public/images/categories/<slug>.png`) and any unused real photo assets
+  under `public/images/` — never abstract line-icon SVGs presented as product
+  photos.

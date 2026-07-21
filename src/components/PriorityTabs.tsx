@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { BottomSheet } from "@/components/BottomSheet";
 import {
   formatConditionLabel,
@@ -18,14 +19,14 @@ import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 import type { Priority } from "@/lib/types";
 import { RefreshPricesButton } from "@/components/RefreshPricesButton";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
-import { formatFreshness } from "@/lib/freshness";
+import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 
 /** Single pill style shared by every card badge — only the tone color varies. */
 function Badge({
   tone,
   children,
 }: {
-  tone: "top" | "authorized" | "neutral";
+  tone: "top" | "authorized" | "neutral" | "fresh" | "stale";
   children: React.ReactNode;
 }) {
   const toneClass =
@@ -33,7 +34,11 @@ function Badge({
       ? "bg-cta/30 text-navy-900"
       : tone === "authorized"
         ? "bg-navy-100 text-navy-900"
-        : "bg-surface text-muted";
+          : tone === "fresh"
+          ? "badge-savings"
+          : tone === "stale"
+            ? "bg-amber-100 text-amber-900"
+            : "bg-surface text-muted";
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${toneClass}`}>
       {children}
@@ -43,10 +48,18 @@ function Badge({
 
 /** Fixed-width label column so values line up at the same position on every card. */
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  const empty =
+    children == null ||
+    children === "" ||
+    (typeof children === "string" && !children.trim());
   return (
     <div className="flex items-baseline gap-2 text-sm">
       <span className="w-24 shrink-0 text-xs font-medium text-muted sm:w-28">{label}</span>
-      <span className="min-w-0 flex-1 text-foreground/85">{children}</span>
+      <span
+        className={`min-w-0 flex-1 text-foreground/85 ${empty ? "italic text-muted" : ""}`}
+      >
+        {empty ? "Not provided" : children}
+      </span>
     </div>
   );
 }
@@ -59,10 +72,12 @@ function RecommendationPanel({
   productId: string;
 }) {
   return (
-    <div className="rounded-2xl border border-cta/40 bg-cta/10 p-4 sm:p-5">
+    <div className="rounded-2xl border border-accent/25 bg-section-soft p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">Recommended</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-navy-800">
+            Why recommended
+          </p>
           <h3 className="mt-1 text-lg font-bold tracking-tight text-foreground">{model.label}</h3>
           <p className="mt-1 text-sm font-medium text-foreground">{model.retailerName}</p>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/85">
@@ -71,7 +86,7 @@ function RecommendationPanel({
         </div>
         <div className="text-right">
           <p className="text-xs font-medium text-muted">Total known cost</p>
-          <p className="text-xl font-bold tabular-nums text-price">
+          <p className="text-xl price-text">
             ${model.totalKnownCost.toFixed(2)}
           </p>
           <div className="mt-1">
@@ -138,11 +153,17 @@ function RecommendationPanel({
 
 function OfferCard({
   productId,
+  productName,
+  brandName,
+  productImageSrc,
   row,
   isTop,
   recommendationLabel,
 }: {
   productId: string;
+  productName: string;
+  brandName: string;
+  productImageSrc: string;
   row: CompareRow;
   isTop: boolean;
   recommendationLabel: string;
@@ -183,10 +204,21 @@ function OfferCard({
             </h3>
             {isTop ? (
               <Badge tone="top">{recommendationLabel}</Badge>
-            ) : (
-              <Badge tone="neutral">{recommendation.label}</Badge>
-            )}
+            ) : null}
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
+            {(() => {
+              const minutes = listing.freshnessMinutesAgo;
+              if (needsFreshnessWarning(minutes)) {
+                return <Badge tone="stale">{freshnessWarningLabel()}</Badge>;
+              }
+              if (minutes != null && minutes < 15) {
+                return <Badge tone="fresh">Updated recently</Badge>;
+              }
+              if (minutes != null) {
+                return <Badge tone="neutral">{formatFreshness(minutes)}</Badge>;
+              }
+              return <Badge tone="neutral">Last checked unknown</Badge>;
+            })()}
           </div>
           {listing.sourceTypeLabel ? (
             <>
@@ -208,6 +240,30 @@ function OfferCard({
         </div>
       </div>
 
+      {/* Trust signals — Importnest is source-transparent */}
+      <ul className="offer-trust-strip mt-3" aria-label="Source confidence">
+        <li>
+          {listing.isAuthorizedSource ? (
+            <span className="offer-trust-pill offer-trust-pill-ok">Approved source</span>
+          ) : (
+            <span className="offer-trust-pill">Listed source</span>
+          )}
+        </li>
+        <li>
+          <span className="offer-trust-pill">{formatFreshness(listing.freshnessMinutesAgo)}</span>
+        </li>
+        <li>
+          <span className="offer-trust-pill">
+            {/affiliate/i.test(listing.sourceType) || /affiliate/i.test(listing.sourceTypeLabel)
+              ? "Affiliate link"
+              : listing.sourceTypeLabel || "Partner listing"}
+          </span>
+        </li>
+        <li>
+          <span className="offer-trust-pill offer-trust-pill-ok">Sponsored? No</span>
+        </li>
+      </ul>
+
       {/* Condition · Total known cost · Delivery/pickup · Protection · Freshness, one order on every card */}
       <div className="mt-3 space-y-2">
         <FieldRow label="Condition">{formatConditionLabel(listing.condition)}</FieldRow>
@@ -215,7 +271,11 @@ function OfferCard({
           itemPrice={listing.price}
           shipping={listing.shipping}
           mandatoryFees={listing.mandatoryFees}
-          verifiedDiscount={listing.verifiedDiscount}
+          verifiedDiscount={
+            listing.verifiedDiscount != null && listing.verifiedDiscount > 0
+              ? listing.verifiedDiscount
+              : null
+          }
           totalKnownCost={total}
         />
         <FieldRow label="Delivery / pickup">{fulfillment}</FieldRow>
@@ -223,7 +283,7 @@ function OfferCard({
           <ProtectionDetails details={listing.protectionDetails} />
         </FieldRow>
         <FieldRow label="Freshness">
-          <Freshness minutesAgo={listing.freshnessMinutesAgo} />
+          <Freshness minutesAgo={listing.freshnessMinutesAgo} showRefreshHint />
         </FieldRow>
       </div>
 
@@ -242,9 +302,23 @@ function OfferCard({
             rel="noopener noreferrer sponsored"
             className="btn-cta min-h-11 px-4 py-2 text-center text-sm"
           >
-            View offer
+            View retailer offer
           </a>
         ) : null}
+        <AddToCartButton
+          label="Add this offer to cart"
+          listingId={listing.id}
+          productId={productId}
+          title={productName}
+          brand={brandName}
+          imageUrl={productImageSrc}
+          retailerName={listing.sourceName}
+          condition={formatConditionLabel(listing.condition)}
+          itemPrice={listing.price}
+          shipping={listing.shipping}
+          fees={listing.mandatoryFees}
+          totalKnownCost={total}
+        />
       </div>
     </li>
   );
@@ -252,12 +326,18 @@ function OfferCard({
 
 export function PriorityTabs({
   productId,
+  productName,
+  brandName,
+  productImageSrc,
   rows,
   priority,
   priorityOptions,
   panel,
 }: {
   productId: string;
+  productName: string;
+  brandName: string;
+  productImageSrc: string;
   /** Already ranked server-side for `priority` — this component never re-sorts. */
   rows: CompareRow[];
   priority: Priority;
@@ -272,7 +352,11 @@ export function PriorityTabs({
   const topId = panel ? rows[0]?.listing.id : undefined;
   const recommendationLabel = panel?.label ?? "";
   const anyStale = rows.some((r) => isStaleFreshness(r.listing.freshnessMinutesAgo));
-  const oldestMinutes = Math.max(0, ...rows.map((r) => r.listing.freshnessMinutesAgo ?? 0));
+  const anyWarn = rows.some((r) => needsFreshnessWarning(r.listing.freshnessMinutesAgo));
+  const knownAges = rows
+    .map((r) => r.listing.freshnessMinutesAgo)
+    .filter((v): v is number => v != null);
+  const oldestMinutes = knownAges.length > 0 ? Math.max(...knownAges) : null;
   const sourceCount = new Set(rows.map((r) => r.listing.sourceId)).size;
 
   if (rows.length === 0) {
@@ -293,22 +377,22 @@ export function PriorityTabs({
 
   return (
     <div>
-      {/* Recommendation summary */}
-      {anyStale ? (
+      {/* Soft freshness nudge — only when data is truly old */}
+      {anyWarn ? (
         <StatusBanner
           tone="info"
-          title={`Prices last checked: ${formatFreshness(oldestMinutes).replace(/^Updated /i, "")}`}
-          description="Totals still reflect the last sync. Refresh for the latest item, shipping, and fee figures before you buy."
+          title={formatFreshness(oldestMinutes)}
+          description={`${freshnessWarningLabel()}. Totals still reflect the last sync — refresh for the latest item, shipping, and fee figures before you buy.`}
           action={<RefreshPricesButton productId={productId} />}
         />
       ) : null}
 
       {panel ? (
-        <div className={anyStale ? "mt-4" : ""}>
+        <div className={anyWarn || anyStale ? "mt-4" : ""}>
           <RecommendationPanel model={panel} productId={productId} />
         </div>
       ) : (
-        <div className={anyStale ? "mt-4" : ""}>
+        <div className={anyWarn || anyStale ? "mt-4" : ""}>
           <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-muted">
             {NO_RECOMMENDATION_TEXT}
           </p>
@@ -387,6 +471,9 @@ export function PriorityTabs({
           <OfferCard
             key={row.listing.id}
             productId={productId}
+            productName={productName}
+            brandName={brandName}
+            productImageSrc={productImageSrc}
             row={row}
             isTop={row.listing.id === topId}
             recommendationLabel={recommendationLabel}

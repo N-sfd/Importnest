@@ -1,60 +1,138 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { categoryDisplayTitle, categoryImageSrc } from "@/lib/category-visuals";
-import { getCategoryDemoProducts } from "@/data/category-demo-products";
+import { useSearchParams } from "next/navigation";
+import { categoryDisplayTitle, normalizeCategoryKey } from "@/lib/category-visuals";
+import {
+  getCategoryDemoProducts,
+  getCategoryDemoSubtypes,
+} from "@/data/category-demo-products";
+import { ProductImage } from "@/components/ProductImage";
 
 /**
- * Non-interactive discovery tiles for category browsing — see
- * .cursor/rules/homepage-demo-data.mdc. No price/offer/compare/save
- * affordances; every tile links to browsing the real category, never to a
- * fake product page. Hidden entirely when there's no demo content for this
- * category rather than rendering an empty section.
+ * Image-rich discovery tiles for category browsing — distinct subtype photos.
+ * Not live listings: no invented prices/offers.
+ * Always scoped to the requested category only (never mixes departments).
  */
-export function CategoryDemoGrid({ categorySlug }: { categorySlug: string }) {
-  const products = getCategoryDemoProducts(categorySlug);
+export function CategoryDemoGrid({
+  categorySlug,
+  prominence = "secondary",
+  showSubtypeChips = true,
+}: {
+  categorySlug: string;
+  /** primary = main browse grid when live results are empty; secondary = “More to explore” */
+  prominence?: "primary" | "secondary";
+  /** When false, omit subtype chips (e.g. already shown in CategoryBrowseHeader). */
+  showSubtypeChips?: boolean;
+}) {
+  const searchParams = useSearchParams();
+  const activeSubtype = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const key = normalizeCategoryKey(categorySlug);
+  const products = getCategoryDemoProducts(categorySlug).filter(
+    (p) => normalizeCategoryKey(p.categorySlug) === key,
+  );
   if (products.length === 0) return null;
 
-  const categoryHeroImage = categoryImageSrc(categorySlug);
   const title = categoryDisplayTitle(categorySlug);
-  const browseHref = `/search?category=${categorySlug}`;
+  const browseHref = `/search/results?category=${encodeURIComponent(categorySlug)}`;
+  const subtypes = getCategoryDemoSubtypes(categorySlug);
+  const headingId = prominence === "primary" ? "category-browse-heading" : "category-demo-heading";
+  const imageBySubtype = new Map(products.map((p) => [p.subtype.toLowerCase(), p.image]));
+  const isBeauty = key === "beauty";
+  const sectionTitle =
+    prominence === "primary"
+      ? isBeauty
+        ? "Explore Beauty Devices"
+        : `Explore ${title}`
+      : `More to explore in ${title}`;
+  const sectionSubtitle = isBeauty
+    ? "10 beauty and personal-care device types with distinct photos — browse ideas, then compare live offers when available."
+    : `${products.length} ${title} product types with distinct photos — browse ideas, then compare live offers when available.`;
 
   return (
-    <section className="mt-6" aria-labelledby="category-demo-heading">
-      <h2 id="category-demo-heading" className="text-sm font-bold uppercase tracking-wide text-muted">
-        More to explore in {title}
-      </h2>
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {products.map((product) => {
-          const image = product.image ?? categoryHeroImage;
-          return (
+    <section className={prominence === "primary" ? "mt-2" : "mt-8"} aria-labelledby={headingId}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id={headingId} className="text-lg font-bold tracking-tight text-navy-900 sm:text-xl">
+            {sectionTitle}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">{sectionSubtitle}</p>
+        </div>
+        <Link href={browseHref} className="text-sm font-semibold text-link hover:underline">
+          View all {title}
+        </Link>
+      </div>
+
+      {showSubtypeChips ? (
+        <ul className="category-subtype-strip mt-3" aria-label={`${title} product types`}>
+          {subtypes.map((subtype) => {
+            const thumb = imageBySubtype.get(subtype.toLowerCase());
+            const selected = activeSubtype === subtype.toLowerCase();
+            return (
+              <li key={subtype}>
+                <Link
+                  href={`/search/results?q=${encodeURIComponent(subtype)}&category=${encodeURIComponent(categorySlug)}`}
+                  className={`category-subtype-chip ${selected ? "category-subtype-chip-active" : ""}`}
+                >
+                  {thumb ? (
+                    <span className="category-subtype-thumb">
+                      <Image
+                        src={thumb}
+                        alt=""
+                        width={28}
+                        height={28}
+                        unoptimized
+                        className="h-7 w-7 object-contain"
+                      />
+                    </span>
+                  ) : null}
+                  <span className="capitalize">{subtype}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      <ul className="section-grid mt-4">
+        {products.map((product) => (
+          <li key={product.id} className="min-w-0">
             <Link
-              key={product.id}
-              href={browseHref}
-              className="group flex gap-3 rounded-xl border border-border bg-panel p-3 transition hover:border-navy-800"
+              href={`/search/results?q=${encodeURIComponent(product.subtype)}&category=${encodeURIComponent(categorySlug)}`}
+              className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)] transition hover:-translate-y-0.5 hover:border-accent/45"
             >
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-white">
-                {image ? (
-                  <Image src={image} alt="" fill className="object-cover" sizes="64px" />
-                ) : null}
-              </div>
-              <div className="min-w-0">
+              <div className="relative mx-2 mt-2 overflow-hidden rounded-[14px] bg-[#F7FAFC]">
+                <ProductImage
+                  src={product.image}
+                  category={product.categorySlug}
+                  subtype={product.subtype}
+                  title={product.title}
+                  subtitle={product.subtitle}
+                  size="card"
+                  className="transition duration-300 group-hover:scale-[1.03]"
+                  sizes="(max-width:640px) 50vw, (max-width:1280px) 25vw, 20vw"
+                />
                 {product.badge ? (
-                  <span className="mb-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+                  <span className="badge-accent absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold">
                     {product.badge}
                   </span>
                 ) : null}
-                <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted">
+              </div>
+              <div className="flex min-h-[7.5rem] flex-1 flex-col gap-0.5 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   {product.brand}
                 </p>
-                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground group-hover:text-link">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-navy-900 group-hover:text-link">
                   {product.title}
                 </p>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted">{product.subtitle}</p>
+                <p className="mt-0.5 text-xs capitalize text-accent">{product.subtype}</p>
+                <p className="mt-auto line-clamp-2 text-xs text-muted">{product.subtitle}</p>
               </div>
             </Link>
-          );
-        })}
-      </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

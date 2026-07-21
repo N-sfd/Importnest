@@ -11,15 +11,16 @@ export function CompareNavLink() {
   return (
     <Link
       href="/compare/list"
-      className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold text-navy-900 transition hover:bg-navy-100 sm:px-3"
+      className="header-action"
+      aria-label={`Compare${count > 0 ? `, ${count} items` : ""}`}
     >
-      <CompareIcon />
-      Compare
-      {count > 0 ? (
-        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cta px-1 text-[10px] font-bold text-white">
-          {count}
-        </span>
-      ) : null}
+      <span className="relative inline-flex overflow-visible p-1">
+        <CompareIcon />
+        {count > 0 ? (
+          <span className="header-action-badge">{count > 99 ? "99+" : count}</span>
+        ) : null}
+      </span>
+      <span className="label header-action-label">Compare</span>
     </Link>
   );
 }

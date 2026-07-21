@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { CategoryNavIcon } from "@/components/CategoryNavIcons";
 import {
   navDepartments,
   topNavLinks,
@@ -30,13 +32,17 @@ function DepartmentPanel({
               onMouseEnter={() => onSelect(d.id)}
               onFocus={() => onSelect(d.id)}
               onClick={() => onSelect(d.id)}
-              className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold transition ${
+              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition ${
                 d.id === active.id
                   ? "bg-navy-900 text-white"
                   : "text-foreground hover:bg-navy-100"
               }`}
             >
-              {d.name}
+              <CategoryNavIcon
+                deptId={d.id}
+                className={`category-nav-icon ${d.id === active.id ? "opacity-95" : "text-navy-800"}`}
+              />
+              <span className="min-w-0 flex-1">{d.name}</span>
               <span aria-hidden className="text-xs opacity-60">
                 ›
               </span>
@@ -85,12 +91,42 @@ function DepartmentPanel({
   );
 }
 
+function navLinkIsActive(
+  href: string,
+  pathname: string,
+  category: string | null,
+  q: string | null,
+): boolean {
+  if (!pathname.startsWith("/search")) return false;
+  try {
+    const url = new URL(href, "https://importnest.local");
+    const linkCategory = url.searchParams.get("category");
+    const linkQ = url.searchParams.get("q");
+    if (linkQ === "deals") {
+      return (q ?? "").toLowerCase().includes("deal");
+    }
+    if (linkCategory) {
+      return category === linkCategory;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 /** Amazon / Idealo-style department bar + All menu flyout. */
 export function CategoryNav() {
   const [open, setOpen] = useState(false);
   const [activeDept, setActiveDept] = useState(navDepartments[0]?.id ?? "home");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+  const q = searchParams.get("q");
 
   useEffect(() => {
     if (!open) return;
@@ -112,42 +148,68 @@ export function CategoryNav() {
     };
   }, [open]);
 
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    function updateFades() {
+      if (!el) return;
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      setCanScrollLeft(scrollLeft > 4);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    }
+
+    updateFades();
+    el.addEventListener("scroll", updateFades, { passive: true });
+    window.addEventListener("resize", updateFades);
+    return () => {
+      el.removeEventListener("scroll", updateFades);
+      window.removeEventListener("resize", updateFades);
+    };
+  }, []);
+
   return (
-    <div ref={rootRef} className="relative border-b border-border bg-navy-800/95 text-white/95">
-      <div className="mx-auto flex max-w-[1200px] items-stretch gap-1 px-2 py-1.5 text-sm sm:px-4">
+    <div ref={rootRef} className="category-nav relative border-b border-black/10 text-white">
+      <div className="category-nav-inner nav-container">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((v) => !v)}
-          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold transition ${
-            open ? "bg-cta text-white" : "bg-white/10 text-white hover:bg-white/15"
-          }`}
+          className="category-all"
         >
-          <span aria-hidden className="text-base leading-none">
-            ☰
-          </span>
+          <CategoryNavIcon label="All" />
           <span>All</span>
         </button>
 
-        <nav
-          aria-label="Departments"
-          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        <div
+          className={`category-nav-scroller ${canScrollLeft ? "category-nav-fade-left" : ""} ${
+            canScrollRight ? "category-nav-fade-right" : ""
+          }`}
         >
-          {topNavLinks.map((link) => (
-            <Link
-              key={link.href + link.label}
-              href={link.href}
-              className={`shrink-0 rounded-lg px-2.5 py-1.5 transition hover:bg-white/10 hover:text-white ${
-                link.featured
-                  ? "font-semibold text-cta"
-                  : "font-medium text-white/90"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+          <nav
+            ref={scrollerRef}
+            aria-label="Departments"
+            className="category-nav-links"
+          >
+            {topNavLinks.map((link) => {
+              const active = navLinkIsActive(link.href, pathname, category, q);
+              return (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`category-link ${link.featured ? "category-link-featured" : ""} ${
+                    active ? "category-link-active" : ""
+                  }`}
+                >
+                  <CategoryNavIcon label={link.label} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
       {open ? (
@@ -163,7 +225,7 @@ export function CategoryNav() {
             aria-label="All departments"
             className="absolute left-0 right-0 top-full z-40 border-b border-border shadow-[var(--shadow-panel)]"
           >
-            <div className="mx-auto max-w-[1200px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
+            <div className="mx-auto max-w-[1440px] overflow-hidden rounded-b-2xl border-x border-border bg-panel text-foreground sm:mx-4 lg:mx-auto">
               <DepartmentPanel
                 departments={navDepartments}
                 activeId={activeDept}

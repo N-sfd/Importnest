@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   formatFreshness,
   FRESHNESS_STALE_MINUTES,
+  FRESHNESS_WARN_MINUTES,
+  freshnessWarningLabel,
   getFreshnessState,
   isFreshnessStale,
+  needsFreshnessWarning,
 } from "@/lib/freshness";
 
 describe("formatFreshness", () => {
@@ -34,9 +37,9 @@ describe("formatFreshness", () => {
     expect(text).not.toContain("2639");
   });
 
-  it("formats an unknown timestamp", () => {
-    expect(formatFreshness(null)).toBe("Freshness unknown");
-    expect(formatFreshness(undefined)).toBe("Freshness unknown");
+  it("formats an unknown timestamp softly", () => {
+    expect(formatFreshness(null)).toBe("Last checked unknown");
+    expect(formatFreshness(undefined)).toBe("Last checked unknown");
   });
 });
 
@@ -63,7 +66,7 @@ describe("getFreshnessState", () => {
 });
 
 describe("isFreshnessStale", () => {
-  it("treats stale ages and unknown ages both as stale", () => {
+  it("treats stale ages and unknown ages both as stale for ranking gates", () => {
     expect(isFreshnessStale(FRESHNESS_STALE_MINUTES)).toBe(true);
     expect(isFreshnessStale(null)).toBe(true);
   });
@@ -71,5 +74,19 @@ describe("isFreshnessStale", () => {
   it("treats fresh and aging ages as not stale", () => {
     expect(isFreshnessStale(0)).toBe(false);
     expect(isFreshnessStale(FRESHNESS_STALE_MINUTES - 1)).toBe(false);
+  });
+});
+
+describe("needsFreshnessWarning", () => {
+  it("does not warn for unknown or recent ages", () => {
+    expect(needsFreshnessWarning(null)).toBe(false);
+    expect(needsFreshnessWarning(60)).toBe(false);
+    expect(needsFreshnessWarning(FRESHNESS_WARN_MINUTES - 1)).toBe(false);
+  });
+
+  it("warns only when data is truly old", () => {
+    expect(needsFreshnessWarning(FRESHNESS_WARN_MINUTES)).toBe(true);
+    expect(needsFreshnessWarning(24 * 60)).toBe(true);
+    expect(freshnessWarningLabel()).toBe("May need refresh");
   });
 });

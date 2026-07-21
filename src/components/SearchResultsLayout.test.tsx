@@ -23,9 +23,19 @@ function makeProduct(overrides: Partial<SearchResultProduct> = {}): SearchResult
     isSaved: false,
     matchKind: "exact",
     highlights: [],
+    bestListing: null,
     ...overrides,
   };
 }
+
+const openBoxListing = {
+  listingId: "listing-open-box-pickup",
+  sourceName: "Local Electronics",
+  condition: "open-box",
+  price: 842,
+  shipping: 0,
+  fees: 0,
+};
 
 describe("SearchResultProductCard — no source data (zero listings for this product)", () => {
   it("shows an honest 'No offers' instead of a fabricated price or offer count", () => {
@@ -76,5 +86,52 @@ describe("SearchResultProductCard — comparable alternative labeling", () => {
     );
     expect(html).toContain("Exact match");
     expect(html).not.toContain("Comparable alternative");
+  });
+});
+
+describe("SearchResultProductCard — Add to Cart visibility", () => {
+  it("shows Add to cart when a real bestListing backs a normal search result", () => {
+    const html = renderToStaticMarkup(
+      <SearchResultProductCard
+        product={makeProduct({ bestListing: openBoxListing })}
+        signedIn={false}
+        redirectTo="/search/results?category=electronics"
+      />,
+    );
+    expect(html).toContain("Add to cart");
+    expect(html).toContain("Save");
+    expect(html).toContain("Compare");
+  });
+
+  it("shows Add to cart on filtered open-box / pickup result cards with a matching listing", () => {
+    const html = renderToStaticMarkup(
+      <SearchResultProductCard
+        product={makeProduct({
+          categorySlug: "electronics",
+          categoryName: "Electronics",
+          productName: "Nimbus Wireless Earbuds",
+          conditions: ["open-box", "new"],
+          hasPickup: true,
+          bestListing: openBoxListing,
+          lowestTotalCost: 842,
+        })}
+        signedIn={false}
+        redirectTo="/search/results?category=electronics&condition=open_box&pickup=1"
+      />,
+    );
+    expect(html).toContain("Add to cart");
+  });
+
+  it("hides Add to cart when there is no valid listing/backing offer", () => {
+    const html = renderToStaticMarkup(
+      <SearchResultProductCard
+        product={makeProduct({ bestListing: null, offerCount: 2, lowestTotalCost: 100 })}
+        signedIn={false}
+        redirectTo="/search/results"
+      />,
+    );
+    expect(html).not.toContain("Add to cart");
+    expect(html).toContain("Save");
+    expect(html).toContain("Compare");
   });
 });

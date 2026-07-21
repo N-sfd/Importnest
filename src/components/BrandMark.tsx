@@ -2,68 +2,48 @@ import Image from "next/image";
 import Link from "next/link";
 
 const SIZES = {
-  sm: { fullH: 36, icon: 32 },
-  /** Header lockup target ~42–48px */
-  md: { fullH: 46, icon: 40 },
-  lg: { fullH: 56, icon: 48 },
+  sm: { fullH: 36, icon: 28 },
+  md: { fullH: 48, icon: 36 },
+  lg: { fullH: 64, icon: 48 },
   xl: { fullH: 96, icon: 72 },
-} as const;
-
-/** Compact header lockup: icon rendered smaller than the wordmark, tight gap, centered. */
-/**
- * The wordmark's ~10.8:1 aspect ratio means a height tall enough to hit a
- * ~260px total-width cap and a ~36px height cap at the same time is not
- * achievable simultaneously (36px tall alone would need ~390px of width just
- * for the text). Width is prioritized here — it's what determines whether
- * the logo dominates the header — at the cost of a shorter height than a
- * naive per-property target would suggest.
- */
-const HEADER_LOCKUP = {
-  sm: { textH: 13, iconH: 10, gap: 3 },
-  md: { textH: 18, iconH: 13, gap: 4 },
 } as const;
 
 export type BrandLogo = "in" | "nest" | "logo9";
 export type BrandLayout = "horizontal" | "stacked" | "header";
 
 /**
- * Nest pack (current primary): cart + nest + verified tag.
- * `logo9` — transparent header lockup (icon + wordmark) and dark/full variants.
- * `in` keeps the older iN mark for optional call-sites.
+ * Brand assets:
+ * - header  → icon + IMPORTNEST only (no tagline) — top navigation
+ * - full    → icon + wordmark + tagline — footer / hero / marketing
+ * - icon    → mark only — favicon / mobile compact
  */
 const ASSETS = {
   logo9: {
-    /** Header-optimized: icon + IMPORTNEST only, transparent, no tagline/smiles. */
-    header: "/brand/logo9-header.png",
-    horizontal: "/brand/logo9-transparent.png",
-    /** Navy-plate lockup for dark surfaces (footer). */
-    horizontalOnDark: "/brand/logo9-on-dark.png",
-    stacked: "/brand/logo9-full.png",
-    icon: "/brand/logo9-icon.png",
-    iconDark: "/brand/logo9-icon-dark.png",
-    circle: "/brand/logo9-mark.png",
-    circleDark: "/brand/logo9-mark-dark.png",
-    headerAspect: 9.85,
-    /** Full transparent lockup with tagline ~1934×337 */
-    horizontalAspect: 5.74,
-    stackedAspect: 1.43,
-    /** Tightly-cropped icon and wordmark, sized independently for the compact header lockup. */
-    headerIcon: "/brand/logo9-header-icon.png",
-    headerWordmark: "/brand/logo9-header-wordmark.png",
-    headerIconAspect: 1.89,
-    headerWordmarkAspect: 10.82,
+    header: "/brand/importnest-header-logo-v2.png",
+    horizontal: "/brand/importnest-full-logo-v2.png",
+    horizontalOnDark: "/brand/importnest-full-logo-on-dark-v2.png",
+    stacked: "/brand/importnest-full-logo-on-dark-v2.png",
+    icon: "/brand/importnest-icon.png",
+    iconDark: "/brand/importnest-icon.png",
+    circle: "/brand/importnest-icon.png",
+    circleDark: "/brand/importnest-icon.png",
+    /** Navy-plate compact lockup (icon + IMPORTNEST, no tagline) — blends with the navy header */
+    headerAspect: 6.39,
+    /** 982×316 transparent full lockup with tagline */
+    horizontalAspect: 3.11,
+    stackedAspect: 3.11,
   },
   nest: {
-    header: "/brand/logo-horizontal.png",
-    horizontal: "/brand/logo-horizontal.png",
-    stacked: "/brand/logo-primary.png",
-    icon: "/brand/logo-app-icon-light.png",
-    iconDark: "/brand/logo-app-icon-dark.png",
-    circle: "/brand/logo-circle-light.png",
-    circleDark: "/brand/logo-circle-dark.png",
-    headerAspect: 4.83,
-    horizontalAspect: 4.83,
-    stackedAspect: 1.43,
+    header: "/brand/importnest-header-logo-v2.png",
+    horizontal: "/brand/importnest-full-logo-v2.png",
+    stacked: "/brand/importnest-full-logo-v2.png",
+    icon: "/brand/importnest-icon.png",
+    iconDark: "/brand/importnest-icon.png",
+    circle: "/brand/importnest-icon.png",
+    circleDark: "/brand/importnest-icon.png",
+    headerAspect: 6.39,
+    horizontalAspect: 3.11,
+    stackedAspect: 3.11,
   },
   in: {
     header: "/brand/logo8-full-dark.png",
@@ -79,9 +59,9 @@ const ASSETS = {
   },
 } as const;
 
-/** Importnest brand mark — prefer `nest` (primary pack). */
+/** Importnest brand mark — header uses compact lockup; full tagline only for large surfaces. */
 export function BrandMark({
-  logo = "nest",
+  logo = "logo9",
   showWordmark = true,
   size = "md",
   onDark = false,
@@ -93,52 +73,21 @@ export function BrandMark({
   showWordmark?: boolean;
   size?: keyof typeof SIZES;
   onDark?: boolean;
-  /** Wordmark layout: header = compact lockup, footer/hero = stacked/horizontal */
+  /** header = compact (no tagline); horizontal/stacked = full marketing lockup */
   layout?: BrandLayout;
 }) {
   const dims = SIZES[size];
   const asset = ASSETS[logo];
 
   if (showWordmark) {
-    if (layout === "header" && "headerIcon" in asset) {
-      const lockup = HEADER_LOCKUP[size as keyof typeof HEADER_LOCKUP] ?? HEADER_LOCKUP.md;
-      const iconW = Math.round(lockup.iconH * asset.headerIconAspect);
-      const textW = Math.round(lockup.textH * asset.headerWordmarkAspect);
-      return (
-        <span
-          className="inline-flex items-center leading-none"
-          style={{ gap: lockup.gap }}
-        >
-          <Image
-            src={asset.headerIcon}
-            alt=""
-            width={iconW}
-            height={lockup.iconH}
-            className="object-contain"
-            style={{ height: lockup.iconH, width: "auto" }}
-            priority
-          />
-          <Image
-            src={asset.headerWordmark}
-            alt="Importnest"
-            width={textW}
-            height={lockup.textH}
-            className="object-contain"
-            style={{ height: lockup.textH, width: "auto" }}
-            priority
-          />
-        </span>
-      );
-    }
-
     let src: string;
     let aspect: number;
     if (layout === "header") {
       src = asset.header;
       aspect = asset.headerAspect;
-    } else if (onDark && logo === "logo9" && layout === "horizontal") {
-      src = ASSETS.logo9.horizontalOnDark;
-      aspect = ASSETS.logo9.horizontalAspect;
+    } else if (onDark && "horizontalOnDark" in asset) {
+      src = asset.horizontalOnDark;
+      aspect = asset.horizontalAspect;
     } else if (layout === "stacked") {
       src = asset.stacked;
       aspect = asset.stackedAspect;
@@ -166,41 +115,52 @@ export function BrandMark({
   const iconSrc = onDark ? asset.iconDark : asset.icon;
 
   return (
-    <span className="inline-flex overflow-hidden rounded-xl">
+    <span className="inline-flex leading-none">
       <Image
         src={iconSrc}
         alt="Importnest"
-        width={dims.icon}
+        width={Math.round(dims.icon * 1.89)}
         height={dims.icon}
         className="object-contain"
+        style={{ height: dims.icon, width: "auto" }}
         priority
       />
     </span>
   );
 }
 
-/** Header home link — transparent icon + wordmark, no plate or tagline. */
+/**
+ * Header home link — compact transparent logo (icon + IMPORTNEST only).
+ * Never uses the tagline lockup, dark plate, or decorative underline.
+ */
 export function BrandLink({
   className = "",
-  onDark = false,
-  logo = "nest",
+  logo = "logo9",
 }: {
   variant?: "onDark" | "onLight";
   className?: string;
   onDark?: boolean;
   logo?: BrandLogo;
 }) {
+  const headerSrc = ASSETS[logo].header;
+  const aspect = ASSETS[logo].headerAspect;
+  const height = 38;
+  const width = Math.round(height * aspect);
+
   return (
     <Link
       href="/"
-      className={`inline-flex shrink-0 items-center self-center transition hover:opacity-90 ${className}`}
+      className={`header-logo brand-logo transition hover:opacity-90 ${className}`}
+      aria-label="Importnest home"
     >
-      <span className="hidden sm:inline-flex leading-none">
-        <BrandMark logo={logo} showWordmark layout="header" onDark={onDark} size="md" />
-      </span>
-      <span className="inline-flex leading-none sm:hidden">
-        <BrandMark logo={logo} showWordmark={false} onDark={onDark} size="sm" />
-      </span>
+      <Image
+        src={headerSrc}
+        alt="Importnest"
+        width={width}
+        height={height}
+        className="header-logo-img"
+        priority
+      />
     </Link>
   );
 }

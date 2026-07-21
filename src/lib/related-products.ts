@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { minutesSince } from "@/lib/compare-view";
-import { productImageFor } from "@/lib/images";
+import { productImageFor } from "@/lib/product-images";
 import type { PopularComparison } from "@/lib/popular-comparisons";
 
 /**
@@ -29,27 +29,54 @@ export async function getRelatedProducts(
       matches: { some: { status: "approved" } },
     },
     select: {
+      id: true,
       canonicalProductId: true,
       price: true,
       shipping: true,
       fees: true,
+      condition: true,
       freshnessCapturedAt: true,
+      source: { select: { name: true } },
     },
   });
 
-  type Agg = { offerCount: number; lowestTotalCost: number; freshestAt: Date };
+  type Agg = {
+    offerCount: number;
+    sourceNames: Set<string>;
+    lowestTotalCost: number;
+    freshestAt: Date;
+    bestListing: PopularComparison["bestListing"];
+  };
   const byProduct = new Map<string, Agg>();
   for (const listing of listings) {
     const id = listing.canonicalProductId;
     if (!id) continue;
     const total = listing.price + listing.shipping + listing.fees;
+    const bestListing: PopularComparison["bestListing"] = {
+      listingId: listing.id,
+      sourceName: listing.source.name,
+      condition: listing.condition,
+      price: listing.price,
+      shipping: listing.shipping,
+      fees: listing.fees,
+    };
     const existing = byProduct.get(id);
     if (!existing) {
-      byProduct.set(id, { offerCount: 1, lowestTotalCost: total, freshestAt: listing.freshnessCapturedAt });
+      byProduct.set(id, {
+        offerCount: 1,
+        sourceNames: new Set([listing.source.name]),
+        lowestTotalCost: total,
+        freshestAt: listing.freshnessCapturedAt,
+        bestListing,
+      });
       continue;
     }
     existing.offerCount += 1;
-    existing.lowestTotalCost = Math.min(existing.lowestTotalCost, total);
+    existing.sourceNames.add(listing.source.name);
+    if (total < existing.lowestTotalCost) {
+      existing.lowestTotalCost = total;
+      existing.bestListing = bestListing;
+    }
     if (listing.freshnessCapturedAt > existing.freshestAt) {
       existing.freshestAt = listing.freshnessCapturedAt;
     }
@@ -67,7 +94,7 @@ export async function getRelatedProducts(
 
   const products = await prisma.canonicalProduct.findMany({
     where: { id: { in: rankedIds } },
-    include: { brand: true },
+    include: { brand: true, category: true },
   });
   const productById = new Map(products.map((p) => [p.id, p]));
 
@@ -80,12 +107,15 @@ export async function getRelatedProducts(
         productId: id,
         brandName: product.brand.name,
         productName: product.modelName,
-        imageSrc: productImageFor(id),
+        categorySlug: product.category.slug,
+        imageSrc: productImageFor(id, product.category.slug, product.modelName),
         lowestTotalCost: agg.lowestTotalCost,
         offerCount: agg.offerCount,
+        sourceCount: agg.sourceNames.size,
         freshnessMinutesAgo: minutesSince(agg.freshestAt),
         rating: product.averageRating,
         isSaved: savedProductIds.has(id),
+        bestListing: agg.bestListing,
       },
     ];
   });

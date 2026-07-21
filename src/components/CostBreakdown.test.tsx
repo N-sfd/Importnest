@@ -73,7 +73,7 @@ describe("CostBreakdown — total emphasis", () => {
     // The total row uses the bold/emphasized price styling; the item-price row does not.
     const totalRow = html.slice(totalIndex, totalIndex + 400);
     const itemRow = html.slice(itemPriceIndex, itemPriceIndex + 400);
-    expect(totalRow).toContain("font-extrabold");
-    expect(itemRow).not.toContain("font-extrabold");
+    expect(totalRow).toContain("price-text");
+    expect(itemRow).not.toContain("price-text");
   });
 });

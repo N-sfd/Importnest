@@ -147,18 +147,32 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Current total
+                  Current
                 </p>
                 <p className="mt-0.5 text-lg font-extrabold tabular-nums text-navy-900">
-                  {item.currentPrice != null ? `$${item.currentPrice.toFixed(2)}` : "Unavailable"}
+                  {item.currentPrice != null
+                    ? `$${item.currentPrice.toFixed(2)}`
+                    : "Not provided"}
                 </p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Target price
+                  Target
                 </p>
                 <p className="mt-0.5 text-sm font-semibold tabular-nums text-navy-900">
-                  {item.targetPrice != null ? `$${item.targetPrice.toFixed(2)}` : "Not set"}
+                  {item.targetPrice != null ? `$${item.targetPrice.toFixed(2)}` : "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  Alert status
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-navy-900">
+                  {item.status === "watching" || item.status === "triggered"
+                    ? item.status === "triggered"
+                      ? "Triggered"
+                      : "Active"
+                    : statusLabel[item.status]}
                 </p>
               </div>
               <div>
@@ -166,7 +180,19 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                   Offers
                 </p>
                 <p className="mt-0.5 text-sm font-semibold text-navy-900">
-                  {item.offerCount} {item.offerCount === 1 ? "offer" : "offers"}
+                  {item.offerCount > 0
+                    ? `${item.offerCount} ${item.offerCount === 1 ? "offer" : "offers"}`
+                    : "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  Sources
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-navy-900">
+                  {item.sourceCoverage > 0
+                    ? `${item.sourceCoverage} ${item.sourceCoverage === 1 ? "source" : "sources"}`
+                    : "Not provided"}
                 </p>
               </div>
               <div>
@@ -178,7 +204,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                     change ? CHANGE_TONE_CLASS[change.tone] : "text-muted"
                   }`}
                 >
-                  {change?.text ?? "No history"}
+                  {change?.text ?? "Not provided"}
                 </p>
               </div>
               <div className="col-span-2 sm:col-span-1">

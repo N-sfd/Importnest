@@ -23,10 +23,12 @@ export const topNavLinks: NavLink[] = [
   { label: "Home", href: "/search?category=home" },
   { label: "Electronics", href: "/search?category=electronics" },
   { label: "Appliances", href: "/search?category=appliances" },
-  { label: "Kitchen", href: "/search?q=kitchen&category=appliances" },
+  { label: "Kitchen", href: "/search?category=kitchen" },
   { label: "Footwear", href: "/search?category=footwear" },
   { label: "Beauty", href: "/search?category=beauty-devices" },
   { label: "Accessories", href: "/search?category=accessories" },
+  { label: "Automotive", href: "/search?category=automotive" },
+  { label: "Outdoors", href: "/search?category=outdoors" },
   { label: "Today's deals", href: "/search?q=deals", featured: true },
 ];
 
@@ -80,6 +82,18 @@ export const navDepartments: NavDepartment[] = [
     ],
   },
   {
+    id: "kitchen",
+    name: "Kitchen",
+    href: "/search?category=kitchen",
+    items: [
+      { label: "Cookware", href: "/search?q=cookware&category=kitchen" },
+      { label: "Blenders", href: "/search?q=blender&category=kitchen" },
+      { label: "Coffee makers", href: "/search?q=coffee&category=kitchen" },
+      { label: "Dinnerware", href: "/search?q=dinnerware&category=kitchen" },
+      { label: "Bakeware", href: "/search?q=bakeware&category=kitchen" },
+    ],
+  },
+  {
     id: "footwear",
     name: "Fashion & footwear",
     href: "/search?category=footwear",
@@ -108,6 +122,28 @@ export const navDepartments: NavDepartment[] = [
       { label: "Phone cases", href: "/search?q=phone+case&category=accessories" },
       { label: "Chargers & cables", href: "/search?q=charger&category=accessories" },
       { label: "Bags & backpacks", href: "/search?q=backpack&category=accessories" },
+    ],
+  },
+  {
+    id: "automotive",
+    name: "Automotive",
+    href: "/search?category=automotive",
+    items: [
+      { label: "Dash cams", href: "/search?q=dash+cam&category=automotive" },
+      { label: "Phone mounts", href: "/search?q=phone+mount&category=automotive" },
+      { label: "Jump starters", href: "/search?q=jump+starter&category=automotive" },
+      { label: "Floor mats", href: "/search?q=floor+mats&category=automotive" },
+    ],
+  },
+  {
+    id: "outdoors",
+    name: "Outdoors",
+    href: "/search?category=outdoors",
+    items: [
+      { label: "Tents", href: "/search?q=tent&category=outdoors" },
+      { label: "Backpacks", href: "/search?q=backpack&category=outdoors" },
+      { label: "Coolers", href: "/search?q=cooler&category=outdoors" },
+      { label: "Camping lanterns", href: "/search?q=lantern&category=outdoors" },
     ],
   },
 ];

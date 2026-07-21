@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { CartProvider } from "@/components/CartProvider";
 import { CompareBasketProvider } from "@/components/CompareBasketProvider";
+import { DevToolsModal } from "@/components/DevToolsModal";
 import { RecentlyViewedProvider } from "@/components/RecentlyViewedProvider";
 import { themeInitScript } from "@/components/ThemeToggle";
 import "./globals.css";
@@ -29,10 +31,11 @@ export const metadata: Metadata = {
     "Compare purchasing options across approved online sources with transparent, explainable recommendations.",
   icons: {
     icon: [
+      { url: "/brand/importnest-icon.png", type: "image/png" },
       { url: "/brand/favicon-dark.png", type: "image/png" },
       { url: "/brand/favicon-light.png", type: "image/png", media: "(prefers-color-scheme: light)" },
     ],
-    apple: "/brand/logo-app-icon-dark.png",
+    apple: "/brand/importnest-icon.png",
   },
 };
 
@@ -52,7 +55,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-surface font-sans text-foreground antialiased">
         <CompareBasketProvider>
-          <RecentlyViewedProvider>{children}</RecentlyViewedProvider>
+          <CartProvider>
+            <RecentlyViewedProvider>
+              {children}
+              <DevToolsModal />
+            </RecentlyViewedProvider>
+          </CartProvider>
         </CompareBasketProvider>
       </body>
     </html>

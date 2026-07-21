@@ -1,238 +1,278 @@
 /**
- * Homepage/category-browsing demo data only — see AGENTS.md.
+ * Category-browsing demo data only — see AGENTS.md / homepage-demo-data rule.
  *
- * These are NOT real listings: no price, no offer count, no source count,
- * no condition, no "last checked" freshness. Showing invented values for
- * any of those would misrepresent them as real commerce facts, which is
- * exactly what this project avoids everywhere else (compare pages, search
- * results, Top Products/Best Deals all derive strictly from seeded
- * Listing/PriceHistory rows). This file exists purely to keep category
- * browsing visually populated — rendered as non-interactive discovery
- * tiles (see CategoryDemoGrid), never wired into compare, save, alerts,
- * or ranking logic. Real products (the ones actually seeded in the DB)
- * keep full functionality everywhere they appear.
+ * These are NOT real listings: no invented live retailer offers.
+ * Each category has 10 distinct subtypes with distinct thumbnail photos.
  */
+
+import { normalizeCategoryKey } from "@/lib/category-visuals";
+import { getProductDisplayImage, imageForSubtype } from "@/lib/product-images";
 
 export type CategoryDemoProduct = {
   id: string;
   title: string;
   brand: string;
   categorySlug: string;
+  subtype: string;
   subtitle: string;
   badge?: string;
-  /** Overrides the category's shared hero image when a distinct real asset exists. */
-  image?: string;
+  image: string;
 };
 
 const badgeCycle = ["Featured", "Popular pick", "Editor's pick", undefined] as const;
 
-/**
- * A few categories have real, unused (not wired to any seeded product)
- * extra images sitting in public/images/home/ — cycle through those for
- * visual variety instead of repeating the single category hero image 8
- * times.
- *
- * Every other category gets a distinct, clearly-generic line-icon SVG per
- * sub-type instead (public/images/demo-icons/) rather than one repeated
- * photo — these are abstract placeholders, not claimed product photos, and
- * are assigned one-to-one below via each product's `image` field.
- */
-const EXTRA_IMAGES: Record<string, string[]> = {
-  electronics: [
-    "/images/home/headphones/overear.png",
-    "/images/home/headphones/airbuds-pro-3.png",
-    "/images/home/headphones/earbuds-case.png",
-  ],
-  automotive: [
-    "/images/home/automotive/car-jump-starter.png",
-    "/images/home/automotive/car-phone-mount.png",
-    "/images/home/automotive/car-usb-charger.png",
-  ],
-};
-
-const DEMO_ICON = (slug: string) => `/images/demo-icons/${slug}.svg`;
-
-/** One icon per product, in the same order as each category's entry list below. */
-const ICON_IMAGES: Record<string, string[]> = {
-  appliances: [
-    "microwave",
-    "toaster-oven",
-    "vacuum",
-    "slow-cooker",
-    "air-fryer",
-    "freezer",
-    "ac-unit",
-    "dehumidifier",
-  ].map(DEMO_ICON),
-  kitchen: [
-    "cookware-set",
-    "pour-over",
-    "knife-block",
-    "stand-mixer",
-    "cutting-board",
-    "kettle",
-    "food-storage",
-    "cast-iron-skillet",
-  ].map(DEMO_ICON),
-  footwear: [
-    "trail-runner",
-    "sneaker",
-    "hiking-boot",
-    "loafer",
-    "sandal",
-    "winter-boot",
-    "training-shoe",
-    "chukka-boot",
-  ].map(DEMO_ICON),
-  beauty: [
-    "cleansing-brush",
-    "hair-dryer",
-    "flat-iron",
-    "led-mirror",
-    "razor",
-    "facial-steamer",
-    "sonic-cleansing",
-    "nail-care",
-  ].map(DEMO_ICON),
-  accessories: [
-    "wallet",
-    "backpack",
-    "phone-case",
-    "travel-organizer",
-    "sunglasses",
-    "cable",
-    "crossbody-bag",
-    "watch-band",
-  ].map(DEMO_ICON),
-  outdoors: [
-    "daypack",
-    "tent",
-    "sleeping-bag",
-    "camp-stove",
-    "water-bottle",
-    "trekking-poles",
-    "lantern",
-    "camp-chair",
-  ].map(DEMO_ICON),
-  home: [
-    "blanket",
-    "table-lamp",
-    "storage-bins",
-    "throw-pillow",
-    "air-filter",
-    "wall-clock",
-    "diffuser",
-    "curtains",
-  ].map(DEMO_ICON),
-};
-
 function withBadges(
   categorySlug: string,
-  entries: { title: string; brand: string; subtitle: string }[],
+  entries: { title: string; brand: string; subtitle: string; subtype: string }[],
 ): CategoryDemoProduct[] {
-  const images = EXTRA_IMAGES[categorySlug] ?? ICON_IMAGES[categorySlug];
   return entries.map((e, i) => ({
     id: `demo-${categorySlug}-${i + 1}`,
     categorySlug,
     badge: badgeCycle[i % badgeCycle.length],
-    image: images ? images[i % images.length] : undefined,
+    image:
+      imageForSubtype(categorySlug, e.subtype) ??
+      getProductDisplayImage({
+        categorySlug,
+        title: e.title,
+        subtitle: e.subtitle,
+        subtype: e.subtype,
+        tags: [e.subtype],
+      }),
     ...e,
   }));
 }
 
 export const CATEGORY_DEMO_PRODUCTS: Record<string, CategoryDemoProduct[]> = {
   electronics: withBadges("electronics", [
-    { title: "Vantage 13\" Ultrabook", brand: "Nordstream", subtitle: "Thin-and-light laptop for everyday work" },
-    { title: "Crestline Noise-Cancelling Earbuds", brand: "Alto", subtitle: "Compact true-wireless earbuds" },
-    { title: "Marlow 4K Streaming Stick", brand: "Kindred", subtitle: "Streaming device for any TV" },
-    { title: "Solace Smartwatch SE", brand: "Everline", subtitle: "Fitness and notifications on your wrist" },
-    { title: "Halcyon Tablet 10", brand: "Nordstream", subtitle: "Everyday tablet for browsing and media" },
-    { title: "Pilcrow Mechanical Keyboard", brand: "Alto", subtitle: "Compact keyboard for desk setups" },
-    { title: "Rivermark Portable SSD 1TB", brand: "Kindred", subtitle: "Fast portable storage" },
-    { title: "Auralite Bluetooth Speaker", brand: "Everline", subtitle: "Compact speaker for home or travel" },
+    { title: "Pixelbay Smart Phone SE", brand: "Kindred", subtype: "smartphone", subtitle: "Everyday smartphone with clear camera" },
+    { title: "Vantage 14\" Laptop", brand: "Nordstream", subtype: "laptop", subtitle: "Everyday laptop for work and study" },
+    { title: "Halcyon Tablet 10", brand: "Nordstream", subtype: "tablet", subtitle: "Everyday tablet for browsing and media" },
+    { title: "Harborline Over-Ear Headphones", brand: "Alto", subtype: "headphones", subtitle: "Wireless headphones for travel and focus" },
+    { title: "Crestline Noise-Cancelling Earbuds", brand: "Alto", subtype: "earbuds", subtitle: "Compact true-wireless earbuds" },
+    { title: "Clearview 27\" Monitor", brand: "Nordstream", subtype: "monitor", subtitle: "IPS monitor for desk setups" },
+    { title: "Solace Smartwatch SE", brand: "Everline", subtype: "smartwatch", subtitle: "Fitness and notifications on your wrist" },
+    { title: "Auralite Bluetooth Speaker", brand: "Everline", subtype: "speaker", subtitle: "Compact speaker for home or travel" },
+    { title: "Lensfield Compact Camera", brand: "Kindred", subtype: "camera", subtitle: "Point-and-shoot camera for travel" },
+    { title: "ArcadePad Gaming Accessory", brand: "Alto", subtype: "gaming accessory", subtitle: "Wireless controller for console and PC" },
   ]),
   appliances: withBadges("appliances", [
-    { title: "Wintervale Countertop Microwave", brand: "Hearthcrest", subtitle: "Compact microwave for small kitchens" },
-    { title: "Millbrook 6-Slice Toaster Oven", brand: "Fernwood", subtitle: "Countertop oven for toasting and baking" },
-    { title: "Grayson Upright Vacuum", brand: "Hearthcrest", subtitle: "Bagless vacuum for carpets and floors" },
-    { title: "Ashford Slow Cooker 6-Qt", brand: "Fernwood", subtitle: "Programmable slow cooker" },
-    { title: "Larkspur Air Fryer", brand: "Hearthcrest", subtitle: "Compact air fryer for everyday cooking" },
-    { title: "Dunmore Chest Freezer", brand: "Fernwood", subtitle: "Extra freezer storage for the garage" },
-    { title: "Birchfield Window AC Unit", brand: "Hearthcrest", subtitle: "Cooling for a single room" },
-    { title: "Thornbury Dehumidifier", brand: "Fernwood", subtitle: "Moisture control for basements" },
+    { title: "Brightwell Dishwasher", brand: "Fernwood", subtype: "dishwasher", subtitle: "Quiet dishwasher for everyday loads" },
+    { title: "Frostline Refrigerator", brand: "Hearthcrest", subtype: "refrigerator", subtitle: "French-door fridge for family kitchens" },
+    { title: "Wintervale Countertop Microwave", brand: "Hearthcrest", subtype: "microwave", subtitle: "Compact microwave for small kitchens" },
+    { title: "Millbrook 6-Slice Toaster Oven", brand: "Fernwood", subtype: "toaster oven", subtitle: "Countertop oven for toasting and baking" },
+    { title: "Larkspur Air Fryer", brand: "Hearthcrest", subtype: "air fryer", subtitle: "Compact air fryer for everyday cooking" },
+    { title: "Brewlane Coffee Maker", brand: "Fernwood", subtype: "coffee maker", subtitle: "Programmable drip coffee maker" },
+    { title: "Grayson Upright Vacuum", brand: "Hearthcrest", subtype: "vacuum", subtitle: "Bagless vacuum for carpets and floors" },
+    { title: "Clearair Air Purifier", brand: "Fernwood", subtype: "air purifier", subtitle: "HEPA air purifier for living rooms" },
+    { title: "Thornbury Dehumidifier", brand: "Fernwood", subtype: "dehumidifier", subtitle: "Moisture control for basements" },
+    { title: "Cascade Washing Machine", brand: "Fernwood", subtype: "washing machine", subtitle: "Front-load laundry appliance" },
   ]),
   kitchen: withBadges("kitchen", [
-    { title: "Copperfield Nonstick Cookware Set", brand: "Bramblewood", subtitle: "8-piece everyday cookware set" },
-    { title: "Millhouse Pour-Over Coffee Set", brand: "Ashgrove", subtitle: "Manual brew set for coffee lovers" },
-    { title: "Oakstead Knife Block Set", brand: "Bramblewood", subtitle: "Kitchen knives with wood block" },
-    { title: "Ferngate Stand Mixer", brand: "Ashgrove", subtitle: "Countertop mixer for baking" },
-    { title: "Willowmere Cutting Board Set", brand: "Bramblewood", subtitle: "Bamboo cutting boards, set of 3" },
-    { title: "Cobblestone Electric Kettle", brand: "Ashgrove", subtitle: "Fast-boil kettle with auto shutoff" },
-    { title: "Hazelbrook Food Storage Set", brand: "Bramblewood", subtitle: "Stackable airtight containers" },
-    { title: "Rosedale Cast Iron Skillet", brand: "Ashgrove", subtitle: "Pre-seasoned 10-inch skillet" },
+    { title: "Copperfield Nonstick Cookware Set", brand: "Bramblewood", subtype: "cookware", subtitle: "8-piece everyday cookware set" },
+    { title: "Stoneware Dinnerware Set", brand: "Ashgrove", subtype: "dinnerware", subtitle: "Service for four, everyday plates" },
+    { title: "Riverglen Kitchen Utensils", brand: "Bramblewood", subtype: "utensils", subtitle: "Heat-safe utensils with crock" },
+    { title: "Whirlblend Countertop Blender", brand: "Ashgrove", subtype: "blender", subtitle: "High-speed blender for smoothies" },
+    { title: "Millhouse Coffee Machine", brand: "Ashgrove", subtype: "coffee machine", subtitle: "Single-serve coffee machine" },
+    { title: "Cobblestone Electric Kettle", brand: "Ashgrove", subtype: "kettle", subtitle: "Fast-boil kettle with auto shutoff" },
+    { title: "Willowmere Cutting Board Set", brand: "Bramblewood", subtype: "cutting board", subtitle: "Bamboo cutting boards, set of 3" },
+    { title: "Hazelbrook Food Storage Set", brand: "Bramblewood", subtype: "food storage", subtitle: "Stackable airtight containers" },
+    { title: "Ovenrest Bakeware Set", brand: "Ashgrove", subtype: "bakeware", subtitle: "Nonstick sheet pans and muffin tin" },
+    { title: "Drawerline Kitchen Organizer", brand: "Bramblewood", subtype: "organizer", subtitle: "Expandable drawer organizer" },
   ]),
   footwear: withBadges("footwear", [
-    { title: "Pinnacle Trail Runner", brand: "Cadence", subtitle: "Lightweight shoe for trail and road" },
-    { title: "Harborline Canvas Sneaker", brand: "Wayfarer", subtitle: "Everyday casual sneaker" },
-    { title: "Ridgeway Hiking Boot", brand: "Cadence", subtitle: "Waterproof boot for the outdoors" },
-    { title: "Meadowlark Slip-On Loafer", brand: "Wayfarer", subtitle: "Comfortable everyday loafer" },
-    { title: "Summit Trail Sandal", brand: "Cadence", subtitle: "Adjustable sandal for warm weather" },
-    { title: "Northbend Winter Boot", brand: "Wayfarer", subtitle: "Insulated boot for cold climates" },
-    { title: "Fleetfoot Training Shoe", brand: "Cadence", subtitle: "Cross-training shoe for the gym" },
-    { title: "Glenmoor Chukka Boot", brand: "Wayfarer", subtitle: "Classic ankle boot" },
+    { title: "Pinnacle Running Shoe", brand: "Cadence", subtype: "running shoe", subtitle: "Lightweight shoe for road runs" },
+    { title: "Harborline Canvas Sneaker", brand: "Wayfarer", subtype: "sneaker", subtitle: "Everyday casual sneaker" },
+    { title: "Ridgeway Hiking Boot", brand: "Cadence", subtype: "hiking boot", subtitle: "Waterproof boot for the outdoors" },
+    { title: "Summit Trail Sandal", brand: "Cadence", subtype: "sandal", subtitle: "Adjustable sandal for warm weather" },
+    { title: "Meadowlark Everyday Loafer", brand: "Wayfarer", subtype: "loafer", subtitle: "Comfortable everyday loafer" },
+    { title: "Northbend Winter Boot", brand: "Wayfarer", subtype: "winter boot", subtitle: "Insulated boot for cold climates" },
+    { title: "Fleetfoot Training Shoe", brand: "Cadence", subtype: "training shoe", subtitle: "Cross-training shoe for the gym" },
+    { title: "Shoreline Casual Shoe", brand: "Wayfarer", subtype: "casual shoe", subtitle: "Soft everyday casual shoe" },
+    { title: "Boardwalk Dress Shoe", brand: "Wayfarer", subtype: "dress shoe", subtitle: "Polished lace-up dress shoe" },
+    { title: "Easystep Slip-On Shoe", brand: "Cadence", subtype: "slip-on shoe", subtitle: "No-tie slip-on for travel days" },
   ]),
   beauty: withBadges("beauty", [
-    { title: "Lumenne Facial Cleansing Brush", brand: "Sable & Co.", subtitle: "Gentle daily cleansing device" },
-    { title: "Rosemere Hair Dryer 1875W", brand: "Verabelle", subtitle: "Fast-drying dryer with cool shot" },
-    { title: "Silkwood Flat Iron", brand: "Sable & Co.", subtitle: "Ceramic plates for smooth styling" },
-    { title: "Petalglow LED Mirror", brand: "Verabelle", subtitle: "Lighted vanity mirror" },
-    { title: "Ambervale Electric Razor", brand: "Sable & Co.", subtitle: "Rechargeable grooming razor" },
-    { title: "Willowmist Facial Steamer", brand: "Verabelle", subtitle: "At-home facial steaming device" },
-    { title: "Cascade Sonic Cleansing Kit", brand: "Sable & Co.", subtitle: "Sonic cleansing with travel case" },
-    { title: "Marigold Nail Care Set", brand: "Verabelle", subtitle: "Manicure and pedicure kit" },
+    { title: "Rosemere Hair Dryer 1875W", brand: "Verabelle", subtype: "hair dryer", subtitle: "Fast-drying dryer with cool shot" },
+    { title: "Silkwood Curling Iron", brand: "Sable & Co.", subtype: "curling iron", subtitle: "Ceramic barrel for soft waves" },
+    { title: "Sleekline Hair Straightener", brand: "Verabelle", subtype: "hair straightener", subtitle: "Flat iron for smooth styles" },
+    { title: "Ambervale Electric Shaver", brand: "Sable & Co.", subtype: "electric shaver", subtitle: "Rechargeable razor for daily use" },
+    { title: "Lumenne Facial Cleansing Brush", brand: "Sable & Co.", subtype: "facial cleansing brush", subtitle: "Gentle daily cleansing device" },
+    { title: "Coolmist Skincare Fridge", brand: "Verabelle", subtype: "skincare fridge", subtitle: "Mini fridge for serums and creams" },
+    { title: "Petalglow LED Mirror", brand: "Verabelle", subtype: "LED mirror", subtitle: "Lighted vanity mirror" },
+    { title: "Softpulse Massage Tool", brand: "Sable & Co.", subtype: "massage tool", subtitle: "Handheld facial massage tool" },
+    { title: "Marigold Manicure Kit", brand: "Verabelle", subtype: "manicure kit", subtitle: "Manicure and pedicure kit" },
+    { title: "Trimline Grooming Kit", brand: "Sable & Co.", subtype: "grooming kit", subtitle: "Travel grooming essentials set" },
   ]),
   accessories: withBadges("accessories", [
-    { title: "Harrowgate Leather Wallet", brand: "Coalridge", subtitle: "Slim bifold wallet" },
-    { title: "Kestrel Laptop Backpack", brand: "Portside", subtitle: "Padded backpack with laptop sleeve" },
-    { title: "Brindlewood Phone Case", brand: "Coalridge", subtitle: "Protective case with card slot" },
-    { title: "Ledgerline Travel Organizer", brand: "Portside", subtitle: "Pouch for cables and chargers" },
-    { title: "Ashcombe Sunglasses", brand: "Coalridge", subtitle: "Polarized everyday sunglasses" },
-    { title: "Millpond Fast-Charge Cable Set", brand: "Portside", subtitle: "Braided charging cables, 3-pack" },
-    { title: "Foxglove Crossbody Bag", brand: "Coalridge", subtitle: "Compact everyday crossbody" },
-    { title: "Ironbridge Watch Band", brand: "Portside", subtitle: "Adjustable band for smartwatches" },
+    { title: "Harrowgate Leather Wallet", brand: "Coalridge", subtype: "wallet", subtitle: "Slim bifold wallet" },
+    { title: "Kestrel Day Backpack", brand: "Portside", subtype: "backpack", subtitle: "Padded backpack with laptop compartment" },
+    { title: "Brindlewood Phone Case", brand: "Coalridge", subtype: "phone case", subtitle: "Protective case with card slot" },
+    { title: "Ashcombe Sunglasses", brand: "Coalridge", subtype: "sunglasses", subtitle: "Polarized everyday sunglasses" },
+    { title: "Ironbridge Watch Band", brand: "Portside", subtype: "watch band", subtitle: "Adjustable band for smartwatches" },
+    { title: "Millpond Fast-Charge Cable", brand: "Portside", subtype: "charging cable", subtitle: "Braided charging cable set" },
+    { title: "Ledgerline Travel Organizer", brand: "Portside", subtype: "travel organizer", subtitle: "Pouch for cables and chargers" },
+    { title: "Foxglove Crossbody Bag", brand: "Coalridge", subtype: "crossbody bag", subtitle: "Compact everyday crossbody" },
+    { title: "Slatepack Laptop Sleeve", brand: "Portside", subtype: "laptop sleeve", subtitle: "Padded 14-inch laptop sleeve" },
+    { title: "Orbit Wireless Charger", brand: "Coalridge", subtype: "wireless charger", subtitle: "Qi wireless charging pad" },
   ]),
   automotive: withBadges("automotive", [
-    { title: "Redline Dash Cam 1080p", brand: "Ferroline", subtitle: "Front-view dash camera" },
-    { title: "Trailhead Portable Jump Starter", brand: "Roadcrest", subtitle: "Compact jump starter and power bank" },
-    { title: "Ironclad Cargo Organizer", brand: "Ferroline", subtitle: "Trunk storage organizer" },
-    { title: "Highbeam LED Headlight Kit", brand: "Roadcrest", subtitle: "Upgrade headlight bulb kit" },
-    { title: "Wayline Phone Mount", brand: "Ferroline", subtitle: "Magnetic vent phone mount" },
-    { title: "Stonegate All-Weather Floor Mats", brand: "Roadcrest", subtitle: "Set of 4 all-weather mats" },
-    { title: "Cinderpath Tire Inflator", brand: "Ferroline", subtitle: "Portable air compressor" },
-    { title: "Millbank Car Vacuum", brand: "Roadcrest", subtitle: "Compact handheld car vacuum" },
+    { title: "Redline Dash Cam 1080p", brand: "Ferroline", subtype: "dash cam", subtitle: "Front-view dash camera" },
+    { title: "Wayline Phone Mount", brand: "Ferroline", subtype: "phone mount", subtitle: "Magnetic vent phone mount" },
+    { title: "Chargepath Battery Charger", brand: "Roadcrest", subtype: "battery charger", subtitle: "12V battery charger and maintainer" },
+    { title: "Stonegate All-Weather Floor Mats", brand: "Roadcrest", subtype: "floor mats", subtitle: "Set of 4 all-weather mats" },
+    { title: "Cinderpath Tire Inflator", brand: "Ferroline", subtype: "tire inflator", subtitle: "Portable air compressor" },
+    { title: "Millbank Car Vacuum", brand: "Roadcrest", subtype: "car vacuum", subtitle: "Compact handheld car vacuum" },
+    { title: "ComfortRide Seat Cover", brand: "Ferroline", subtype: "seat cover", subtitle: "Universal front-seat cover set" },
+    { title: "Trailhead Jump Starter", brand: "Roadcrest", subtype: "jump starter", subtitle: "Compact jump starter and power bank" },
+    { title: "Clearview Windshield Wipers", brand: "Roadcrest", subtype: "windshield wipers", subtitle: "All-season wiper blade pair" },
+    { title: "Roadkit Emergency Tool Kit", brand: "Ferroline", subtype: "tool kit", subtitle: "Compact roadside tool kit" },
   ]),
   outdoors: withBadges("outdoors", [
-    { title: "Timberline Daypack 24L", brand: "Northfell", subtitle: "Everyday hiking daypack" },
-    { title: "Basecamp 2-Person Tent", brand: "Greylock", subtitle: "Lightweight backpacking tent" },
-    { title: "Alpineglow Sleeping Bag", brand: "Northfell", subtitle: "3-season sleeping bag" },
-    { title: "Riverstone Camp Stove", brand: "Greylock", subtitle: "Portable propane camp stove" },
-    { title: "Windward Insulated Bottle", brand: "Northfell", subtitle: "32oz insulated water bottle" },
-    { title: "Craghold Trekking Poles", brand: "Greylock", subtitle: "Adjustable aluminum trekking poles" },
-    { title: "Duskfall Camping Lantern", brand: "Northfell", subtitle: "Rechargeable LED lantern" },
-    { title: "Fernway Camp Chair", brand: "Greylock", subtitle: "Folding camp chair with cup holder" },
+    { title: "Timberline Hiking Backpack 24L", brand: "Northfell", subtype: "backpack", subtitle: "Everyday hiking backpack" },
+    { title: "Basecamp 2-Person Tent", brand: "Greylock", subtype: "tent", subtitle: "Lightweight shelter for overnight trips" },
+    { title: "Duskfall Camping Lantern", brand: "Northfell", subtype: "camping lantern", subtitle: "Rechargeable LED lantern" },
+    { title: "Icebound Soft Cooler", brand: "Greylock", subtype: "cooler", subtitle: "Insulated soft cooler for day trips" },
+    { title: "Windward Hiking Bottle", brand: "Northfell", subtype: "hiking bottle", subtitle: "32oz insulated water bottle" },
+    { title: "Alpineglow Sleeping Bag", brand: "Northfell", subtype: "sleeping bag", subtitle: "3-season sleeping bag" },
+    { title: "Fernway Outdoor Chair", brand: "Greylock", subtype: "outdoor chair", subtitle: "Folding camp chair with cup holder" },
+    { title: "Meadow Picnic Blanket", brand: "Northfell", subtype: "picnic blanket", subtitle: "Waterproof picnic blanket" },
+    { title: "Trailcarry Travel Bag", brand: "Greylock", subtype: "travel bag", subtitle: "Duffel travel bag with shoe pocket" },
+    { title: "Riverstone Portable Stove", brand: "Greylock", subtype: "portable stove", subtitle: "Portable propane camp stove" },
   ]),
   home: withBadges("home", [
-    { title: "Aldergrove Weighted Blanket", brand: "Homestead & Co.", subtitle: "12lb weighted blanket" },
-    { title: "Brookline Table Lamp", brand: "Linden", subtitle: "Ceramic base table lamp" },
-    { title: "Mossgate Storage Bins", brand: "Homestead & Co.", subtitle: "Stackable fabric storage bins, set of 3" },
-    { title: "Thistledown Throw Pillow Set", brand: "Linden", subtitle: "Decorative pillow covers, set of 2" },
-    { title: "Grovemont Air Purifier Filter", brand: "Homestead & Co.", subtitle: "Replacement filter, 3-pack" },
-    { title: "Hollowbrook Wall Clock", brand: "Linden", subtitle: "Minimalist wall clock" },
-    { title: "Pemberton Diffuser", brand: "Homestead & Co.", subtitle: "Essential oil diffuser" },
-    { title: "Willowcrest Curtain Panels", brand: "Linden", subtitle: "Blackout curtain panels, pair" },
+    { title: "Aldergrove Weighted Blanket", brand: "Homestead & Co.", subtype: "blanket", subtitle: "12lb weighted blanket" },
+    { title: "Brookline Table Lamp", brand: "Linden", subtype: "table lamp", subtitle: "Ceramic base table lamp" },
+    { title: "Mossgate Storage Bins", brand: "Homestead & Co.", subtype: "storage bins", subtitle: "Stackable fabric storage bins, set of 3" },
+    { title: "Thistledown Throw Pillows", brand: "Linden", subtype: "throw pillows", subtitle: "Decorative pillow covers, set of 2" },
+    { title: "Hollowbrook Wall Clock", brand: "Linden", subtype: "wall clock", subtitle: "Minimalist wall clock" },
+    { title: "Willowcrest Curtains", brand: "Linden", subtype: "curtains", subtitle: "Blackout curtain panels, pair" },
+    { title: "Pemberton Diffuser", brand: "Homestead & Co.", subtype: "diffuser", subtitle: "Essential oil diffuser" },
+    { title: "Softstep Area Rug", brand: "Linden", subtype: "rug", subtitle: "Low-pile living room rug" },
+    { title: "Nestline Home Organizer", brand: "Homestead & Co.", subtype: "organizer", subtitle: "Desktop and drawer organizer set" },
+    { title: "Clearair Home Air Purifier", brand: "Homestead & Co.", subtype: "home air purifier", subtitle: "Room air purifier with filter" },
   ]),
 };
 
-export function getCategoryDemoProducts(categorySlug: string, limit = 8): CategoryDemoProduct[] {
-  return (CATEGORY_DEMO_PRODUCTS[categorySlug] ?? []).slice(0, limit);
+export function getCategoryDemoProducts(categorySlug: string, limit = 10): CategoryDemoProduct[] {
+  const key = normalizeCategoryKey(categorySlug);
+  return (CATEGORY_DEMO_PRODUCTS[key] ?? CATEGORY_DEMO_PRODUCTS[categorySlug] ?? []).slice(
+    0,
+    limit,
+  );
+}
+
+/** Distinct subtype labels for category browse chips. */
+export function getCategoryDemoSubtypes(categorySlug: string): string[] {
+  return getCategoryDemoProducts(categorySlug, 20).map((p) => p.subtype);
+}
+
+/** Friendly chip labels for category browse (e.g. smartphone → Phones). */
+const SUBTYPE_CHIP_LABELS: Record<string, string> = {
+  smartphone: "Phones",
+  laptop: "Laptops",
+  tablet: "Tablets",
+  headphones: "Headphones",
+  earbuds: "Earbuds",
+  monitor: "Monitors",
+  smartwatch: "Smartwatches",
+  speaker: "Speakers",
+  camera: "Cameras",
+  "gaming accessory": "Gaming",
+  dishwasher: "Dishwashers",
+  refrigerator: "Refrigerators",
+  microwave: "Microwaves",
+  "toaster oven": "Toaster ovens",
+  "air fryer": "Air fryers",
+  "coffee maker": "Coffee makers",
+  vacuum: "Vacuums",
+  "air purifier": "Air purifiers",
+  dehumidifier: "Dehumidifiers",
+  "washing machine": "Washers",
+  cookware: "Cookware",
+  dinnerware: "Dinnerware",
+  utensils: "Utensils",
+  blender: "Blenders",
+  "coffee machine": "Coffee machines",
+  kettle: "Kettles",
+  "cutting board": "Cutting boards",
+  "food storage": "Food storage",
+  bakeware: "Bakeware",
+  organizer: "Organizers",
+  "running shoe": "Running",
+  sneaker: "Sneakers",
+  "hiking boot": "Hiking boots",
+  sandal: "Sandals",
+  loafer: "Loafers",
+  "winter boot": "Winter boots",
+  "training shoe": "Training",
+  "casual shoe": "Casual",
+  "dress shoe": "Dress shoes",
+  "slip-on shoe": "Slip-ons",
+  "hair dryer": "Hair dryers",
+  "curling iron": "Curling irons",
+  "hair straightener": "Straighteners",
+  "electric shaver": "Shavers",
+  "facial cleansing brush": "Facial brushes",
+  "skincare fridge": "Skincare fridges",
+  "led mirror": "LED mirrors",
+  "massage tool": "Massage tools",
+  "manicure kit": "Manicure kits",
+  "grooming kit": "Grooming kits",
+  wallet: "Wallets",
+  backpack: "Backpacks",
+  "phone case": "Phone cases",
+  sunglasses: "Sunglasses",
+  "watch band": "Watch bands",
+  "charging cable": "Cables",
+  "travel organizer": "Organizers",
+  "crossbody bag": "Crossbody",
+  "laptop sleeve": "Laptop sleeves",
+  "wireless charger": "Chargers",
+  "dash cam": "Dash cams",
+  "phone mount": "Phone mounts",
+  "battery charger": "Chargers",
+  "floor mats": "Floor mats",
+  "tire inflator": "Inflators",
+  "car vacuum": "Car vacuums",
+  "seat cover": "Seat covers",
+  "jump starter": "Jump starters",
+  "windshield wipers": "Wipers",
+  "tool kit": "Tool kits",
+  tent: "Tents",
+  "camping lantern": "Lanterns",
+  cooler: "Coolers",
+  "hiking bottle": "Bottles",
+  "sleeping bag": "Sleeping bags",
+  "outdoor chair": "Chairs",
+  "picnic blanket": "Picnic",
+  "travel bag": "Travel bags",
+  "portable stove": "Stoves",
+  blanket: "Blankets",
+  "table lamp": "Lamps",
+  "storage bins": "Storage",
+  "throw pillows": "Pillows",
+  "wall clock": "Clocks",
+  curtains: "Curtains",
+  diffuser: "Diffusers",
+  rug: "Rugs",
+  "home air purifier": "Air purifiers",
+};
+
+export type CategorySubtypeChip = {
+  subtype: string;
+  label: string;
+  image: string;
+};
+
+export function getCategorySubtypeChips(categorySlug: string): CategorySubtypeChip[] {
+  return getCategoryDemoProducts(categorySlug, 20).map((p) => {
+    const key = p.subtype.toLowerCase();
+    return {
+      subtype: p.subtype,
+      label:
+        SUBTYPE_CHIP_LABELS[key] ??
+        p.subtype.replace(/\b\w/g, (c) => c.toUpperCase()),
+      image: p.image,
+    };
+  });
 }

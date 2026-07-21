@@ -1,32 +1,66 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { intentPillsFromQuery } from "@/lib/search-pills";
+
+function SparkleIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M12 2.5l1.4 5.2L18.5 9 13.4 10.3 12 15.5l-1.4-5.2L5.5 9l5.1-1.3L12 2.5z" />
+      <path d="M18.5 14.5l.7 2.5 2.5.7-2.5.7-.7 2.5-.7-2.5-2.5-.7 2.5-.7.7-2.5z" opacity=".85" />
+    </svg>
+  );
+}
+
 /**
- * Always-visible header search. Large and centered in the header row.
+ * Header search with conversational AI affordance and live intent pills.
  */
 export function HeaderSearch() {
+  const [query, setQuery] = useState("");
+  const pills = useMemo(() => intentPillsFromQuery(query), [query]);
+
   return (
-    <div className="order-3 w-full min-w-0 lg:order-none lg:mx-2 lg:flex-1">
-      <form
-        action="/search"
-        className="flex w-full items-center overflow-hidden rounded-full border border-border bg-panel shadow-[0_1px_3px_rgb(4_25_53/0.08)] focus-within:border-cta/40 focus-within:ring-2 focus-within:ring-ring"
-      >
+    <div className="header-search">
+      <form action="/search" className="search-shell search-shell-ai">
         <label htmlFor="header-q" className="sr-only">
-          Search Importnest
+          Search Importnest with natural language
         </label>
+        <span className="search-ai-icon" aria-hidden="true">
+          <SparkleIcon />
+        </span>
         <input
           id="header-q"
           name="q"
           type="search"
-          placeholder="Search products, models, or UPCs"
-          className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-sm text-navy-900 outline-none placeholder:text-muted sm:px-5 sm:text-[15px]"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Describe what you need — product, budget, delivery…"
+          className="search-input"
+          autoComplete="off"
         />
         <button
           type="submit"
-          className="btn-cta m-1.5 h-10 min-w-[5rem] shrink-0 px-4 text-sm leading-none sm:min-w-[5.5rem] sm:px-5"
+          className="btn-cta m-1.5 h-9 min-w-[5.25rem] shrink-0 px-5 text-sm leading-none sm:h-10 sm:min-w-[5.75rem] sm:px-6"
         >
           Search
         </button>
       </form>
+      {pills.length > 0 ? (
+        <ul className="search-intent-pills" aria-label="Detected filters">
+          {pills.map((pill) => (
+            <li key={pill.id}>
+              <span className="search-intent-pill">{pill.label}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

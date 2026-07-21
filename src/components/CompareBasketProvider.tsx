@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { CompareToast } from "@/components/CompareToast";
+import { CompareTray } from "@/components/CompareTray";
 import {
   addToBasket,
   COMPARE_BASKET_LIMIT,
@@ -116,7 +116,7 @@ export function CompareBasketProvider({ children }: { children: React.ReactNode 
   return (
     <CompareBasketContext.Provider value={value}>
       {children}
-      <CompareToast />
+      <CompareTray />
     </CompareBasketContext.Provider>
   );
 }

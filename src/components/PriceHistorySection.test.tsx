@@ -22,9 +22,16 @@ describe("PriceHistorySection — no history", () => {
   it("shows the honest not-enough-data message instead of a chart or stats", () => {
     const html = renderToStaticMarkup(<PriceHistorySection summary={emptyPriceHistory(120)} />);
 
-    expect(html).toContain("Price history will appear after more price checks.");
+    expect(html).toContain("Not enough recorded price checks yet");
     expect(html).not.toContain("Current lowest");
     expect(html).not.toContain("<svg");
+  });
+
+  it("renders nothing when hideWhenEmpty and there are fewer than two checks", () => {
+    const html = renderToStaticMarkup(
+      <PriceHistorySection summary={emptyPriceHistory(null)} hideWhenEmpty />,
+    );
+    expect(html).toBe("");
   });
 
   it("never shows illustrative or demo copy", () => {
@@ -45,7 +52,7 @@ describe("PriceHistorySection — real history present", () => {
 
     expect(html).toContain("Current lowest");
     expect(html).toContain("$90.00");
-    expect(html).toContain("Previous lowest price");
+    expect(html).toContain("Previous lowest");
     expect(html).toContain("$100.00");
     expect(html).toContain("30-day low");
     expect(html).toContain("Down $10.00");
