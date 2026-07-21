@@ -14,6 +14,7 @@
     "sync": "npx tsx scripts/sync.ts",
     "sync:official": "npx tsx scripts/sync.ts src-official",
     "sync:retailer-direct": "npx tsx scripts/sync.ts src-retailer-direct",
+    "sync:local-electronics": "npx tsx scripts/sync.ts src-local-electronics",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

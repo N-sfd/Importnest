@@ -44,9 +44,12 @@ two working product-data connectors, and a real search flow.
 ## Screens
 
 - `/` — Home, with a real search box
-- `/search/clarify?q=...` — Matches the query to a `CanonicalProduct` (exact UPC/GTIN lookup for
-  numeric queries, fuzzy name/model/brand match otherwise) and redirects straight to its compare
-  page, or shows a "no match" state. Every search is recorded as a `SearchSession`.
+- `/search/clarify?q=...` — Exact/near-exact queries (UPC/GTIN lookup for numeric queries, fuzzy
+  name/model/brand match otherwise) redirect straight to the compare page. Ambiguous queries get
+  clarifying questions (budget, condition, delivery window, preferred brand) — AI-extracted from
+  the query first, falling back to a deterministic question set when AI is unavailable — then
+  continue to `/search/confirm`, or show a "no match" state with comparable alternatives. Every
+  search is recorded as a `SearchSession`, with answers logged to `SearchClarification`.
 - `/compare/[productId]` — Cross-retailer comparison. Listings, recommendation ranking, and
   fallback copy (warranty/returns/delivery) are all computed live from real `Listing` rows —
   nothing is hand-authored per product or per listing.
@@ -68,23 +71,27 @@ two working product-data connectors, and a real search flow.
   barcode data and no real product pages, so matching uses a synthetic `FSA-<id>` MPN identifier
   (the same pattern a real affiliate feed without UPCs would need) and listings are synced without
   a `url` rather than a fabricated one.
-- Run a sync manually: `npm run sync:official -- <upc>` or `npm run sync:retailer-direct` (or
-  generically, `npm run sync -- <sourceId> [query]` for any connector in the registry).
-- `src/lib/connectors/registry.ts` maps a `Source.id` to its connector. `src-official` and
-  `src-retailer-direct` have real connectors; the other seeded sources (`src-local-electronics`,
-  `src-authorized-outlet`, `src-discount-home`) don't yet.
+- `src/lib/connectors/local-electronics.ts` (source `src-local-electronics`) — real connector
+  against the free, keyless DummyJSON API (`dummyjson.com/products`). Supports real keyword search
+  (`/products/search`), unlike the UPCItemDB trial tier; with no query, pulls DummyJSON's
+  electronics-relevant categories (smartphones, laptops, tablets, mobile-accessories). Matches to a
+  `CanonicalProduct` via `ProductIdentifier` on either DummyJSON's `meta.barcode` (treated as a UPC
+  candidate) or its `sku` (treated as an MPN candidate).
+- Run a sync manually: `npm run sync:official -- <upc>`, `npm run sync:retailer-direct`, or
+  `npm run sync:local-electronics` (or generically, `npm run sync -- <sourceId> [query]` for any
+  connector in the registry).
+- `src/lib/connectors/registry.ts` maps a `Source.id` to its connector. `src-official`,
+  `src-retailer-direct`, and `src-local-electronics` have real connectors; the other seeded sources
+  (`src-authorized-outlet`, `src-discount-home`) don't yet.
 
 ## Known gaps
 
-- Three of five seeded sources have no real connector yet (see above).
-- No scheduled/cron sync — both connectors are synced manually. The UPCItemDB trial tier also
+- Two of five seeded sources (`src-authorized-outlet`, `src-discount-home`) have no real connector
+  yet (see above).
+- No scheduled/cron sync — all three connectors are synced manually. The UPCItemDB trial tier also
   caps at 100 requests/day.
 - No warranty/return-policy data source exists for any listing, so the UI always shows fallback
   copy ("Warranty information not provided", etc.) rather than a real value.
-- `/search/clarify` does a direct match-or-nothing; it doesn't yet ask clarifying questions
-  (budget, condition, delivery window) the way the original BRD flow describes.
-- Most pages still use a hardcoded demo user (`userId: "user-demo"`) instead of resolving the
-  real logged-in Supabase user.
 
 ## Project structure
 
