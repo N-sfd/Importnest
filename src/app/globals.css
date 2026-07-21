@@ -305,13 +305,13 @@ a {
 
 .home-section {
   width: 100%;
-  margin-bottom: 40px;
+  margin-bottom: 56px;
 }
 
 /* Soft band stays inside the content container — no 100vw breakout */
 .home-band {
   width: 100%;
-  margin: 0 0 40px;
+  margin: 0 0 56px;
   padding: 28px 24px;
   background: var(--section-soft);
   border: 1px solid var(--border);
