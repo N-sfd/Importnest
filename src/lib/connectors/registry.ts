@@ -1,12 +1,16 @@
 import { upcItemDbConnector } from "./upcitemdb";
 import { retailerDirectConnector } from "./retailer-direct";
 import { localElectronicsConnector } from "./local-electronics";
+import { authorizedOutletConnector } from "./authorized-outlet";
+import { discountHomeConnector } from "./discount-home";
 import type { SourceConnector } from "./types";
 
 const connectors: Record<string, SourceConnector> = {
   [upcItemDbConnector.sourceId]: upcItemDbConnector,
   [retailerDirectConnector.sourceId]: retailerDirectConnector,
   [localElectronicsConnector.sourceId]: localElectronicsConnector,
+  [authorizedOutletConnector.sourceId]: authorizedOutletConnector,
+  [discountHomeConnector.sourceId]: discountHomeConnector,
 };
 
 export function getConnector(sourceId: string): SourceConnector {

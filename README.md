@@ -2,7 +2,7 @@
 
 AI-powered shopping comparison platform. Originally scaffolded as a clickable UI prototype
 against mock data (BRD §11/§13); it now runs on a real Postgres database, real authentication,
-two working product-data connectors, and a real search flow.
+five working product-data connectors (with scheduled sync), and a real search flow.
 
 ## Stack
 
@@ -23,6 +23,8 @@ two working product-data connectors, and a real search flow.
    - `DIRECT_URL` — direct Postgres connection string (Supabase, port 5432; used for migrations)
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or
      `NEXT_PUBLIC_SUPABASE_ANON_KEY`) — from your Supabase project settings
+   - `CRON_SECRET` — optional locally; required in production to authorize the scheduled sync
+     route (see [Scheduled sync](#scheduled-sync))
 
 3. **Apply the schema and seed demo data**
    ```bash
@@ -77,21 +79,40 @@ two working product-data connectors, and a real search flow.
   electronics-relevant categories (smartphones, laptops, tablets, mobile-accessories). Matches to a
   `CanonicalProduct` via `ProductIdentifier` on either DummyJSON's `meta.barcode` (treated as a UPC
   candidate) or its `sku` (treated as an MPN candidate).
-- Run a sync manually: `npm run sync:official -- <upc>`, `npm run sync:retailer-direct`, or
-  `npm run sync:local-electronics` (or generically, `npm run sync -- <sourceId> [query]` for any
-  connector in the registry).
-- `src/lib/connectors/registry.ts` maps a `Source.id` to its connector. `src-official`,
-  `src-retailer-direct`, and `src-local-electronics` have real connectors; the other seeded sources
-  (`src-authorized-outlet`, `src-discount-home`) don't yet.
+- `src/lib/connectors/authorized-outlet.ts` (source `src-authorized-outlet`) — real connector
+  against the free, keyless Platzi Fake Store API (`api.escuelajs.co`). No condition field of its
+  own, so every listing is hardcoded to `certified-refurbished` to match this source's "licensed
+  outlet" identity; matches via a synthetic `AO-<id>` MPN identifier, same pattern as
+  retailer-direct's `FSA-<id>`.
+- `src/lib/connectors/discount-home.ts` (source `src-discount-home`) — real connector against the
+  same DummyJSON API as local-electronics, scoped to home-goods categories instead (home
+  decoration, furniture, kitchen accessories, groceries) to match this source's "Discount Home
+  Supply" identity. Matches the same way local-electronics does (barcode-as-UPC or sku-as-MPN).
+- Run a sync manually: `npm run sync:official -- <upc>`, `npm run sync:retailer-direct`,
+  `npm run sync:local-electronics`, `npm run sync:authorized-outlet`, or
+  `npm run sync:discount-home` (or generically, `npm run sync -- <sourceId> [query]` for any
+  connector in the registry). `npm run sync:all` runs every registered connector's default
+  (no-query) fetch in one pass — the same function the cron route below calls.
+- `src/lib/connectors/registry.ts` maps a `Source.id` to its connector. All five seeded sources now
+  have a real connector.
+
+## Scheduled sync
+
+`src/app/api/cron/sync/route.ts` runs every registered connector (via
+`src/lib/connectors/sync-all.ts`) and upserts the results; one connector failing doesn't stop the
+others. `vercel.json` schedules it every 6 hours through [Vercel
+Cron](https://vercel.com/docs/cron-jobs) when deployed there. Vercel signs cron requests with
+`Authorization: Bearer $CRON_SECRET`, and the route checks that header — set `CRON_SECRET` in the
+deployment's environment variables, or the route rejects every request with 401 (fails closed
+rather than leaving an unauthenticated endpoint that triggers DB writes). Outside Vercel, run
+`npm run sync:all` on whatever scheduler is available instead.
 
 ## Known gaps
 
-- Two of five seeded sources (`src-authorized-outlet`, `src-discount-home`) have no real connector
-  yet (see above).
-- No scheduled/cron sync — all three connectors are synced manually. The UPCItemDB trial tier also
-  caps at 100 requests/day.
 - No warranty/return-policy data source exists for any listing, so the UI always shows fallback
   copy ("Warranty information not provided", etc.) rather than a real value.
+- The UPCItemDB trial tier caps at 100 requests/day, and it only accepts a UPC per request (no
+  keyword search), so its slot in the scheduled sync currently no-ops (see `src-official` above).
 
 ## Project structure
 
@@ -103,12 +124,14 @@ src/
     prisma.ts                 Prisma client singleton
     compare-data.ts            Compare-page data layer (live queries + computed recommendations)
     search-data.ts             Query -> CanonicalProduct matching + SearchSession recording
-    connectors/                Source connectors (real + registry)
+    connectors/                Source connectors (real + registry + sync-all)
     supabase/                  Supabase client/server/middleware helpers
 prisma/
   schema.prisma                Data model
   migrations/                  Generated SQL migrations
   seed.ts                      Demo data (brand, category, product, sources, listings)
 scripts/
-  sync.ts                       Manual connector sync CLI (any registered source)
+  sync.ts                       Manual connector sync CLI (single registered source)
+  sync-all.ts                   Manual sync CLI for every registered source
+vercel.json                     Cron schedule for the scheduled-sync API route
 ```
