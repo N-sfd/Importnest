@@ -49,7 +49,7 @@ export function HeaderSearch() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Describe what you need — product, budget, delivery…"
+          placeholder="Search or describe what you need…"
           className="search-input"
           autoComplete="off"
         />

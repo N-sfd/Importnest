@@ -27,11 +27,14 @@ export function RefreshPricesButton({
   productId,
   className = "",
   compact = false,
+  emphasize = false,
 }: {
   productId: string;
   className?: string;
   /** Small inline icon button — fits next to a freshness timestamp on product cards. */
   compact?: boolean;
+  /** Pill-styled instead of a plain text link — for the most severe "outdated" tier, where a prompt to act should stand out more. */
+  emphasize?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +53,8 @@ export function RefreshPricesButton({
   }
 
   if (compact) {
+    const emphasizedClass =
+      "rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-amber-900 hover:bg-amber-200 no-underline hover:no-underline";
     return (
       <button
         type="button"
@@ -57,7 +62,9 @@ export function RefreshPricesButton({
         disabled={pending}
         aria-label={pending ? "Refreshing prices" : "Refresh prices"}
         title="Refresh prices"
-        className={`inline-flex items-center gap-1 font-medium text-link hover:underline disabled:opacity-60 disabled:no-underline ${className}`}
+        className={`inline-flex items-center gap-1 font-medium disabled:opacity-60 disabled:no-underline ${
+          emphasize ? emphasizedClass : "text-link hover:underline"
+        } ${className}`}
       >
         <RefreshIcon spinning={pending} />
         {pending ? "Refreshing…" : "Refresh"}

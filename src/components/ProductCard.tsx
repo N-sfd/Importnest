@@ -3,7 +3,12 @@ import { ProductCardActions } from "@/components/ProductCardActions";
 import { ProductImage } from "@/components/ProductImage";
 import { RefreshPricesButton } from "@/components/RefreshPricesButton";
 import { colorSwatchStyle } from "@/lib/color-swatches";
-import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
+import {
+  formatFreshness,
+  getFreshnessWarningLevel,
+  needsFreshnessWarning,
+  freshnessWarningLabel,
+} from "@/lib/freshness";
 import { productImageAlt } from "@/lib/product-images";
 
 function swatchCss(label: string): string {
@@ -310,8 +315,12 @@ export function ProductCard({
           dealReason?.trim() ||
           offerCount === 0) ? (
           <div className="product-card-meta">
-            {offerLabel ? <p className="product-card-meta-line">{offerLabel}</p> : null}
-            {sourceLabel ? <p className="product-card-meta-line">{sourceLabel}</p> : null}
+            {offerLabel ? (
+              <p className="product-card-meta-line whitespace-nowrap">{offerLabel}</p>
+            ) : null}
+            {sourceLabel ? (
+              <p className="product-card-meta-line whitespace-nowrap">{sourceLabel}</p>
+            ) : null}
             {hasFreshnessField ? (
               <p className="product-card-meta-line">
                 <span className="product-card-meta-label">Last checked</span>
@@ -335,7 +344,11 @@ export function ProductCard({
                 {commerce ? (
                   <>
                     <span aria-hidden="true">·</span>
-                    <RefreshPricesButton productId={productId} compact />
+                    <RefreshPricesButton
+                      productId={productId}
+                      compact
+                      emphasize={getFreshnessWarningLevel(freshnessMinutesAgo) === "outdated"}
+                    />
                   </>
                 ) : null}
               </p>
