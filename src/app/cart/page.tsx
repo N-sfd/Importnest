@@ -1,6 +1,7 @@
 import { CartClient } from "@/components/CartClient";
 import { PageShell } from "@/components/PageShell";
 import { getAuthUser } from "@/lib/auth";
+import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 
 export default async function CartPage() {
@@ -15,9 +16,17 @@ export default async function CartPage() {
     savedProductIds = saved.map((s) => s.canonicalProductId);
   }
 
+  // Fetched unconditionally since the cart itself lives in client-side
+  // localStorage — the server can't know in advance whether it's empty.
+  const popularComparisons = await getPopularComparisons(4, new Set(savedProductIds));
+
   return (
     <PageShell>
-      <CartClient signedIn={Boolean(authUser)} savedProductIds={savedProductIds} />
+      <CartClient
+        signedIn={Boolean(authUser)}
+        savedProductIds={savedProductIds}
+        popularComparisons={popularComparisons}
+      />
     </PageShell>
   );
 }
