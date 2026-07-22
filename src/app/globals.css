@@ -740,68 +740,10 @@ a {
   justify-content: center;
 }
 
-.product-card-secondary-desktop {
-  display: none;
-  grid-template-columns: 1fr 1fr;
+/** Compact, always-visible icon row (Compare, Cart) above the primary CTA. */
+.product-card-actions-row {
+  display: flex;
   gap: 0.5rem;
-}
-
-.product-card-secondary-desktop > * {
-  min-width: 0;
-}
-
-.product-card:hover .product-card-secondary-desktop,
-.product-card:focus-within .product-card-secondary-desktop {
-  display: grid;
-}
-
-.product-card-secondary-mobile {
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.product-card-more-btn {
-  display: inline-flex;
-  min-height: 2.25rem;
-  min-width: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fff;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--navy-900);
-}
-
-.product-card-more-menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 0.35rem);
-  z-index: 20;
-  display: flex;
-  width: min(16rem, 80vw);
-  flex-direction: column;
-  gap: 0.45rem;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 0.65rem;
-  box-shadow: 0 12px 28px rgba(16, 35, 63, 0.14);
-}
-
-@media (min-width: 768px) {
-  .product-card-secondary-mobile {
-    display: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .product-card-secondary-desktop {
-    display: none !important;
-  }
 }
 
 .result-card-image,

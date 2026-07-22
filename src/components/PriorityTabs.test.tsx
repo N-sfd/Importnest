@@ -11,7 +11,7 @@ import {
   type CompareListingView,
   type CompareRow,
 } from "@/lib/compare-view";
-import { FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
+import { FRESHNESS_OUTDATED_MINUTES, FRESHNESS_STALE_MINUTES } from "@/lib/freshness";
 import { BRAND_FALLBACK_IMAGE } from "@/lib/images";
 import type { Priority } from "@/lib/types";
 
@@ -116,8 +116,8 @@ describe("PriorityTabs — stale offers", () => {
     ];
     const html = renderPriorityTabs(rows);
 
-    expect(html).toContain("Prices last checked");
-    expect(html).toContain("Confirm current prices");
+    expect(html).toContain("Pricing was last synced a while ago");
+    expect(html).toContain("confirm current prices if you are about to buy");
     expect(html).toContain(NEUTRAL_RECOMMENDATION_LABEL);
   });
 
@@ -125,8 +125,7 @@ describe("PriorityTabs — stale offers", () => {
     const rows = [makeRow({ id: "a", price: 50, freshnessMinutesAgo: 2 })];
     const html = renderPriorityTabs(rows);
 
-    expect(html).not.toContain("Prices last checked");
-    expect(html).not.toContain("Some prices look stale");
+    expect(html).not.toContain("Pricing was last synced a while ago");
     expect(html).not.toContain(NEUTRAL_RECOMMENDATION_LABEL);
   });
 });
@@ -212,11 +211,19 @@ describe("PriorityTabs — offer card, View offer visibility", () => {
 });
 
 describe("PriorityTabs — offer card, stale listing", () => {
-  it("shows the refresh nudge next to freshness on a stale offer", () => {
+  it("shows a neutral freshness badge (no warning) at the ranking-stale threshold — too recent for a shopper-facing warning", () => {
     const rows = [makeRow({ id: "a", freshnessMinutesAgo: FRESHNESS_STALE_MINUTES })];
     const html = renderPriorityTabs(rows);
 
-    expect(html).toContain("Tap refresh for latest");
+    expect(html).not.toContain("May need refresh");
+    expect(html).not.toContain("Data may be outdated");
+  });
+
+  it("shows the outdated-data badge once an offer is genuinely old", () => {
+    const rows = [makeRow({ id: "a", freshnessMinutesAgo: FRESHNESS_OUTDATED_MINUTES })];
+    const html = renderPriorityTabs(rows);
+
+    expect(html).toContain("Data may be outdated");
   });
 });
 

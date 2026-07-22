@@ -102,7 +102,9 @@ export function ProductSummary({
           </p>
 
           {showFreshnessWarning ? (
-            <p className="mt-1 text-xs font-medium text-amber-800">{freshnessWarningLabel()}</p>
+            <p className="mt-1 text-xs font-medium text-amber-800">
+              {freshnessWarningLabel(lastCheckedMinutesAgo)}
+            </p>
           ) : null}
 
           {lowestTotalKnownCost != null ? (

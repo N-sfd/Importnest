@@ -21,10 +21,17 @@ function SparkleIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export function HeroSearch({ className = "" }: { className?: string }) {
+export function HeroSearch({
+  className = "",
+  maxExamples,
+}: {
+  className?: string;
+  /** Caps the "Try this" example chips — omit to show all. */
+  maxExamples?: number;
+}) {
   const [query, setQuery] = useState("");
   const pills = useMemo(() => intentPillsFromQuery(query), [query]);
-  const examples = EXAMPLE_SEARCHES.map((e) => ({
+  const examples = EXAMPLE_SEARCHES.slice(0, maxExamples ?? EXAMPLE_SEARCHES.length).map((e) => ({
     label: e.label,
     href: `/search?q=${encodeURIComponent(e.query)}`,
   }));

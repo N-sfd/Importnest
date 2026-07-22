@@ -102,9 +102,10 @@ describe("SearchResultProductCard — Add to Cart visibility", () => {
         redirectTo="/search/results?category=electronics"
       />,
     );
-    expect(html).toContain("Add to cart");
+    // Compare/Cart are icon-only buttons on the card — assert via aria-label, not visible text.
+    expect(html).toContain('aria-label="Add Apex Quiet Dishwasher to cart"');
     expect(html).toContain("Save");
-    expect(html).toContain("Compare");
+    expect(html).toContain('aria-label="Add Apex Quiet Dishwasher to compare"');
   });
 
   it("shows Add to cart on filtered open-box / pickup result cards with a matching listing", () => {
@@ -123,7 +124,7 @@ describe("SearchResultProductCard — Add to Cart visibility", () => {
         redirectTo="/search/results?category=electronics&condition=open_box&pickup=1"
       />,
     );
-    expect(html).toContain("Add to cart");
+    expect(html).toContain('aria-label="Add Nimbus Wireless Earbuds to cart"');
   });
 
   it("hides Add to cart when there is no valid listing/backing offer", () => {
@@ -134,9 +135,9 @@ describe("SearchResultProductCard — Add to Cart visibility", () => {
         redirectTo="/search/results"
       />,
     );
-    expect(html).not.toContain("Add to cart");
+    expect(html).not.toContain("to cart");
     expect(html).toContain("Save");
-    expect(html).toContain("Compare");
+    expect(html).toContain('aria-label="Add Apex Quiet Dishwasher to compare"');
   });
 });
 

@@ -6,13 +6,26 @@ export type CategoryImageCardProps = {
   desc: string;
   href: string;
   image: string;
+  /** Up to 4 department-style browsing chips (e.g. "Phones", "Laptops"). */
+  subcategories?: string[];
+  /** Real live CanonicalProduct count for this category — omit when unknown, never fabricated. */
+  productCount?: number | null;
 };
 
 /**
  * Category browsing card — image-forward with a light text panel
- * (no heavy dark gradient overlays).
+ * (no heavy dark gradient overlays). Amazon-style department chips and a
+ * real product count (when known) make it read as a browsable department
+ * rather than just a photo tile.
  */
-export function CategoryImageCard({ name, desc, href, image }: CategoryImageCardProps) {
+export function CategoryImageCard({
+  name,
+  desc,
+  href,
+  image,
+  subcategories = [],
+  productCount,
+}: CategoryImageCardProps) {
   return (
     <Link
       href={href}
@@ -27,9 +40,37 @@ export function CategoryImageCard({ name, desc, href, image }: CategoryImageCard
           sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw"
         />
       </div>
-      <div className="flex flex-1 flex-col gap-0.5 px-3.5 py-3">
-        <div className="font-bold text-navy-900 group-hover:text-link">{name}</div>
-        <div className="line-clamp-2 text-xs leading-snug text-muted">{desc}</div>
+      <div className="flex flex-1 flex-col gap-1.5 px-3.5 py-3">
+        <div>
+          <div className="font-bold text-navy-900 group-hover:text-link">{name}</div>
+          <div className="line-clamp-2 text-xs leading-snug text-muted">{desc}</div>
+        </div>
+
+        {subcategories.length > 0 ? (
+          <ul className="flex flex-wrap gap-1" aria-label={`${name} subcategories`}>
+            {subcategories.slice(0, 4).map((sub) => (
+              <li
+                key={sub}
+                className="rounded-full border border-border bg-white px-2 py-0.5 text-[10px] font-semibold text-navy-800"
+              >
+                {sub}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          {productCount != null && productCount > 0 ? (
+            <span className="text-[11px] font-medium text-muted">
+              {productCount} {productCount === 1 ? "product" : "products"}
+            </span>
+          ) : (
+            <span />
+          )}
+          <span className="text-xs font-semibold text-link group-hover:underline">
+            View category
+          </span>
+        </div>
       </div>
     </Link>
   );

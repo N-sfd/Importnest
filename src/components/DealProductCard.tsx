@@ -22,7 +22,6 @@ export function DealProductCard({
   const badge =
     item.discountPercent != null ? `Save ${item.discountPercent}%` : "Best deal";
   const dealReason = whyThisDeal(item);
-  const suggestedAlert = Math.max(1, Math.floor(item.currentTotal * 0.95)).toFixed(2);
 
   return (
     <ProductCard
@@ -45,15 +44,6 @@ export function DealProductCard({
       signedIn={signedIn}
       redirectTo={redirectTo}
       dealReason={dealReason}
-      priceAlert={
-        signedIn
-          ? {
-              suggestedAlert,
-              currentLowestPrice: item.currentTotal,
-              alert: null,
-            }
-          : null
-      }
     />
   );
 }

@@ -37,6 +37,24 @@ export const categoryDescriptions: Record<string, string> = {
     "Compare lighting, storage, textiles, and home essentials.",
 };
 
+/**
+ * Curated department-style subcategory labels shown as chips on the homepage
+ * category cards (Amazon-style browsing hint) — informational navigation
+ * copy, not a claim about specific inventory, same editorial status as
+ * `categoryDescriptions` above.
+ */
+export const categorySubcategories: Record<string, string[]> = {
+  electronics: ["Phones", "Laptops", "Tablets", "Audio"],
+  appliances: ["Dishwashers", "Refrigerators", "Vacuums", "Laundry"],
+  kitchen: ["Cookware", "Blenders", "Coffee makers", "Knives"],
+  footwear: ["Running", "Sneakers", "Boots", "Sandals"],
+  beauty: ["Hair dryers", "Stylers", "Shavers", "Mirrors"],
+  accessories: ["Bags", "Chargers", "Cases", "Wallets"],
+  automotive: ["Dash cams", "Mounts", "Chargers", "Car care"],
+  outdoors: ["Backpacks", "Tents", "Coolers", "Bottles"],
+  home: ["Lighting", "Storage", "Textiles", "Essentials"],
+};
+
 const CATEGORY_TITLES: Record<string, string> = {
   electronics: "Electronics",
   appliances: "Appliances",
@@ -130,6 +148,12 @@ export function categoryHasImage(category: string): boolean {
 
 export function categoryImageAlt(category: string, title?: string): string {
   return `${categoryDisplayTitle(category, title)} category image`;
+}
+
+/** Up to 4 department-style subcategory chip labels for a category card. */
+export function categorySubcategoriesFor(category: string): string[] {
+  const key = normalizeCategoryKey(category);
+  return categorySubcategories[key] ?? [];
 }
 
 /** Stable list of shoppable category slugs (canonical keys). */

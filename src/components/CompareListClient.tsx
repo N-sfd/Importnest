@@ -87,7 +87,8 @@ export function CompareListClient() {
         </button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)]">
+      {/* Desktop: full side-by-side table */}
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-border bg-panel shadow-[var(--shadow-panel)] md:block">
         <table className="compare-tool-table min-w-[960px] w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-surface text-left">
@@ -169,7 +170,7 @@ export function CompareListClient() {
                     </span>
                     {warn ? (
                       <span className="mt-0.5 block text-xs font-medium text-amber-800">
-                        {freshnessWarningLabel()}
+                        {freshnessWarningLabel(product.lastCheckedMinutesAgo)}
                       </span>
                     ) : null}
                   </td>
@@ -198,6 +199,95 @@ export function CompareListClient() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile/tablet: stacked comparison cards instead of a table */}
+      <div className="mt-4 grid gap-3 md:hidden">
+        {products.map((product) => {
+          const warn = needsFreshnessWarning(product.lastCheckedMinutesAgo);
+          return (
+            <div
+              key={product.id}
+              className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]"
+            >
+              <div className="flex gap-3">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-[#F7FAFC]">
+                  <Image
+                    src={product.imageSrc}
+                    alt=""
+                    fill
+                    className={productThumbClass(product.imageSrc)}
+                    sizes="64px"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold leading-snug text-navy-900">{product.name}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    {product.brandName} · {product.categoryName}
+                  </p>
+                  <p className="mt-1 text-lg font-extrabold tabular-nums text-navy-900">
+                    {money(product.lowestKnownPrice)}
+                  </p>
+                </div>
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                <div>
+                  <dt className="text-muted">Offers</dt>
+                  <dd className="mt-0.5 font-semibold text-navy-900">
+                    {product.offerCount > 0 ? product.offerCount : "—"}
+                    {product.sourceCount > 0
+                      ? ` · ${product.sourceCount} ${product.sourceCount === 1 ? "source" : "sources"}`
+                      : ""}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Condition</dt>
+                  <dd className="mt-0.5 font-semibold text-navy-900">
+                    {product.conditions.length > 0 ? product.conditions.join(", ") : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Delivery</dt>
+                  <dd className="mt-0.5 font-semibold text-navy-900">
+                    {product.deliverySummary ?? "Not provided"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Freshness</dt>
+                  <dd className="mt-0.5 font-semibold text-navy-900">
+                    {formatFreshness(product.lastCheckedMinutesAgo)}
+                    {warn ? (
+                      <span className="mt-0.5 block font-medium text-amber-800">
+                        {freshnessWarningLabel(product.lastCheckedMinutesAgo)}
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+              </dl>
+
+              {product.bestReason ? (
+                <p className="mt-2.5 text-xs leading-relaxed text-muted">{product.bestReason}</p>
+              ) : null}
+
+              <div className="mt-3 flex gap-2">
+                <Link
+                  href={`/compare/${product.id}`}
+                  className="btn-cta min-h-10 flex-1 px-3 py-2 text-center text-xs"
+                >
+                  View offers
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => remove(product.id)}
+                  className="min-h-10 rounded-full border border-border px-3 py-2 text-xs font-semibold text-navy-900 hover:border-navy-800"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {products.length === 1 ? (

@@ -74,15 +74,6 @@ export type ProductCardProps = {
   metaNote?: string | null;
   /** Idealo-style deal rationale — only when backed by real history / multi-offer data. */
   dealReason?: string | null;
-  /**
-   * When provided with signedIn, shows a compact Set price alert control.
-   * suggestedAlert is a prefilled target from real current TKC.
-   */
-  priceAlert?: {
-    suggestedAlert: string;
-    currentLowestPrice: number | null;
-    alert?: { threshold: string | null; isActive: boolean } | null;
-  } | null;
   /** Horizontal list layout for search results density toggle. */
   compactList?: boolean;
 };
@@ -139,7 +130,6 @@ export function ProductCard({
   ratingNote,
   metaNote,
   dealReason,
-  priceAlert,
   compactList = false,
 }: ProductCardProps) {
   const saveRedirect = redirectTo ?? href;
@@ -355,7 +345,9 @@ export function ProductCard({
               <p className="text-xs font-medium text-navy-800">No offers</p>
             ) : null}
             {showFreshnessWarning ? (
-              <p className="text-xs font-medium text-amber-800">{freshnessWarningLabel()}</p>
+              <p className="text-xs font-medium text-amber-800">
+                {freshnessWarningLabel(freshnessMinutesAgo)}
+              </p>
             ) : null}
           </div>
         ) : null}
@@ -369,10 +361,6 @@ export function ProductCard({
             href={href}
             bestListing={bestListing}
             primaryCtaLabel={primaryCtaLabel}
-            signedIn={signedIn}
-            redirectTo={saveRedirect}
-            freshnessMinutesAgo={freshnessMinutesAgo}
-            priceAlert={priceAlert}
           />
         ) : (
           <div className="product-card-actions">

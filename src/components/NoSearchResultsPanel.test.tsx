@@ -7,12 +7,12 @@ describe("NoSearchResultsPanel — no exact match for the current filters", () =
   it("names the query in the description", () => {
     const html = renderToStaticMarkup(<NoSearchResultsPanel params={{ q: "quiet dishwasher" }} />);
     expect(html).toContain("quiet dishwasher");
-    expect(html).toContain("No matching product found");
+    expect(html).toContain("No exact matches for your filter choices");
   });
 
   it("falls back to a broadening message when there's no query at all", () => {
     const html = renderToStaticMarkup(<NoSearchResultsPanel params={{}} />);
-    expect(html).toContain("Try broadening your criteria");
+    expect(html).toContain("Try resetting filters or browsing a department");
   });
 });
 
@@ -38,10 +38,11 @@ describe("NoSearchResultsPanel — all filters too strict", () => {
     expect(html).toContain("Allow comparable alternatives");
   });
 
-  it("always offers Browse category and Edit search alongside filter relief", () => {
+  it("always offers Browse category, plus Reset filters when facet filters are active", () => {
     const html = renderToStaticMarkup(<NoSearchResultsPanel params={strictParams} />);
     expect(html).toContain("Browse category");
-    expect(html).toContain("Edit search");
+    // "Reset filters" (not "Edit search") shows whenever there are facet filters to clear.
+    expect(html).toContain("Reset filters");
   });
 });
 
@@ -56,10 +57,11 @@ describe("NoSearchResultsPanel — user relaxes one filter", () => {
     const html = renderToStaticMarkup(<NoSearchResultsPanel params={params} />);
     expect(html).toContain("Remove condition filter");
 
-    // The only /search/results?... link in this panel (with no category
-    // captured, "Browse category" points at plain /search/results) is the
-    // "Remove condition filter" action itself.
-    const hrefMatch = html.match(/href="(\/search\/results\?[^"]+)"/);
+    // Target the "Remove condition filter" link specifically — "Reset
+    // filters" (which strips every facet, not just condition) also renders
+    // a /search/results?... link earlier in the panel when facet filters
+    // are active, so a first-match regex would grab the wrong href.
+    const hrefMatch = html.match(/href="(\/search\/results\?[^"]+)">Remove condition filter</);
     expect(hrefMatch).not.toBeNull();
 
     // React SSR HTML-escapes "&" between query params as "&amp;".
@@ -90,7 +92,7 @@ describe("NoSearchResultsPanel — no source data (no category known)", () => {
     const html = renderToStaticMarkup(
       <NoSearchResultsPanel params={{ category: "accessories" }} />,
     );
-    expect(html).toContain("Browse Accessories");
-    expect(html).toContain("Explore Accessories product types below");
+    expect(html).toContain("No exact matches for your filter choices");
+    expect(html).toContain("No live listings matched Accessories with your current filters");
   });
 });

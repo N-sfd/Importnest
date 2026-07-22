@@ -15,7 +15,8 @@ const STATE_TEXT_CLASS: Record<FreshnessState, string> = {
 
 /**
  * Compact freshness indicator. Always shows soft relative time.
- * Amber “May need refresh” only when data is truly old (6h+).
+ * Amber warning only when data is truly old — "May need refresh" past a day,
+ * escalating to "Data may be outdated" past two days.
  */
 export function Freshness({
   minutesAgo,
@@ -37,7 +38,7 @@ export function Freshness({
       <span>{formatFreshness(minutesAgo)}</span>
       {warn ? (
         <span className="inline-flex items-center gap-1 font-medium text-amber-800">
-          · {freshnessWarningLabel()}
+          · {freshnessWarningLabel(minutesAgo)}
           {showRefreshHint ? <span className="font-normal text-muted">· Refresh price</span> : null}
         </span>
       ) : null}

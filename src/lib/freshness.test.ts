@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   formatFreshness,
+  FRESHNESS_OUTDATED_MINUTES,
+  FRESHNESS_REFRESH_MINUTES,
   FRESHNESS_STALE_MINUTES,
-  FRESHNESS_WARN_MINUTES,
   freshnessWarningLabel,
   getFreshnessState,
+  getFreshnessWarningLevel,
   isFreshnessStale,
   needsFreshnessWarning,
 } from "@/lib/freshness";
@@ -77,16 +79,37 @@ describe("isFreshnessStale", () => {
   });
 });
 
-describe("needsFreshnessWarning", () => {
-  it("does not warn for unknown or recent ages", () => {
-    expect(needsFreshnessWarning(null)).toBe(false);
-    expect(needsFreshnessWarning(60)).toBe(false);
-    expect(needsFreshnessWarning(FRESHNESS_WARN_MINUTES - 1)).toBe(false);
+describe("getFreshnessWarningLevel", () => {
+  it("is none for unknown, fresh, or aging-but-under-a-day ages", () => {
+    expect(getFreshnessWarningLevel(null)).toBe("none");
+    expect(getFreshnessWarningLevel(60)).toBe("none");
+    expect(getFreshnessWarningLevel(FRESHNESS_REFRESH_MINUTES - 1)).toBe("none");
   });
 
-  it("warns only when data is truly old", () => {
-    expect(needsFreshnessWarning(FRESHNESS_WARN_MINUTES)).toBe(true);
-    expect(needsFreshnessWarning(24 * 60)).toBe(true);
-    expect(freshnessWarningLabel()).toBe("May need refresh");
+  it("is refresh once data is a day old, up to the outdated threshold", () => {
+    expect(getFreshnessWarningLevel(FRESHNESS_REFRESH_MINUTES)).toBe("refresh");
+    expect(getFreshnessWarningLevel(FRESHNESS_OUTDATED_MINUTES - 1)).toBe("refresh");
+  });
+
+  it("is outdated only once data is truly stale (48h+)", () => {
+    expect(getFreshnessWarningLevel(FRESHNESS_OUTDATED_MINUTES)).toBe("outdated");
+    expect(getFreshnessWarningLevel(72 * 60)).toBe("outdated");
+  });
+});
+
+describe("needsFreshnessWarning", () => {
+  it("does not warn for unknown ages, or anything under a day old", () => {
+    expect(needsFreshnessWarning(null)).toBe(false);
+    // A product checked 1 hour ago must never carry a refresh/outdated warning.
+    expect(needsFreshnessWarning(60)).toBe(false);
+    expect(needsFreshnessWarning(FRESHNESS_REFRESH_MINUTES - 1)).toBe(false);
+  });
+
+  it("warns once data is a day old, escalating the label past 48h", () => {
+    expect(needsFreshnessWarning(FRESHNESS_REFRESH_MINUTES)).toBe(true);
+    expect(freshnessWarningLabel(FRESHNESS_REFRESH_MINUTES)).toBe("May need refresh");
+
+    expect(needsFreshnessWarning(FRESHNESS_OUTDATED_MINUTES)).toBe(true);
+    expect(freshnessWarningLabel(FRESHNESS_OUTDATED_MINUTES)).toBe("Data may be outdated");
   });
 });

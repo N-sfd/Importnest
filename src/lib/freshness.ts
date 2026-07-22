@@ -13,10 +13,16 @@ export const FRESHNESS_FRESH_MINUTES = 15;
  */
 export const FRESHNESS_STALE_MINUTES = 60;
 /**
- * Shopper-facing warning threshold. Soft “Updated X ago” is always fine;
- * amber “May need refresh” only past this age (or when unknown on compare screens).
+ * Shopper-facing warning thresholds. Soft “Updated X ago” is always fine on
+ * its own up through "yesterday"/"N days ago" — a warning suffix only kicks
+ * in once data is genuinely old enough to act on, in two tiers: a soft
+ * "May need refresh" nudge, escalating to "Data may be outdated" only once
+ * truly stale (default demo/seed data that hasn't been re-synced recently
+ * would otherwise trip a single low threshold almost permanently, which is
+ * what made every rail feel unreliable).
  */
-export const FRESHNESS_WARN_MINUTES = 6 * 60;
+export const FRESHNESS_REFRESH_MINUTES = 24 * 60;
+export const FRESHNESS_OUTDATED_MINUTES = 48 * 60;
 
 export function getFreshnessState(minutes: number | null | undefined): FreshnessState {
   if (minutes == null) return "unknown";
@@ -34,13 +40,27 @@ export function isFreshnessStale(minutes: number | null | undefined): boolean {
   return state === "stale" || state === "unknown";
 }
 
+export type FreshnessWarningLevel = "none" | "refresh" | "outdated";
+
 /**
- * Whether to show a shopper-facing amber refresh warning.
- * Relative “Updated …” text is always preferred; this only flags truly old data.
+ * Which shopper-facing warning tier (if any) applies. Unknown ages get no
+ * warning suffix here — `formatFreshness` already softly labels those
+ * "Last checked unknown", and ranking eligibility (a stricter, separate
+ * concern) is handled by `isFreshnessStale` instead.
+ */
+export function getFreshnessWarningLevel(minutes: number | null | undefined): FreshnessWarningLevel {
+  if (minutes == null) return "none";
+  if (minutes >= FRESHNESS_OUTDATED_MINUTES) return "outdated";
+  if (minutes >= FRESHNESS_REFRESH_MINUTES) return "refresh";
+  return "none";
+}
+
+/**
+ * Whether to show a shopper-facing refresh/outdated warning at all.
+ * Relative “Updated …” text is always preferred; this only flags old data.
  */
 export function needsFreshnessWarning(minutes: number | null | undefined): boolean {
-  if (minutes == null) return false;
-  return minutes >= FRESHNESS_WARN_MINUTES;
+  return getFreshnessWarningLevel(minutes) !== "none";
 }
 
 /** Soft relative freshness text. Prefer this over warning copy on product cards. */
@@ -60,7 +80,7 @@ export function formatFreshness(minutes: number | null | undefined): string {
   return days === 1 ? "Updated yesterday" : `Updated ${days} days ago`;
 }
 
-/** Short warning label when needsFreshnessWarning is true. */
-export function freshnessWarningLabel(): string {
-  return "May need refresh";
+/** Short warning label for the given age — call only when needsFreshnessWarning is true. */
+export function freshnessWarningLabel(minutes: number | null | undefined): string {
+  return getFreshnessWarningLevel(minutes) === "outdated" ? "Data may be outdated" : "May need refresh";
 }

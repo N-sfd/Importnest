@@ -5,14 +5,15 @@ import { DealProductCard } from "@/components/DealProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
 import { HomePersonalizationRail } from "@/components/HomePersonalizationRail";
 import { HowItWorks } from "@/components/HowItWorks";
+import { MiniAlertCard } from "@/components/MiniAlertCard";
 import { PageShell } from "@/components/PageShell";
 import { PopularComparisonsSection } from "@/components/PopularComparisonCard";
-import { TotalKnownCostHook } from "@/components/TotalKnownCostHook";
 import { TopProductsSection } from "@/components/TopProductsSection";
 import { BestDealsSection } from "@/components/BestDealsSection";
+import { TrustStrip } from "@/components/TrustStrip";
 import { getAuthUser } from "@/lib/auth";
 import { getBestDeals } from "@/lib/best-deals";
-import { categoryDescriptionFor } from "@/lib/category-visuals";
+import { categoryDescriptionFor, categorySubcategoriesFor } from "@/lib/category-visuals";
 import { categoryImageFor, homeDealImageFor } from "@/lib/images";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
@@ -23,59 +24,49 @@ import { getUserWatchlist } from "@/lib/saved-data";
 const categories = [
   {
     name: "Electronics",
-    desc: categoryDescriptionFor("electronics"),
+    key: "electronics",
+    slug: "electronics",
     href: "/search?category=electronics",
-    image: categoryImageFor("electronics"),
   },
   {
     name: "Appliances",
-    desc: categoryDescriptionFor("appliances"),
+    key: "appliances",
+    slug: "appliances",
     href: "/search?category=appliances",
-    image: categoryImageFor("appliances"),
   },
-  {
-    name: "Kitchen",
-    desc: categoryDescriptionFor("kitchen"),
-    href: "/search?category=kitchen",
-    image: categoryImageFor("kitchen"),
-  },
+  { name: "Kitchen", key: "kitchen", slug: "kitchen", href: "/search?category=kitchen" },
   {
     name: "Footwear",
-    desc: categoryDescriptionFor("footwear"),
+    key: "footwear",
+    slug: "footwear",
     href: "/search?category=footwear",
-    image: categoryImageFor("footwear"),
   },
   {
     name: "Beauty Devices",
-    desc: categoryDescriptionFor("beauty"),
+    key: "beauty",
+    slug: "beauty-devices",
     href: "/search?category=beauty-devices",
-    image: categoryImageFor("beauty"),
   },
   {
     name: "Accessories",
-    desc: categoryDescriptionFor("accessories"),
+    key: "accessories",
+    slug: "accessories",
     href: "/search?category=accessories",
-    image: categoryImageFor("accessories"),
   },
   {
     name: "Automotive",
-    desc: categoryDescriptionFor("automotive"),
+    key: "automotive",
+    slug: "automotive",
     href: "/search?category=automotive",
-    image: categoryImageFor("automotive"),
   },
   {
     name: "Outdoors",
-    desc: categoryDescriptionFor("outdoors"),
+    key: "outdoors",
+    slug: "outdoors",
     href: "/search?category=outdoors",
-    image: categoryImageFor("outdoors"),
   },
-  {
-    name: "Home",
-    desc: categoryDescriptionFor("home"),
-    href: "/search?category=home",
-    image: categoryImageFor("home"),
-  },
-];
+  { name: "Home", key: "home", slug: "home", href: "/search?category=home" },
+] as const;
 
 export default async function HomePage() {
   const user = await getAuthUser();
@@ -88,17 +79,31 @@ export default async function HomePage() {
     });
     savedIds = new Set(saved.map((s) => s.canonicalProductId));
   }
-  const [popularPool, bestPool, sources, recentSearches, watchlist] = await Promise.all([
-    getPopularComparisons(40, savedIds),
-    getBestDeals(40, savedIds),
-    prisma.source.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-    user ? getUserWatchlist(user.id) : Promise.resolve([]),
-  ]);
+  const [popularPool, bestPool, sources, recentSearches, watchlist, categoryCounts] =
+    await Promise.all([
+      getPopularComparisons(40, savedIds),
+      getBestDeals(40, savedIds),
+      prisma.source.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
+      user ? getUserWatchlist(user.id) : Promise.resolve([]),
+      prisma.category.findMany({
+        where: { slug: { in: categories.map((c) => c.slug) } },
+        select: { slug: true, _count: { select: { products: true } } },
+      }),
+    ]);
+  const productCountBySlug = new Map(categoryCounts.map((c) => [c.slug, c._count.products]));
+  const categoryCards = categories.map((c) => ({
+    name: c.name,
+    href: c.href,
+    desc: categoryDescriptionFor(c.key),
+    image: categoryImageFor(c.key),
+    subcategories: categorySubcategoriesFor(c.key),
+    productCount: productCountBySlug.get(c.slug) ?? null,
+  }));
 
   // Dedupe products across the three rails so the same item (and its image) never
   // appears twice on the homepage.
@@ -154,7 +159,7 @@ export default async function HomePage() {
               View all
             </Link>
           </div>
-          <CategoryImageGrid items={categories} />
+          <CategoryImageGrid items={categoryCards} />
         </section>
 
         {/* Top Products */}
@@ -168,6 +173,8 @@ export default async function HomePage() {
             <BestDealsSection items={bestDeals} signedIn={Boolean(user)} />
           </div>
         </div>
+
+        <TrustStrip />
 
         {/* Popular Comparisons */}
         <div className="home-section">
@@ -238,9 +245,9 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* Compare prices. See the real total cost. */}
+        {/* Compare smarter. Shop confidently. — mid-page CTA card */}
         <section
-          className="home-section section-soft px-5 py-7 sm:px-8 sm:py-8"
+          className="home-section rounded-3xl border-2 border-accent/30 bg-panel px-5 py-7 shadow-[var(--shadow-panel)] sm:px-8 sm:py-8"
           aria-labelledby="compare-smarter-heading"
         >
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:items-center">
@@ -249,21 +256,14 @@ export default async function HomePage() {
                 id="compare-smarter-heading"
                 className="text-xl font-extrabold tracking-tight text-navy-900 sm:text-2xl"
               >
-                Compare prices. See the real total cost.
+                Still comparing?
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Still looking? Search again across{" "}
-                <Link
-                  href="#approved-sources"
-                  className="font-semibold text-link underline-offset-2 hover:underline"
-                >
-                  approved retailers
-                </Link>{" "}
-                and refine by category, budget, or model.
+                Search again, adjust budget, or compare another product.
               </p>
             </div>
             <div className="min-w-0">
-              <HeroSearch className="mt-0" />
+              <HeroSearch className="mt-0" maxExamples={3} />
             </div>
           </div>
         </section>
@@ -296,7 +296,7 @@ export default async function HomePage() {
                   Start comparing
                 </Link>
               </div>
-              <TotalKnownCostHook />
+              <MiniAlertCard watchlist={watchlist} />
             </div>
 
             <div className="mt-6">

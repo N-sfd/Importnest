@@ -209,7 +209,7 @@ function OfferCard({
             {(() => {
               const minutes = listing.freshnessMinutesAgo;
               if (needsFreshnessWarning(minutes)) {
-                return <Badge tone="stale">{freshnessWarningLabel()}</Badge>;
+                return <Badge tone="stale">{freshnessWarningLabel(minutes)}</Badge>;
               }
               if (minutes != null && minutes < 15) {
                 return <Badge tone="fresh">Updated recently</Badge>;
@@ -382,7 +382,7 @@ export function PriorityTabs({
         <StatusBanner
           tone="info"
           title={formatFreshness(oldestMinutes)}
-          description={`${freshnessWarningLabel()}. Totals still reflect the last sync — refresh for the latest item, shipping, and fee figures before you buy.`}
+          description={`${freshnessWarningLabel(oldestMinutes)}. Totals still reflect the last sync — refresh for the latest item, shipping, and fee figures before you buy.`}
           action={<RefreshPricesButton productId={productId} />}
         />
       ) : null}
