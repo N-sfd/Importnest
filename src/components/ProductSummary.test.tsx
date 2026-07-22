@@ -148,11 +148,12 @@ describe("ProductSummary — professional identity, not decorative clutter", () 
     expect(html).not.toContain("Total Known Cost");
   });
 
-  it("shows From · Total Known Cost only when a real lowest total is provided", () => {
+  it("shows From / price / Total Known Cost only when a real lowest total is provided", () => {
     const html = renderToStaticMarkup(
       <ProductSummary {...baseProps} lowestTotalKnownCost={849} />,
     );
-    expect(html).toContain("From · Total Known Cost");
+    expect(html).toContain(">From<");
+    expect(html).toContain("Total Known Cost");
     expect(html).toContain("$849.00");
   });
 

@@ -100,7 +100,7 @@ export function HowItWorks() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
         <Link href="/how-to-use" className="text-sm font-semibold text-link hover:underline">
-          Full guide →
+          How Importnest works →
         </Link>
       </div>
       <ol className="mt-5 grid gap-4 sm:grid-cols-3">

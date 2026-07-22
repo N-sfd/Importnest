@@ -631,13 +631,6 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-.product-card-tkc-callout {
-  font-size: 0.72rem;
-  line-height: 1.35;
-  font-weight: 600;
-  color: #2f5a12;
-}
-
 .product-card-meta {
   display: flex;
   flex-direction: column;
@@ -806,14 +799,17 @@ a {
   pointer-events: none;
 }
 
+/* A navy-to-transparent gradient was invisible here — the bar's own
+   background is that same navy, so "fading to reveal navy" showed nothing.
+   A dark vignette stays visible regardless of the bar's own color. */
 .category-nav-fade-left::before {
   left: 0;
-  background: linear-gradient(90deg, var(--navy-900), transparent);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.32), transparent);
 }
 
 .category-nav-fade-right::after {
   right: 0;
-  background: linear-gradient(270deg, var(--navy-900), transparent);
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.32), transparent);
 }
 
 .category-link {
@@ -1090,7 +1086,12 @@ a {
 
 @media (max-width: 1100px) {
   .header-top-inner {
-    grid-template-columns: auto minmax(320px, 1fr) auto;
+    /* Logo (~307px at this band's 48px height) + icon-only actions can leave
+       under 320px free around 761–846px viewport (e.g. iPad portrait at
+       768px) — a hard 320px floor here overflowed the row and visually
+       clipped the search input. A much lower floor lets the 1fr track
+       shrink to fit; it still expands to fill available space otherwise. */
+    grid-template-columns: auto minmax(140px, 1fr) auto;
     padding: 12px 20px;
   }
 

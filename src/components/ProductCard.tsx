@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProductCardActions } from "@/components/ProductCardActions";
 import { ProductImage } from "@/components/ProductImage";
+import { RefreshPricesButton } from "@/components/RefreshPricesButton";
 import { colorSwatchStyle } from "@/lib/color-swatches";
 import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
 import { productImageAlt } from "@/lib/product-images";
@@ -299,11 +300,6 @@ export function ProductCard({
             {breakdownLine ? (
               <p className="product-card-tkc-breakdown">{breakdownLine}</p>
             ) : null}
-            {previousPrice != null && fromPrice != null && previousPrice > fromPrice + 0.009 ? (
-              <p className="product-card-tkc-callout">
-                Lower Total Known Cost than recent tracked price (${previousPrice.toFixed(2)}).
-              </p>
-            ) : null}
           </div>
         ) : null}
 
@@ -334,8 +330,14 @@ export function ProductCard({
               <p className="text-xs font-medium text-navy-800">No offers</p>
             ) : null}
             {showFreshnessWarning ? (
-              <p className="text-xs font-medium text-amber-800">
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-medium text-amber-800">
                 {freshnessWarningLabel(freshnessMinutesAgo)}
+                {commerce ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <RefreshPricesButton productId={productId} compact />
+                  </>
+                ) : null}
               </p>
             ) : null}
           </div>

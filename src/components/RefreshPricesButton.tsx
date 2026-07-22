@@ -3,12 +3,35 @@
 import { useState, useTransition } from "react";
 import { refreshProductPrices } from "@/app/actions/refresh-prices";
 
+function RefreshIcon({ spinning = false }: { spinning?: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={spinning ? "animate-spin" : ""}
+    >
+      <path d="M21 12a9 9 0 1 1-3-6.7" />
+      <path d="M21 3v6h-6" />
+    </svg>
+  );
+}
+
 export function RefreshPricesButton({
   productId,
   className = "",
+  compact = false,
 }: {
   productId: string;
   className?: string;
+  /** Small inline icon button — fits next to a freshness timestamp on product cards. */
+  compact?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +47,22 @@ export function RefreshPricesButton({
       // Full reload so SSR freshness + ranking labels recompute from updated DB.
       window.location.reload();
     });
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={pending}
+        aria-label={pending ? "Refreshing prices" : "Refresh prices"}
+        title="Refresh prices"
+        className={`inline-flex items-center gap-1 font-medium text-link hover:underline disabled:opacity-60 disabled:no-underline ${className}`}
+      >
+        <RefreshIcon spinning={pending} />
+        {pending ? "Refreshing…" : "Refresh"}
+      </button>
+    );
   }
 
   return (

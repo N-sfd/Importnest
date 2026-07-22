@@ -108,14 +108,13 @@ export function ProductSummary({
           ) : null}
 
           {lowestTotalKnownCost != null ? (
-            <p className="mt-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                From · Total Known Cost
-              </span>
-              <span className="ml-2 text-xl price-text sm:text-2xl">
+            <div className="mt-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-accent">From</p>
+              <p className="mt-0.5 text-xl price-text sm:text-2xl">
                 ${lowestTotalKnownCost.toFixed(2)}
-              </span>
-            </p>
+              </p>
+              <p className="mt-0.5 text-xs font-semibold text-muted">Total Known Cost</p>
+            </div>
           ) : null}
         </div>
 

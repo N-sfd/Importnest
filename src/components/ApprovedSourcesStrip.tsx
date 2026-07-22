@@ -31,10 +31,10 @@ export function ApprovedSourcesStrip({ sources }: { sources: ApprovedSourceItem[
           </p>
         </div>
         <Link
-          href="/#approved-sources"
+          href="/how-to-use"
           className="text-xs font-semibold text-link hover:underline sm:text-sm"
         >
-          See source standards
+          How Importnest works
         </Link>
       </div>
 

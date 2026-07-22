@@ -17,7 +17,7 @@ export function Footer() {
           <ul className="mt-3 space-y-2.5 text-sm text-white/80">
             <li>
               <Link href="/how-to-use" className="transition hover:text-cta">
-                How comparison works
+                How Importnest works
               </Link>
             </li>
             <li>
