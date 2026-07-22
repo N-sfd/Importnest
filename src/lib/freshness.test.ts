@@ -40,8 +40,8 @@ describe("formatFreshness", () => {
   });
 
   it("formats an unknown timestamp softly", () => {
-    expect(formatFreshness(null)).toBe("Last checked unknown");
-    expect(formatFreshness(undefined)).toBe("Last checked unknown");
+    expect(formatFreshness(null)).toBe("Last checked unavailable");
+    expect(formatFreshness(undefined)).toBe("Last checked unavailable");
   });
 });
 
@@ -91,9 +91,9 @@ describe("getFreshnessWarningLevel", () => {
     expect(getFreshnessWarningLevel(FRESHNESS_OUTDATED_MINUTES - 1)).toBe("refresh");
   });
 
-  it("is outdated only once data is truly stale (48h+)", () => {
+  it("is outdated only once data is truly stale (72h+)", () => {
     expect(getFreshnessWarningLevel(FRESHNESS_OUTDATED_MINUTES)).toBe("outdated");
-    expect(getFreshnessWarningLevel(72 * 60)).toBe("outdated");
+    expect(getFreshnessWarningLevel(96 * 60)).toBe("outdated");
   });
 });
 
@@ -102,10 +102,12 @@ describe("needsFreshnessWarning", () => {
     expect(needsFreshnessWarning(null)).toBe(false);
     // A product checked 1 hour ago must never carry a refresh/outdated warning.
     expect(needsFreshnessWarning(60)).toBe(false);
+    // Nor must one checked 15 hours ago — the exact case that made the app feel unreliable.
+    expect(needsFreshnessWarning(15 * 60)).toBe(false);
     expect(needsFreshnessWarning(FRESHNESS_REFRESH_MINUTES - 1)).toBe(false);
   });
 
-  it("warns once data is a day old, escalating the label past 48h", () => {
+  it("warns once data is a day old, escalating the label past 72h", () => {
     expect(needsFreshnessWarning(FRESHNESS_REFRESH_MINUTES)).toBe(true);
     expect(freshnessWarningLabel(FRESHNESS_REFRESH_MINUTES)).toBe("May need refresh");
 

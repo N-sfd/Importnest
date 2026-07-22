@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ProductCardActions } from "@/components/ProductCardActions";
-import { ProductCardSaveButton } from "@/components/ProductCardSaveButton";
 import { ProductImage } from "@/components/ProductImage";
 import { colorSwatchStyle } from "@/lib/color-swatches";
 import { formatFreshness, needsFreshnessWarning, freshnessWarningLabel } from "@/lib/freshness";
@@ -182,14 +181,6 @@ export function ProductCard({
             </span>
           ) : null}
         </Link>
-        {commerce ? (
-          <ProductCardSaveButton
-            productId={productId}
-            isSaved={isSaved}
-            signedIn={signedIn}
-            redirectTo={saveRedirect}
-          />
-        ) : null}
       </div>
 
       <div className="product-card-body">
@@ -290,14 +281,15 @@ export function ProductCard({
         {showPrice ? (
           <div className="product-card-price-block">
             <div className="product-card-price-row">
-              <p className="product-card-price">
-                <span className="product-card-price-label">From · Total Known Cost</span>
+              <div className="product-card-price">
+                <span className="product-card-price-eyebrow">From</span>
                 <span className="product-card-price-value">${fromPrice.toFixed(2)}</span>
-              </p>
+              </div>
               {previousPrice != null ? (
                 <p className="product-card-price-was">${previousPrice.toFixed(2)}</p>
               ) : null}
             </div>
+            <p className="product-card-price-caption">Total Known Cost</p>
             <p className="product-card-tkc-badge" title="Item + shipping + mandatory fees from approved sources">
               Includes ship + fees
               <span className="product-card-tkc-info" aria-hidden="true">
@@ -334,12 +326,9 @@ export function ProductCard({
               <p className="product-card-meta-line">{metaNote.trim()}</p>
             ) : null}
             {dealReason?.trim() ? (
-              <div className="product-card-deal-reason">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-navy-800">
-                  Why this deal?
-                </p>
-                <p className="mt-0.5 text-xs leading-snug text-muted">{dealReason.trim()}</p>
-              </div>
+              <p className="product-card-deal-reason text-xs font-semibold leading-snug text-navy-800">
+                {dealReason.trim()}
+              </p>
             ) : null}
             {offerCount === 0 ? (
               <p className="text-xs font-medium text-navy-800">No offers</p>
@@ -361,6 +350,9 @@ export function ProductCard({
             href={href}
             bestListing={bestListing}
             primaryCtaLabel={primaryCtaLabel}
+            isSaved={isSaved}
+            signedIn={signedIn}
+            redirectTo={saveRedirect}
           />
         ) : (
           <div className="product-card-actions">

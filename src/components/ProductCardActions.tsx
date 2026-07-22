@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToCompareButton } from "@/components/AddToCompareButton";
+import { ProductCardSaveButton } from "@/components/ProductCardSaveButton";
 import { formatConditionLabel } from "@/lib/compare-view";
 import type { ProductCardListing } from "@/components/ProductCard";
 
 /**
- * Compact, always-visible icon row (Compare, Cart — Save lives on the image
- * corner, at zero row height) plus one prominent primary CTA below. Replaces
- * a hover-reveal-on-desktop / "···" overflow-on-mobile pattern that hid these
- * controls behind an interaction and didn't help card height anyway once
- * revealed — a flat icon row is shorter and works the same on touch and mouse.
+ * View offers is the one prominent primary CTA, on top; Save/Compare/Cart
+ * are a compact, always-visible icon row below it — no hover-reveal or
+ * overflow menu, so the same layout works on touch and mouse alike.
  */
 export function ProductCardActions({
   productId,
@@ -19,6 +18,9 @@ export function ProductCardActions({
   href,
   bestListing,
   primaryCtaLabel,
+  isSaved,
+  signedIn,
+  redirectTo,
 }: {
   productId: string;
   productName: string;
@@ -27,10 +29,25 @@ export function ProductCardActions({
   href: string;
   bestListing?: ProductCardListing | null;
   primaryCtaLabel: string;
+  isSaved: boolean;
+  signedIn: boolean;
+  redirectTo: string;
 }) {
   return (
     <div className="product-card-actions">
+      <Link
+        href={href}
+        className="product-card-action-wide btn-cta flex min-h-10 items-center justify-center px-3 py-2.5 text-center text-sm font-semibold"
+      >
+        {primaryCtaLabel}
+      </Link>
       <div className="product-card-actions-row">
+        <ProductCardSaveButton
+          productId={productId}
+          isSaved={isSaved}
+          signedIn={signedIn}
+          redirectTo={redirectTo}
+        />
         <AddToCompareButton productId={productId} productName={productName} />
         {bestListing ? (
           <AddToCartButton
@@ -49,12 +66,6 @@ export function ProductCardActions({
           />
         ) : null}
       </div>
-      <Link
-        href={href}
-        className="product-card-action-wide btn-cta flex min-h-10 items-center justify-center px-3 py-2.5 text-center text-sm font-semibold"
-      >
-        {primaryCtaLabel}
-      </Link>
     </div>
   );
 }

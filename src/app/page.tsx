@@ -192,7 +192,7 @@ export default async function HomePage() {
                 Today&apos;s deals
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Browse live offers with real Total Known Cost — never invented discounts.
+                Fresh deals from approved sources — real Total Known Cost, never invented discounts.
               </p>
             </div>
             <Link

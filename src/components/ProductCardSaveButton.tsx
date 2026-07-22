@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { saveProductAction, unsaveProductAction } from "@/lib/saved-actions";
 
-/** Heart / bookmark overlay on the product image — secondary to View offers. */
+const ICON_BUTTON_CLASS =
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-panel/95 shadow-sm transition hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+/** Compact Save/heart toggle — sits in the product-card action row alongside Compare and Cart. */
 export function ProductCardSaveButton({
   productId,
   isSaved,
@@ -13,7 +16,7 @@ export function ProductCardSaveButton({
   signedIn: boolean;
   redirectTo: string;
 }) {
-  const className = `product-card-save ${isSaved ? "product-card-save-on" : ""}`;
+  const className = `${ICON_BUTTON_CLASS} ${isSaved ? "text-accent" : "text-navy-900"}`;
 
   if (signedIn) {
     return (
@@ -23,12 +26,12 @@ export function ProductCardSaveButton({
             ? unsaveProductAction.bind(null, productId, redirectTo)
             : saveProductAction.bind(null, productId, redirectTo)
         }
-        className="product-card-save-form"
       >
         <button
           type="submit"
           className={className}
           aria-label={isSaved ? "Remove from saved" : "Save product"}
+          aria-pressed={isSaved}
           title={isSaved ? "Saved" : "Save"}
         >
           <HeartIcon filled={isSaved} />
@@ -52,12 +55,12 @@ export function ProductCardSaveButton({
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
     <svg
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="2.1"
+      strokeWidth="2.2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

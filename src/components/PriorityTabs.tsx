@@ -217,7 +217,7 @@ function OfferCard({
               if (minutes != null) {
                 return <Badge tone="neutral">{formatFreshness(minutes)}</Badge>;
               }
-              return <Badge tone="neutral">Last checked unknown</Badge>;
+              return <Badge tone="neutral">Last checked unavailable</Badge>;
             })()}
           </div>
           {listing.sourceTypeLabel ? (

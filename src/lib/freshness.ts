@@ -22,7 +22,7 @@ export const FRESHNESS_STALE_MINUTES = 60;
  * what made every rail feel unreliable).
  */
 export const FRESHNESS_REFRESH_MINUTES = 24 * 60;
-export const FRESHNESS_OUTDATED_MINUTES = 48 * 60;
+export const FRESHNESS_OUTDATED_MINUTES = 72 * 60;
 
 export function getFreshnessState(minutes: number | null | undefined): FreshnessState {
   if (minutes == null) return "unknown";
@@ -45,7 +45,7 @@ export type FreshnessWarningLevel = "none" | "refresh" | "outdated";
 /**
  * Which shopper-facing warning tier (if any) applies. Unknown ages get no
  * warning suffix here — `formatFreshness` already softly labels those
- * "Last checked unknown", and ranking eligibility (a stricter, separate
+ * "Last checked unavailable", and ranking eligibility (a stricter, separate
  * concern) is handled by `isFreshnessStale` instead.
  */
 export function getFreshnessWarningLevel(minutes: number | null | undefined): FreshnessWarningLevel {
@@ -65,7 +65,7 @@ export function needsFreshnessWarning(minutes: number | null | undefined): boole
 
 /** Soft relative freshness text. Prefer this over warning copy on product cards. */
 export function formatFreshness(minutes: number | null | undefined): string {
-  if (minutes == null) return "Last checked unknown";
+  if (minutes == null) return "Last checked unavailable";
   if (minutes < 1) return "Updated just now";
   if (minutes < 60) {
     return minutes === 1 ? "Updated 1 minute ago" : `Updated ${minutes} minutes ago`;

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { BrandLink } from "@/components/BrandMark";
+import { BrandMark } from "@/components/BrandMark";
 
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-white/10 bg-navy-900 text-white">
       <div className="footer-inner mx-auto grid max-w-[1200px] gap-10 py-12 sm:grid-cols-[minmax(0,1.35fr)_1fr_1fr_1fr]">
         <div className="footer-brand min-w-0">
-          <BrandLink logo="logo9" className="footer-logo" />
+          <BrandMark logo="logo9" onDark height={64} className="footer-logo" />
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
             AI-powered shopping comparison—transparent total cost, delivery, and protection across
             approved retailers.
@@ -16,7 +16,7 @@ export function Footer() {
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Explore</p>
           <ul className="mt-3 space-y-2.5 text-sm text-white/80">
             <li>
-              <Link href="/" className="transition hover:text-cta">
+              <Link href="/how-to-use" className="transition hover:text-cta">
                 How comparison works
               </Link>
             </li>
