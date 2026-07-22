@@ -100,8 +100,10 @@ five working product-data connectors (with scheduled sync), and a real search fl
 
 `src/app/api/cron/sync/route.ts` runs every registered connector (via
 `src/lib/connectors/sync-all.ts`) and upserts the results; one connector failing doesn't stop the
-others. `vercel.json` schedules it every 6 hours through [Vercel
-Cron](https://vercel.com/docs/cron-jobs) when deployed there. Vercel signs cron requests with
+others. `vercel.json` schedules it once daily through [Vercel
+Cron](https://vercel.com/docs/cron-jobs) when deployed there (Hobby-plan accounts are capped at one
+run per day per cron job — bump the schedule if the project is ever upgraded to Pro). Vercel signs
+cron requests with
 `Authorization: Bearer $CRON_SECRET`, and the route checks that header — set `CRON_SECRET` in the
 deployment's environment variables, or the route rejects every request with 401 (fails closed
 rather than leaving an unauthenticated endpoint that triggers DB writes). Outside Vercel, run
