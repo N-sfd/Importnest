@@ -226,7 +226,7 @@ export function whyThisDeal(item: {
   previousTotal: number | null;
 }): string | null {
   if (item.discountPercent != null && item.discountPercent > 0 && item.previousTotal != null) {
-    return `${item.discountPercent}% lower than recent tracked price.`;
+    return `${item.discountPercent}% below recent tracked price`;
   }
   if (item.offerCount >= 2) {
     return `Lowest Total Known Cost among ${item.offerCount} approved sources.`;

@@ -22,8 +22,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/search?category=appliances" className="transition hover:text-cta">
-                  Browse appliances
+                <Link href="/#shop-category-heading" className="transition hover:text-cta">
+                  Browse categories
                 </Link>
               </li>
             </ul>

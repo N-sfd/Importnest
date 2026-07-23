@@ -321,7 +321,7 @@ export function ProductCard({
             {sourceLabel ? (
               <p className="product-card-meta-line whitespace-nowrap">{sourceLabel}</p>
             ) : null}
-            {hasFreshnessField ? (
+            {hasFreshnessField && !showFreshnessWarning ? (
               <p className="product-card-meta-line">
                 <span className="product-card-meta-label">Last checked</span>
                 {formatFreshness(freshnessMinutesAgo)}
