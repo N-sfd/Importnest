@@ -42,6 +42,8 @@ export type AddToCartButtonProps = NewCartItem & {
   addAriaLabel?: string;
   /** Same disambiguation, for the "remove" state. Defaults to `Remove {title} from cart`. */
   removeAriaLabel?: string;
+  /** Fired after a successful add (not on remove) — lets a parent (e.g. OfferActions) observe the action without re-implementing cart logic. */
+  onAdded?: () => void;
 };
 
 /**
@@ -56,6 +58,7 @@ export function AddToCartButton({
   addedLabel = "Added to cart",
   addAriaLabel,
   removeAriaLabel,
+  onAdded,
   ...item
 }: AddToCartButtonProps) {
   const { isInCart, add, remove, isFull } = useCart();
@@ -74,6 +77,7 @@ export function AddToCartButton({
     }
     if (limitReached) return;
     add(item);
+    onAdded?.();
   }
 
   const ariaLabel = inCart

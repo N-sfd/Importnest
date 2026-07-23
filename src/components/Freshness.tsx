@@ -17,16 +17,18 @@ const STATE_TEXT_CLASS: Record<FreshnessState, string> = {
  * Compact freshness indicator. Always shows soft relative time.
  * Amber warning only when data is truly old — "May need refresh" past a day,
  * escalating to "Data may be outdated" past two days.
+ *
+ * Never renders its own "Refresh" affordance — a plain-text hint here would
+ * look like a button without being one. Callers that want an actual refresh
+ * action should render a real `RefreshPricesButton` (e.g. via `OfferActions`)
+ * alongside this component instead.
  */
 export function Freshness({
   minutesAgo,
   className = "",
-  showRefreshHint = false,
 }: {
   minutesAgo: number | null | undefined;
   className?: string;
-  /** When true and a warning is warranted, append a soft refresh nudge. */
-  showRefreshHint?: boolean;
 }) {
   const state = getFreshnessState(minutesAgo);
   const warn = needsFreshnessWarning(minutesAgo);
@@ -39,7 +41,6 @@ export function Freshness({
       {warn ? (
         <span className="inline-flex items-center gap-1 font-medium text-amber-800">
           · {freshnessWarningLabel(minutesAgo)}
-          {showRefreshHint ? <span className="font-normal text-muted">· Refresh price</span> : null}
         </span>
       ) : null}
     </span>

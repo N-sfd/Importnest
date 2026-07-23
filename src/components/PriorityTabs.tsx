@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AddToCartButton } from "@/components/AddToCartButton";
 import { BottomSheet } from "@/components/BottomSheet";
 import {
   formatConditionLabel,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/compare-view";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import { Freshness } from "@/components/Freshness";
+import { OfferActions } from "@/components/OfferActions";
 import { ProtectionDetails } from "@/components/ProtectionDetails";
 import { BRAND_FALLBACK_IMAGE, sourceImageFor } from "@/lib/images";
 import type { Priority } from "@/lib/types";
@@ -283,45 +283,32 @@ function OfferCard({
           <ProtectionDetails details={listing.protectionDetails} />
         </FieldRow>
         <FieldRow label="Freshness">
-          <Freshness minutesAgo={listing.freshnessMinutesAgo} showRefreshHint />
+          <Freshness minutesAgo={listing.freshnessMinutesAgo} />
         </FieldRow>
       </div>
 
-      {/* Why this option · View offer (hidden without a valid retailer URL) */}
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <Link
-          href={`/compare/${productId}/why/${listing.id}`}
-          className="flex min-h-11 items-center text-sm font-semibold text-link hover:underline"
-        >
-          Why this option
-        </Link>
-        {listing.url ? (
-          <a
-            href={`/go/${listing.id}`}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="btn-cta min-h-11 px-4 py-2 text-center text-sm"
-          >
-            View retailer offer
-          </a>
-        ) : null}
-        <AddToCartButton
-          label="Add this offer to cart"
-          addAriaLabel={`Add ${listing.sourceName} offer for ${productName} to cart`}
-          removeAriaLabel={`Remove ${listing.sourceName} offer for ${productName} from cart`}
-          listingId={listing.id}
-          productId={productId}
-          title={productName}
-          brand={brandName}
-          imageUrl={productImageSrc}
-          retailerName={listing.sourceName}
-          condition={formatConditionLabel(listing.condition)}
-          itemPrice={listing.price}
-          shipping={listing.shipping}
-          fees={listing.mandatoryFees}
-          totalKnownCost={total}
-        />
-      </div>
+      <OfferActions
+        product={{
+          productId,
+          productName,
+          brandName,
+          imageUrl: productImageSrc,
+        }}
+        listing={{
+          id: listing.id,
+          sourceName: listing.sourceName,
+          condition: listing.condition,
+          price: listing.price,
+          shipping: listing.shipping,
+          fees: listing.mandatoryFees,
+          url: listing.url,
+        }}
+        explanation={recommendation}
+        canAddToCart={Boolean(listing.id) && Boolean(listing.sourceName) && Number.isFinite(listing.price)}
+        canRefreshPrice={needsFreshnessWarning(listing.freshnessMinutesAgo)}
+        canViewRetailerOffer={Boolean(listing.url)}
+        canExplain={Boolean(recommendation)}
+      />
     </li>
   );
 }

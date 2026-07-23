@@ -28,6 +28,7 @@ export function RefreshPricesButton({
   className = "",
   compact = false,
   emphasize = false,
+  onRefreshed,
 }: {
   productId: string;
   className?: string;
@@ -35,6 +36,8 @@ export function RefreshPricesButton({
   compact?: boolean;
   /** Pill-styled instead of a plain text link — for the most severe "outdated" tier, where a prompt to act should stand out more. */
   emphasize?: boolean;
+  /** Fired after a real, successful refresh — never on failure or a faked update. */
+  onRefreshed?: () => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +50,7 @@ export function RefreshPricesButton({
         setError(result.error);
         return;
       }
+      onRefreshed?.();
       // Full reload so SSR freshness + ranking labels recompute from updated DB.
       window.location.reload();
     });
