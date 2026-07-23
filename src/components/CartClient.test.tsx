@@ -53,7 +53,13 @@ describe("EmptyCart", () => {
 describe("CartLineRow — renders real listing data", () => {
   it("shows brand, retailer, condition, price, shipping, fees, and total known cost", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     expect(html).toContain("Apex Home");
     expect(html).toContain("SportLane");
@@ -67,27 +73,40 @@ describe("CartLineRow — renders real listing data", () => {
 
   it("shows a 'View offers' link to the product's compare page", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     expect(html).toContain('href="/compare/cp-1"');
     expect(html).toContain("View offers");
   });
 
-  it("shows 'Continue to retailer' only when a listingId is present", () => {
-    const withListing = renderToStaticMarkup(
-      <CartLineRow item={makeItem({ listingId: "lst-1" })} unavailable={false} isSaved={false} signedIn={true} />,
-    );
-    expect(withListing).toContain("Continue to retailer");
-
-    const withoutListing = renderToStaticMarkup(
+  it("shows 'Continue to retailer' only when hasRetailerLink is true — a listingId alone is not enough (the listing might not have a real url)", () => {
+    const withLink = renderToStaticMarkup(
       <CartLineRow
-        item={makeItem({ listingId: undefined })}
+        item={makeItem({ listingId: "lst-1" })}
         unavailable={false}
+        hasRetailerLink={true}
         isSaved={false}
         signedIn={true}
       />,
     );
-    expect(withoutListing).not.toContain("Continue to retailer");
+    expect(withLink).toContain("Continue to retailer");
+
+    const withoutLink = renderToStaticMarkup(
+      <CartLineRow
+        item={makeItem({ listingId: "lst-1" })}
+        unavailable={false}
+        hasRetailerLink={false}
+        isSaved={false}
+        signedIn={true}
+      />,
+    );
+    expect(withoutLink).not.toContain("Continue to retailer");
   });
 });
 
@@ -97,6 +116,7 @@ describe("CartLineRow — missing shipping/fees never fabricate $0", () => {
       <CartLineRow
         item={makeItem({ shipping: undefined, fees: undefined })}
         unavailable={false}
+        hasRetailerLink={true}
         isSaved={false}
         signedIn={true}
       />,
@@ -109,21 +129,39 @@ describe("CartLineRow — missing shipping/fees never fabricate $0", () => {
 describe("CartLineRow — save for later", () => {
   it("shows 'Save for later' when signed in and not yet saved", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     expect(html).toContain("Save for later");
   });
 
   it("shows 'Saved for later' (disabled) when already saved", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={true} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={true}
+        signedIn={true}
+      />,
     );
     expect(html).toContain("Saved for later");
   });
 
   it("prompts sign-in to save for later when signed out", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={false} signedIn={false} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={false}
+      />,
     );
     expect(html).toContain("Sign in to save for later");
   });
@@ -132,7 +170,13 @@ describe("CartLineRow — save for later", () => {
 describe("CartLineRow — quantity controls", () => {
   it("disables the decrease button at quantity 1", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem({ quantity: 1 })} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem({ quantity: 1 })}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     const tag = tagWithAriaLabel(html, "Decrease quantity of Apex Quiet Dishwasher");
     expect(tag).toContain(`disabled=""`);
@@ -140,7 +184,13 @@ describe("CartLineRow — quantity controls", () => {
 
   it("enables the decrease button above quantity 1", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem({ quantity: 2 })} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem({ quantity: 2 })}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     const tag = tagWithAriaLabel(html, "Decrease quantity of Apex Quiet Dishwasher");
     expect(tag).not.toContain(`disabled=""`);
@@ -148,7 +198,13 @@ describe("CartLineRow — quantity controls", () => {
 
   it("disables the increase button at the max quantity of 10", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem({ quantity: 10 })} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem({ quantity: 10 })}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     const tag = tagWithAriaLabel(html, "Increase quantity of Apex Quiet Dishwasher");
     expect(tag).toContain(`disabled=""`);
@@ -156,7 +212,13 @@ describe("CartLineRow — quantity controls", () => {
 
   it("enables the increase button below the max quantity", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem({ quantity: 9 })} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem({ quantity: 9 })}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     const tag = tagWithAriaLabel(html, "Increase quantity of Apex Quiet Dishwasher");
     expect(tag).not.toContain(`disabled=""`);
@@ -164,16 +226,28 @@ describe("CartLineRow — quantity controls", () => {
 
   it("exposes an accessible label for the remove action", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={false} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={false}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     expect(html).toContain('aria-label="Remove Apex Quiet Dishwasher from cart"');
   });
 });
 
 describe("CartLineRow — unavailable listing", () => {
-  it("shows an unavailable notice instead of price/shipping/fees fields", () => {
+  it("shows an unavailable notice instead of price/shipping/fees fields, and hides Continue to retailer even if hasRetailerLink is true", () => {
     const html = renderToStaticMarkup(
-      <CartLineRow item={makeItem()} unavailable={true} isSaved={false} signedIn={true} />,
+      <CartLineRow
+        item={makeItem()}
+        unavailable={true}
+        hasRetailerLink={true}
+        isSaved={false}
+        signedIn={true}
+      />,
     );
     expect(html).toContain("no longer available");
     expect(html).not.toContain("Continue to retailer");
@@ -187,7 +261,7 @@ describe("CartSummary — totals", () => {
   ];
 
   it("shows item count, subtotal, known shipping, known fees, and Total Known Cost", () => {
-    const html = renderToStaticMarkup(<CartSummary items={items} />);
+    const html = renderToStaticMarkup(<CartSummary items={items} hasRetailerLink={true} />);
     expect(html).toContain("Cart summary");
     expect(html).toContain(">3<"); // items = 2 + 1
     expect(html).toContain("$250.00"); // subtotal
@@ -198,30 +272,31 @@ describe("CartSummary — totals", () => {
 
   it("flags shipping/fees as not fully provided instead of implying $0 is final", () => {
     const html = renderToStaticMarkup(
-      <CartSummary items={[makeItem({ shipping: undefined, fees: undefined, totalKnownCost: undefined })]} />,
+      <CartSummary
+        items={[makeItem({ shipping: undefined, fees: undefined, totalKnownCost: undefined })]}
+        hasRetailerLink={true}
+      />,
     );
     expect(html).toContain("not fully provided");
   });
 
-  it("shows the demo checkout button and 'no payment is processed' disclaimer", () => {
-    const html = renderToStaticMarkup(<CartSummary items={items} />);
-    expect(html).toContain("Checkout demo");
+  it("shows the checkout button and 'no payment is processed' disclaimer", () => {
+    const html = renderToStaticMarkup(<CartSummary items={items} hasRetailerLink={true} />);
+    expect(html).toContain("Checkout");
     expect(html).toContain("No payment is processed.");
     expect(html).toContain('href="/checkout"');
   });
 
-  it("shows the retailer note only when a listing is present", () => {
-    const withListing = renderToStaticMarkup(<CartSummary items={items} />);
-    expect(withListing).toContain("Some purchases may be completed on the retailer website.");
+  it("shows the retailer note only when hasRetailerLink is true", () => {
+    const withLink = renderToStaticMarkup(<CartSummary items={items} hasRetailerLink={true} />);
+    expect(withLink).toContain("Some purchases may be completed on the retailer website.");
 
-    const withoutListing = renderToStaticMarkup(
-      <CartSummary items={[makeItem({ listingId: undefined })]} />,
-    );
-    expect(withoutListing).not.toContain("Some purchases may be completed on the retailer website.");
+    const withoutLink = renderToStaticMarkup(<CartSummary items={items} hasRetailerLink={false} />);
+    expect(withoutLink).not.toContain("Some purchases may be completed on the retailer website.");
   });
 
   it("returns all-zero totals for an empty cart without crashing", () => {
-    const html = renderToStaticMarkup(<CartSummary items={[]} />);
+    const html = renderToStaticMarkup(<CartSummary items={[]} hasRetailerLink={false} />);
     expect(html).toContain("$0.00");
   });
 });

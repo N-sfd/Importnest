@@ -26,11 +26,14 @@ const TRUST_POINTS = [
 export function CartLineRow({
   item,
   unavailable,
+  hasRetailerLink,
   isSaved,
   signedIn,
 }: {
   item: CartItem;
   unavailable: boolean;
+  /** Live-checked (not the add-time snapshot) — a listing's url can change or be cleared after it was added. */
+  hasRetailerLink: boolean;
   isSaved: boolean;
   signedIn: boolean;
 }) {
@@ -150,7 +153,7 @@ export function CartLineRow({
             </button>
           </div>
 
-          {!unavailable && item.listingId ? (
+          {!unavailable && hasRetailerLink ? (
             <div className="mt-3">
               <a
                 href={`/go/${item.listingId}`}
@@ -178,11 +181,17 @@ export function CartLineRow({
   );
 }
 
-export function CartSummary({ items }: { items: CartItem[] }) {
+export function CartSummary({
+  items,
+  hasRetailerLink,
+}: {
+  items: CartItem[];
+  /** Live-checked — true when at least one item's listing currently has a real retailer url. */
+  hasRetailerLink: boolean;
+}) {
   const { subtotal, hasUnknownShipping, hasUnknownFees, shippingTotal, feesTotal, totalKnownCost } =
     cartSummaryTotals(items);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const hasRetailerLink = items.some((item) => item.listingId != null);
 
   return (
     <aside className="cart-summary panel h-fit p-4 sm:p-5 lg:sticky lg:top-20">
@@ -237,7 +246,7 @@ export function CartSummary({ items }: { items: CartItem[] }) {
 
       <div className="mt-4 space-y-2 border-t border-border pt-4">
         <Link href="/checkout" className="cart-primary-button btn-cta block min-h-11 px-4 py-2.5 text-center text-sm">
-          Checkout demo
+          Checkout
         </Link>
         <p className="text-center text-[11px] font-semibold leading-snug text-amber-900">
           No payment is processed.
@@ -310,6 +319,10 @@ export function CartClient({
 }) {
   const { items, clear } = useCart();
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+  // Listings currently known to have a real retailer url — starts empty so
+  // "Continue to retailer" never shows from a stale/optimistic snapshot
+  // before the live check resolves.
+  const [retailerLinkIds, setRetailerLinkIds] = useState<Set<string>>(new Set());
   const savedIdSet = useMemo(() => new Set(savedProductIds), [savedProductIds]);
 
   const listingIds = useMemo(
@@ -321,15 +334,17 @@ export function CartClient({
   useEffect(() => {
     if (listingIds.length === 0) {
       setUnavailableIds(new Set());
+      setRetailerLinkIds(new Set());
       return;
     }
     let cancelled = false;
     fetch(`/api/cart-check?ids=${encodeURIComponent(idsKey)}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { availableIds: string[] } | null) => {
+      .then((data: { availableIds: string[]; retailerLinkIds: string[] } | null) => {
         if (cancelled || !data) return;
         const available = new Set(data.availableIds);
         setUnavailableIds(new Set(listingIds.filter((id) => !available.has(id))));
+        setRetailerLinkIds(new Set(data.retailerLinkIds));
       })
       .catch(() => {
         // Network/availability check failures never block rendering the cart —
@@ -378,13 +393,19 @@ export function CartClient({
                     key={item.listingId ?? `product:${item.productId}`}
                     item={item}
                     unavailable={item.listingId != null && unavailableIds.has(item.listingId)}
+                    hasRetailerLink={item.listingId != null && retailerLinkIds.has(item.listingId)}
                     isSaved={savedIdSet.has(item.productId)}
                     signedIn={signedIn}
                   />
                 ))}
               </div>
 
-              <CartSummary items={availableItems} />
+              <CartSummary
+                items={availableItems}
+                hasRetailerLink={availableItems.some(
+                  (item) => item.listingId != null && retailerLinkIds.has(item.listingId),
+                )}
+              />
             </div>
           );
         })()

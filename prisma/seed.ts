@@ -59,7 +59,10 @@ async function seedListings(productId: string, defs: ListingSeed[]) {
         fees: def.fees ?? 0,
         deliveryLabel: def.deliveryLabel,
         sellerName: def.sellerName,
-        url: def.url ?? `https://example.com/offers/${def.id}`,
+        // No real retailer integration exists in this demo — leave url unset
+        // rather than fabricate a link, so "Continue to retailer" / "View
+        // retailer offer" correctly stay hidden per listing.url ? ... : null.
+        url: def.url ?? null,
         freshnessCapturedAt: minutesAgo(def.freshnessMinutesAgo),
       },
     });

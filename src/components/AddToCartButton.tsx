@@ -32,6 +32,16 @@ export type AddToCartButtonProps = NewCartItem & {
   label?: string;
   /** Override the visible "in cart" label, e.g. "Added to cart" (default). */
   addedLabel?: string;
+  /**
+   * Override the accessible name for the "add" state. Required when multiple
+   * buttons for the same product/title appear on one page (e.g. one per
+   * retailer offer on the compare page) — otherwise every button announces
+   * the identical "Add {title} to cart" name and a screen-reader user can't
+   * tell them apart. Defaults to `Add {title} to cart`.
+   */
+  addAriaLabel?: string;
+  /** Same disambiguation, for the "remove" state. Defaults to `Remove {title} from cart`. */
+  removeAriaLabel?: string;
 };
 
 /**
@@ -44,6 +54,8 @@ export function AddToCartButton({
   compact = false,
   label = "Add to cart",
   addedLabel = "Added to cart",
+  addAriaLabel,
+  removeAriaLabel,
   ...item
 }: AddToCartButtonProps) {
   const { isInCart, add, remove, isFull } = useCart();
@@ -65,10 +77,10 @@ export function AddToCartButton({
   }
 
   const ariaLabel = inCart
-    ? `Remove ${item.title} from cart`
+    ? (removeAriaLabel ?? `Remove ${item.title} from cart`)
     : limitReached
       ? "Cart is full — remove an item to add this one"
-      : `Add ${item.title} to cart`;
+      : (addAriaLabel ?? `Add ${item.title} to cart`);
 
   if (compact) {
     return (

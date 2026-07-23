@@ -307,6 +307,8 @@ function OfferCard({
         ) : null}
         <AddToCartButton
           label="Add this offer to cart"
+          addAriaLabel={`Add ${listing.sourceName} offer for ${productName} to cart`}
+          removeAriaLabel={`Remove ${listing.sourceName} offer for ${productName} from cart`}
           listingId={listing.id}
           productId={productId}
           title={productName}

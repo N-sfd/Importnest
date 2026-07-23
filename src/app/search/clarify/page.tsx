@@ -15,6 +15,7 @@ import {
 } from "@/lib/category-visuals";
 import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
+import { suggestedCategoriesForQuery } from "@/lib/search-category-keywords";
 import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
 import {
   answeredQuestionIds,
@@ -71,6 +72,9 @@ export default async function ClarifyPage({
   }
 
   const isDealsQuery = query.toLowerCase().includes("deal");
+  // Query-aware department suggestions (e.g. "bowl" → Kitchen) — falls back
+  // to the generic department list below when nothing recognized matches.
+  const matchedCategories = suggestedCategoriesForQuery(query);
 
   // Defensive re-check: an exact/explicit query landing here directly (e.g.
   // a stale bookmark, browser back) should still skip straight to a result
@@ -172,7 +176,7 @@ export default async function ClarifyPage({
           <StatusBanner
             tone="info"
             title="Using standard questions"
-            description="AI assistance is not available right now, so Importnest is using the regular guided search. Product facts and results still come from approved source data."
+            description="AI assistance is not available right now, so Importnest is using guided search. Product facts and results still come from approved source data."
           />
         </div>
       ) : null}
@@ -184,6 +188,47 @@ export default async function ClarifyPage({
           className="mb-5"
           compact
         />
+      ) : matchedCategories.length > 0 ? (
+        <div className="mb-5 space-y-3">
+          <p className="text-sm text-muted">
+            We did not find an exact <span className="font-semibold text-navy-900">&quot;{query}&quot;</span>{" "}
+            product yet. Here&apos;s where to look instead.
+          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Suggested department{matchedCategories.length > 1 ? "s" : ""}
+          </p>
+          <div className="flex gap-2.5 overflow-x-auto pb-1">
+            {matchedCategories.map(({ slug }) => (
+              <Link
+                key={slug}
+                href={`/search?category=${slug}&q=${encodeURIComponent(query)}`}
+                className="flex w-[6.5rem] shrink-0 flex-col items-center gap-1.5 rounded-xl border border-border bg-panel p-2 text-center transition hover:border-navy-800"
+              >
+                <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-border bg-surface">
+                  {categoryHasImage(slug) ? (
+                    <Image src={categoryImageSrc(slug)!} alt="" fill className="object-cover" sizes="48px" />
+                  ) : null}
+                </div>
+                <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-navy-900">
+                  {categoryDisplayTitle(slug)}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {matchedCategories.flatMap(({ slug, chips }) =>
+              chips.map((chip) => (
+                <Link
+                  key={`${slug}-${chip}`}
+                  href={`/search/results?category=${slug}`}
+                  className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-navy-900 transition hover:border-navy-800"
+                >
+                  {chip}
+                </Link>
+              )),
+            )}
+          </div>
+        </div>
       ) : (
         <div className="mb-5 space-y-3">
           {isDealsQuery ? (

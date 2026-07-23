@@ -362,7 +362,10 @@ async function main() {
             : i % 2 === 0
               ? "Tomorrow"
               : "2-4 days",
-          url: `https://example.com/offers/${listingId}`,
+          // No real retailer integration exists in this demo — leave url
+          // unset rather than fabricate a link, so "Continue to retailer" /
+          // "View retailer offer" correctly stay hidden (listing.url ? ... : null).
+          url: null,
           freshnessCapturedAt: minutesAgo(3 + i * 2),
         },
       });
