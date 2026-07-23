@@ -51,6 +51,8 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Tailwind CSS v4 directive; supported by the Tailwind/PostCSS build pipeline. */
+/* css-lint disable unknownAtRules */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -384,7 +386,7 @@ a {
 }
 
 .search-shell:focus-within {
-  border-color: color-mix(in srgb, var(--cta) 45%, var(--border));
+  border-color: var(--cta);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
 }
 
@@ -491,7 +493,7 @@ a {
 .badge-savings {
   background: color-mix(in srgb, var(--savings) 28%, white);
   color: #2f5a12;
-  border: 1px solid color-mix(in srgb, var(--savings) 55%, white);
+  border: 1px solid rgba(149, 214, 92, 0.55);
 }
 
 .badge-top {
@@ -962,7 +964,7 @@ a {
   padding: 0.45rem 0.6rem;
   border-radius: 10px;
   background: color-mix(in srgb, var(--savings) 10%, white);
-  border: 1px solid color-mix(in srgb, var(--savings) 28%, white);
+  border: 1px solid rgb(140 198 63 / 28%);
 }
 
 .compare-tool-table th,
@@ -1000,6 +1002,7 @@ a {
 }
 
 .offer-trust-pill-ok {
+  border-color: #b4d98a;
   border-color: color-mix(in srgb, var(--savings) 40%, var(--border));
   background: color-mix(in srgb, var(--savings) 12%, white);
   color: #2f5a12;
@@ -1352,7 +1355,8 @@ a {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, white);
   padding: 0.2rem 0.6rem;
   font-size: 11px;
@@ -1370,6 +1374,7 @@ a {
   background: rgba(255, 255, 255, 0.97);
   padding: 0.7rem 1rem max(0.7rem, env(safe-area-inset-bottom));
   box-shadow: 0 -8px 28px rgba(15, 42, 74, 0.12);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
@@ -1585,6 +1590,7 @@ body:has(.compare-tray) .mobile-results-bar {
   top: calc(var(--header-offset, 7.5rem));
   z-index: 25;
   background: color-mix(in srgb, white 92%, transparent);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   margin-inline: -0.15rem;
   padding-inline: 0.15rem;
@@ -1651,7 +1657,7 @@ body:has(.compare-tray) .mobile-results-bar {
 .product-card-intent-badge {
   display: inline-flex;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border: 1px solid var(--border);
   background: color-mix(in srgb, var(--accent) 8%, white);
   padding: 0.15rem 0.45rem;
   font-size: 10px;
