@@ -1,113 +1,176 @@
 /**
- * Round-image carousel tiles for category browse pages. Only Appliances is
- * wired up as the pilot (per rollout plan) — every other category resolves to
- * an empty list, so CategoryRoundCarousel simply renders nothing for them.
+ * Round-image carousel tiles for category browse pages, covering every shop
+ * category (Appliances, Electronics, Kitchen, Footwear, Beauty, Accessories,
+ * Automotive, Outdoors, Home). Categories not in BUILDERS resolve to an empty
+ * list, so CategoryRoundCarousel simply renders nothing for them.
  *
  * Images resolve through the existing product-images subtype map so tiles
  * reuse real, already-approved photo assets instead of new/invented ones.
  */
 
 import type { CategoryRoundCarouselItem } from "@/components/CategoryRoundCarousel";
+import { categoryDisplayTitle, normalizeCategoryKey } from "@/lib/category-visuals";
 import { categoryImageFor } from "@/lib/images";
 import { imageForSubtype } from "@/lib/product-images";
-import { normalizeCategoryKey } from "@/lib/category-visuals";
 
 const DEALS_BADGE_IMAGE = "/images/categories/deals-badge.svg";
+
+type SubtypeDef = {
+  /** Search keyword used both as the tile's slug and the `q` filter value. */
+  query: string;
+  label: string;
+  /** Only when the image lookup keyword differs from the search query (e.g. a grouped label). */
+  imageQuery?: string;
+};
 
 function subtypeHref(categorySlug: string, query: string): string {
   return `/search/results?category=${encodeURIComponent(categorySlug)}&q=${encodeURIComponent(query)}`;
 }
 
-function applianceItems(categorySlug: string): CategoryRoundCarouselItem[] {
-  const fallback = categoryImageFor("appliances");
-  const subtypeImage = (query: string) => imageForSubtype("appliances", query) ?? fallback;
+function buildCategoryItems(categorySlug: string, subtypes: SubtypeDef[]): CategoryRoundCarouselItem[] {
+  const fallback = categoryImageFor(categorySlug);
 
-  return [
-    {
-      slug: "",
-      label: "Appliances",
-      imageUrl: fallback,
-      href: `/search/results?category=${encodeURIComponent(categorySlug)}`,
-    },
-    {
-      slug: "refrigerator",
-      label: "Refrigerators",
-      imageUrl: subtypeImage("refrigerator"),
-      href: subtypeHref(categorySlug, "refrigerator"),
-    },
-    {
-      slug: "washing machine",
-      label: "Laundry",
-      imageUrl: subtypeImage("washing machine"),
-      href: subtypeHref(categorySlug, "washing machine"),
-    },
-    {
-      slug: "cooking",
-      label: "Cooking",
-      imageUrl: subtypeImage("air fryer"),
-      href: subtypeHref(categorySlug, "cooking"),
-    },
-    {
-      slug: "dishwasher",
-      label: "Dishwashers",
-      imageUrl: subtypeImage("dishwasher"),
-      href: subtypeHref(categorySlug, "dishwasher"),
-    },
-    {
-      slug: "freezer",
-      label: "Freezers",
-      imageUrl: subtypeImage("freezer"),
-      href: subtypeHref(categorySlug, "freezer"),
-    },
-    {
-      slug: "small appliance",
-      label: "Small Appliances",
-      imageUrl: subtypeImage("slow cooker"),
-      href: subtypeHref(categorySlug, "small appliance"),
-    },
-    {
-      slug: "vacuum",
-      label: "Vacuum Cleaners",
-      imageUrl: subtypeImage("vacuum"),
-      href: subtypeHref(categorySlug, "vacuum"),
-    },
-    {
-      slug: "air purifier",
-      label: "Air Purifiers",
-      imageUrl: subtypeImage("air purifier"),
-      href: subtypeHref(categorySlug, "air purifier"),
-    },
-    {
-      slug: "coffee maker",
-      label: "Coffee Machines",
-      imageUrl: subtypeImage("coffee maker"),
-      href: subtypeHref(categorySlug, "coffee maker"),
-    },
-    {
-      slug: "microwave",
-      label: "Microwaves",
-      imageUrl: subtypeImage("microwave"),
-      href: subtypeHref(categorySlug, "microwave"),
-    },
-    {
-      slug: "deals",
-      label: "Best Deals",
-      imageUrl: DEALS_BADGE_IMAGE,
-      href: `/search/results?category=${encodeURIComponent(categorySlug)}&sort=lowest_cost`,
-      badge: "Deals",
-    },
-  ];
+  const resetTile: CategoryRoundCarouselItem = {
+    slug: "",
+    label: categoryDisplayTitle(categorySlug),
+    imageUrl: fallback,
+    href: `/search/results?category=${encodeURIComponent(categorySlug)}`,
+  };
+
+  const subtypeTiles: CategoryRoundCarouselItem[] = subtypes.map((s) => ({
+    slug: s.query,
+    label: s.label,
+    imageUrl: imageForSubtype(categorySlug, s.imageQuery ?? s.query) ?? fallback,
+    href: subtypeHref(categorySlug, s.query),
+  }));
+
+  const dealsTile: CategoryRoundCarouselItem = {
+    slug: "deals",
+    label: "Best Deals",
+    imageUrl: DEALS_BADGE_IMAGE,
+    href: `/search/results?category=${encodeURIComponent(categorySlug)}&sort=lowest_cost`,
+    badge: "Deals",
+  };
+
+  return [resetTile, ...subtypeTiles, dealsTile];
 }
 
-const BUILDERS: Record<string, (categorySlug: string) => CategoryRoundCarouselItem[]> = {
-  appliances: applianceItems,
+const SUBTYPES: Record<string, SubtypeDef[]> = {
+  appliances: [
+    { query: "refrigerator", label: "Refrigerators" },
+    { query: "washing machine", label: "Laundry" },
+    { query: "cooking", label: "Cooking", imageQuery: "air fryer" },
+    { query: "dishwasher", label: "Dishwashers" },
+    { query: "freezer", label: "Freezers" },
+    { query: "small appliance", label: "Small Appliances", imageQuery: "slow cooker" },
+    { query: "vacuum", label: "Vacuum Cleaners" },
+    { query: "air purifier", label: "Air Purifiers" },
+    { query: "coffee maker", label: "Coffee Machines" },
+    { query: "microwave", label: "Microwaves" },
+  ],
+  electronics: [
+    { query: "smartphone", label: "Phones" },
+    { query: "laptop", label: "Laptops" },
+    { query: "tablet", label: "Tablets" },
+    { query: "headphones", label: "Headphones" },
+    { query: "earbuds", label: "Earbuds" },
+    { query: "monitor", label: "Monitors" },
+    { query: "smart watch", label: "Smartwatches" },
+    { query: "speaker", label: "Speakers" },
+    { query: "camera", label: "Cameras" },
+    { query: "gaming accessory", label: "Gaming" },
+  ],
+  kitchen: [
+    { query: "cookware", label: "Cookware" },
+    { query: "blender", label: "Blenders" },
+    { query: "coffee machine", label: "Coffee Machines" },
+    { query: "knife set", label: "Knife Sets" },
+    { query: "stand mixer", label: "Stand Mixers" },
+    { query: "cutting board", label: "Cutting Boards" },
+    { query: "kettle", label: "Kettles" },
+    { query: "bakeware", label: "Bakeware" },
+    { query: "food storage", label: "Food Storage" },
+    { query: "kitchen organizer", label: "Organizers" },
+  ],
+  footwear: [
+    { query: "running shoe", label: "Running" },
+    { query: "sneaker", label: "Sneakers" },
+    { query: "trail runner", label: "Trail Runners" },
+    { query: "hiking boot", label: "Hiking Boots" },
+    { query: "sandal", label: "Sandals" },
+    { query: "loafer", label: "Loafers" },
+    { query: "winter boot", label: "Winter Boots" },
+    { query: "training shoe", label: "Training" },
+    { query: "casual shoe", label: "Casual" },
+    { query: "dress shoe", label: "Dress Shoes" },
+  ],
+  beauty: [
+    { query: "hair dryer", label: "Hair Dryers" },
+    { query: "facial cleansing brush", label: "Facial Brushes" },
+    { query: "electric shaver", label: "Shavers" },
+    { query: "skincare fridge", label: "Skincare Fridges" },
+    { query: "curling iron", label: "Curling Irons" },
+    { query: "hair straightener", label: "Straighteners" },
+    { query: "led mirror", label: "LED Mirrors" },
+    { query: "massage tool", label: "Massage Tools" },
+    { query: "manicure kit", label: "Manicure Kits" },
+    { query: "grooming kit", label: "Grooming Kits" },
+  ],
+  accessories: [
+    { query: "wallet", label: "Wallets" },
+    { query: "backpack", label: "Backpacks" },
+    { query: "phone case", label: "Phone Cases" },
+    { query: "sunglasses", label: "Sunglasses" },
+    { query: "crossbody bag", label: "Crossbody Bags" },
+    { query: "watch band", label: "Watch Bands" },
+    { query: "charging cable", label: "Charging Cables" },
+    { query: "laptop sleeve", label: "Laptop Sleeves" },
+    { query: "wireless charger", label: "Wireless Chargers" },
+    { query: "travel organizer", label: "Travel Organizers" },
+  ],
+  automotive: [
+    { query: "dash cam", label: "Dash Cams" },
+    { query: "phone mount", label: "Phone Mounts" },
+    { query: "floor mats", label: "Floor Mats" },
+    { query: "tire inflator", label: "Tire Inflators" },
+    { query: "car vacuum", label: "Car Vacuums" },
+    { query: "battery charger", label: "Battery Chargers" },
+    { query: "seat cover", label: "Seat Covers" },
+    { query: "windshield wipers", label: "Wipers" },
+    { query: "tool kit", label: "Tool Kits" },
+    { query: "jump starter", label: "Jump Starters" },
+  ],
+  outdoors: [
+    { query: "hiking backpack", label: "Backpacks" },
+    { query: "tent", label: "Tents" },
+    { query: "sleeping bag", label: "Sleeping Bags" },
+    { query: "camp stove", label: "Camp Stoves" },
+    { query: "water bottle", label: "Water Bottles" },
+    { query: "camping lantern", label: "Lanterns" },
+    { query: "outdoor chair", label: "Outdoor Chairs" },
+    { query: "cooler", label: "Coolers" },
+    { query: "picnic blanket", label: "Picnic Blankets" },
+    { query: "travel bag", label: "Travel Bags" },
+  ],
+  home: [
+    { query: "blanket", label: "Blankets" },
+    { query: "table lamp", label: "Table Lamps" },
+    { query: "storage bins", label: "Storage Bins" },
+    { query: "throw pillows", label: "Throw Pillows" },
+    { query: "home air purifier", label: "Air Purifiers" },
+    { query: "wall clock", label: "Wall Clocks" },
+    { query: "diffuser", label: "Diffusers" },
+    { query: "curtains", label: "Curtains" },
+    { query: "rug", label: "Rugs" },
+    { query: "home organizer", label: "Organizers" },
+  ],
 };
 
 /** Round-carousel tiles for a category, or [] when that category isn't wired up yet. */
 export function getCategoryRoundCarouselItems(categorySlug: string): CategoryRoundCarouselItem[] {
   const key = normalizeCategoryKey(categorySlug);
-  const build = BUILDERS[key];
-  return build ? build(categorySlug) : [];
+  const subtypes = SUBTYPES[key];
+  return subtypes ? buildCategoryItems(categorySlug, subtypes) : [];
 }
 
 /**

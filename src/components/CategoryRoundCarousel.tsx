@@ -67,7 +67,7 @@ export function CategoryRoundCarousel({
                     width={116}
                     height={116}
                     unoptimized
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                   />
                   {item.badge ? <span className="round-category-badge">{item.badge}</span> : null}
                 </span>
