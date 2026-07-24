@@ -19,6 +19,17 @@ function normalize(input: CostBreakdownInput): CostBreakdownField {
 }
 
 /**
+ * Returns the real numeric amount for charts/visuals, or null when the value
+ * is missing/invalid. Mirrors the "never fabricate $0.00" rule of
+ * `formatCostBreakdownLine` — callers must treat null as "no data", not zero.
+ */
+export function costBreakdownValue(input: CostBreakdownInput): number | null {
+  const { amount } = normalize(input);
+  if (amount == null || !Number.isFinite(amount) || amount < 0) return null;
+  return amount;
+}
+
+/**
  * Formats one cost-breakdown line from a real stored value only. Never
  * fabricates a dollar amount: missing, non-finite, or negative (invalid)
  * amounts all read as "Not provided" rather than a misleading "$0.00".

@@ -1,4 +1,8 @@
-import { formatCostBreakdownLine, type CostBreakdownInput } from "@/lib/cost-breakdown";
+import {
+  costBreakdownValue,
+  formatCostBreakdownLine,
+  type CostBreakdownInput,
+} from "@/lib/cost-breakdown";
 
 function InfoIcon() {
   return (
@@ -55,6 +59,62 @@ function Row({
   );
 }
 
+const BAR_SEGMENTS = [
+  { key: "item", label: "Item price", swatch: "bg-navy-800", dot: "bg-navy-800" },
+  { key: "shipping", label: "Shipping", swatch: "bg-sky-500", dot: "bg-sky-500" },
+  { key: "fees", label: "Fees / taxes", swatch: "bg-amber-400", dot: "bg-amber-400" },
+] as const;
+
+/**
+ * Stacked proportion bar showing how Item + Shipping + Fees make up the
+ * total — a quick visual of where the cost comes from. Uses only real
+ * numeric values; missing components are simply omitted (never treated as 0),
+ * and the bar hides entirely when there isn't enough data to be meaningful.
+ */
+function CostStackBar({
+  itemPrice,
+  shipping,
+  mandatoryFees,
+}: {
+  itemPrice: CostBreakdownInput;
+  shipping: CostBreakdownInput;
+  mandatoryFees: CostBreakdownInput;
+}) {
+  const values: Record<string, number | null> = {
+    item: costBreakdownValue(itemPrice),
+    shipping: costBreakdownValue(shipping),
+    fees: costBreakdownValue(mandatoryFees),
+  };
+  const sum = BAR_SEGMENTS.reduce((acc, s) => acc + (values[s.key] ?? 0), 0);
+  // Need a real item price and a positive denominator, otherwise the bar
+  // would be misleading rather than informative.
+  if (values.item == null || sum <= 0) return null;
+  const present = BAR_SEGMENTS.filter((s) => (values[s.key] ?? 0) > 0);
+
+  return (
+    <div className="mt-2" aria-hidden="true">
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface ring-1 ring-border">
+        {present.map((s) => (
+          <div
+            key={s.key}
+            className={s.swatch}
+            style={{ width: `${((values[s.key] as number) / sum) * 100}%` }}
+            title={`${s.label}: $${(values[s.key] as number).toFixed(2)}`}
+          />
+        ))}
+      </div>
+      <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
+        {present.map((s) => (
+          <li key={s.key} className="flex items-center gap-1">
+            <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+            {s.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /**
  * Compact, reusable cost breakdown for an offer. Renders real stored values
  * only — missing or invalid amounts read as "Not provided", never a
@@ -82,6 +142,7 @@ export function CostBreakdown({
       <Row label="Shipping" value={shipping} />
       <Row label="Mandatory fees" value={mandatoryFees} />
       <Row label="Verified discount" value={verifiedDiscount} signed />
+      <CostStackBar itemPrice={itemPrice} shipping={shipping} mandatoryFees={mandatoryFees} />
       <Row label="Total known cost" value={totalKnownCost} strong />
       <p className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-muted">
         <InfoIcon />

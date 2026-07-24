@@ -26,7 +26,7 @@ function Badge({
   tone,
   children,
 }: {
-  tone: "top" | "authorized" | "neutral" | "fresh" | "stale";
+  tone: "top" | "authorized" | "neutral" | "fresh" | "stale" | "delivery";
   children: React.ReactNode;
 }) {
   const toneClass =
@@ -38,7 +38,9 @@ function Badge({
           ? "badge-savings"
           : tone === "stale"
             ? "bg-amber-100 text-amber-900"
-            : "bg-surface text-muted";
+            : tone === "delivery"
+              ? "bg-violet-100 text-violet-900"
+              : "bg-surface text-muted";
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${toneClass}`}>
       {children}
@@ -178,6 +180,10 @@ function OfferCard({
       ? listing.deliveryLabel
       : "Pickup available"
     : listing.deliveryLabel;
+  // Show a delivery/pickup badge by the merchant name only when the label is
+  // real — never fabricate a delivery estimate the source didn't provide.
+  const deliveryBadge =
+    fulfillment && fulfillment !== "Delivery estimate unavailable" ? fulfillment : null;
 
   return (
     <li
@@ -204,6 +210,23 @@ function OfferCard({
             </h3>
             {isTop ? (
               <Badge tone="top">{recommendationLabel}</Badge>
+            ) : null}
+            {deliveryBadge ? (
+              <Badge tone="delivery">
+                <span className="inline-flex items-center gap-1">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M1.5 4.5h7v6h-7z M8.5 6.5h3l2 2v2h-5z"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="4" cy="11.5" r="1.2" fill="currentColor" />
+                    <circle cx="11.5" cy="11.5" r="1.2" fill="currentColor" />
+                  </svg>
+                  {deliveryBadge}
+                </span>
+              </Badge>
             ) : null}
             {listing.isAuthorizedSource ? <Badge tone="authorized">Approved source</Badge> : null}
             {(() => {
