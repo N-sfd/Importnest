@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
+import { RefreshAllPricesButton } from "@/components/RefreshAllPricesButton";
 import { WatchlistProductCard } from "@/components/WatchlistProductCard";
 import { getOrCreateAppUser } from "@/lib/auth";
 import { productImageFor } from "@/lib/images";
@@ -50,11 +51,14 @@ export default async function SavedPage() {
           </p>
         </div>
         {items.length > 0 ? (
-          <p className="text-sm text-muted">
-            {items.length} {items.length === 1 ? "favourite" : "favourites"}
-            {watching > 0 ? ` · ${watching} active alerts` : null}
-            {triggered > 0 ? ` · ${triggered} triggered` : null}
-          </p>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <p className="text-sm text-muted">
+              {items.length} {items.length === 1 ? "favourite" : "favourites"}
+              {watching > 0 ? ` · ${watching} active alerts` : null}
+              {triggered > 0 ? ` · ${triggered} triggered` : null}
+            </p>
+            <RefreshAllPricesButton />
+          </div>
         ) : null}
       </div>
 
