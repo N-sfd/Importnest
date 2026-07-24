@@ -8,13 +8,14 @@ const items: CategoryRoundCarouselItem[] = [
     label: "Appliances",
     imageUrl: "/images/categories/appliances.png",
     href: "/search/results?category=appliances",
-    lifestyle: true,
+    imageMode: "lifestyle-cover",
   },
   {
     slug: "refrigerator",
     label: "Refrigerators",
     imageUrl: "/images/products/appliances/refrigerator.jpg",
     href: "/search/results?category=appliances&q=refrigerator",
+    imageMode: "photo-cover",
   },
   {
     slug: "deals",
@@ -22,6 +23,7 @@ const items: CategoryRoundCarouselItem[] = [
     imageUrl: "/images/categories/deals-badge.svg",
     href: "/search/results?category=appliances&sort=lowest_cost",
     badge: "Deals",
+    imageMode: "transparent-contain",
   },
 ];
 
@@ -89,13 +91,22 @@ describe("CategoryRoundCarousel", () => {
     expect(html).toMatch(/carousel-arrow left"[^>]*disabled/);
   });
 
-  it("uses object-cover only for lifestyle tiles and object-contain for product tiles", () => {
+  it("stamps each tile's frame with its imageMode as a data attribute, defaulting to photo-cover", () => {
     const html = renderToStaticMarkup(
       <CategoryRoundCarousel categorySlug="appliances" items={items} activeSubtype="" />,
     );
-    // Appliances (lifestyle) tile comes first in the fixture, Refrigerators (product) second.
-    const imgTags = [...html.matchAll(/<img[^>]*>/g)].map((m) => m[0]);
-    expect(imgTags[0]).toContain("object-cover");
-    expect(imgTags[1]).toContain("object-contain");
+    expect(html).toContain('data-mode="lifestyle-cover"');
+    expect(html).toContain('data-mode="photo-cover"');
+    expect(html).toContain('data-mode="transparent-contain"');
+  });
+
+  it("defaults an item with no imageMode to photo-cover", () => {
+    const noModeItems: CategoryRoundCarouselItem[] = [
+      { slug: "", label: "Kitchen", imageUrl: "/images/categories/kitchen.png", href: "/search/results?category=kitchen" },
+    ];
+    const html = renderToStaticMarkup(
+      <CategoryRoundCarousel categorySlug="kitchen" items={noModeItems} activeSubtype="" />,
+    );
+    expect(html).toContain('data-mode="photo-cover"');
   });
 });

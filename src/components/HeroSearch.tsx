@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { EXAMPLE_SEARCHES } from "@/lib/search-prompts";
+import { EXAMPLE_SEARCHES, HERO_QUICK_FILTERS } from "@/lib/search-prompts";
 import { intentPillsFromQuery } from "@/lib/search-pills";
 
 function SparkleIcon({ className = "" }: { className?: string }) {
@@ -24,10 +24,13 @@ function SparkleIcon({ className = "" }: { className?: string }) {
 export function HeroSearch({
   className = "",
   maxExamples,
+  showQuickFilters = false,
 }: {
   className?: string;
   /** Caps the "Try this" example chips — omit to show all. */
   maxExamples?: number;
+  /** Show the real-filter quick chips (Under $100, Free shipping, etc.). */
+  showQuickFilters?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const pills = useMemo(() => intentPillsFromQuery(query), [query]);
@@ -81,6 +84,23 @@ export function HeroSearch({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {showQuickFilters ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Quick filters</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {HERO_QUICK_FILTERS.map((qf) => (
+              <Link
+                key={qf.id}
+                href={qf.href}
+                className="rounded-full border border-accent/30 bg-accent/5 px-3 py-1.5 text-sm font-semibold text-navy-900 transition hover:border-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {qf.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       ) : null}
 
       <div className="mt-3">

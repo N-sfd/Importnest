@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { categoryDisplayTitle, normalizeCategoryKey } from "@/lib/category-visuals";
 
+export type CategoryImageMode = "lifestyle-cover" | "transparent-contain" | "photo-cover";
+
 export type CategoryRoundCarouselItem = {
   label: string;
   /** Lowercase identifier compared against `activeSubtype`; "" means the reset/all tile. */
@@ -13,11 +15,15 @@ export type CategoryRoundCarouselItem = {
   href: string;
   badge?: string;
   /**
-   * True for wide department/lifestyle collage photos, where cropping to fill
-   * the circle is acceptable. False (default) for single-product photos,
-   * where the full item must stay visible — those use object-fit: contain.
+   * How the image fills its circle:
+   * - "lifestyle-cover": wide department/collage photo — crop to fill.
+   * - "photo-cover": single-product studio photo with a baked-in backdrop —
+   *   crop to fill so that backdrop doesn't read as a separate disc behind a
+   *   smaller floating photo (the default; most real product assets are this).
+   * - "transparent-contain": image has real alpha transparency (no backdrop
+   *   to hide) — shrink to fit so nothing is cropped.
    */
-  lifestyle?: boolean;
+  imageMode?: CategoryImageMode;
 };
 
 export type CategoryRoundCarouselProps = {
@@ -115,14 +121,13 @@ export function CategoryRoundCarousel({
                 className={isActive ? "round-category-tile active" : "round-category-tile"}
               >
                 <Link href={item.href} aria-current={isActive ? "true" : undefined}>
-                  <span className="round-category-image">
+                  <span className="round-category-image" data-mode={item.imageMode ?? "photo-cover"}>
                     <Image
                       src={item.imageUrl}
                       alt={item.label}
                       width={116}
                       height={116}
                       unoptimized
-                      className={item.lifestyle ? "h-full w-full object-cover" : "h-full w-full object-contain"}
                     />
                     {item.badge ? <span className="round-category-badge">{item.badge}</span> : null}
                   </span>

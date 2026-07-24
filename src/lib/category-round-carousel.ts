@@ -37,7 +37,7 @@ function buildCategoryItems(categorySlug: string, subtypes: SubtypeDef[]): Categ
     href: `/search/results?category=${encodeURIComponent(categorySlug)}`,
     // Department image is a wide lifestyle/collage photo — cropping to fill
     // the circle reads better than letterboxing it with object-fit: contain.
-    lifestyle: true,
+    imageMode: "lifestyle-cover",
   };
 
   const subtypeTiles: CategoryRoundCarouselItem[] = subtypes.map((s) => ({
@@ -45,6 +45,10 @@ function buildCategoryItems(categorySlug: string, subtypes: SubtypeDef[]): Categ
     label: s.label,
     imageUrl: imageForSubtype(categorySlug, s.imageQuery ?? s.query) ?? fallback,
     href: subtypeHref(categorySlug, s.query),
+    // Every real subtype photo in this app is a studio product shot with a
+    // baked-in backdrop (no alpha transparency) — crop-to-fill avoids
+    // revealing that backdrop as a mismatched disc behind a smaller photo.
+    imageMode: "photo-cover",
   }));
 
   const dealsTile: CategoryRoundCarouselItem = {
@@ -53,6 +57,8 @@ function buildCategoryItems(categorySlug: string, subtypes: SubtypeDef[]): Categ
     imageUrl: DEALS_BADGE_IMAGE,
     href: `/search/results?category=${encodeURIComponent(categorySlug)}&sort=lowest_cost`,
     badge: "Deals",
+    // The only genuinely transparent asset here — an authored SVG icon.
+    imageMode: "transparent-contain",
   };
 
   return [resetTile, ...subtypeTiles, dealsTile];

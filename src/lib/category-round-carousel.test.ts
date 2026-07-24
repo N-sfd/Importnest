@@ -52,15 +52,17 @@ describe("category-round-carousel", () => {
   });
 
   it.each(WIRED_CATEGORIES)(
-    "marks only the reset tile as a lifestyle (cover) image for %s",
+    "assigns the reset tile lifestyle-cover, subtypes photo-cover, and deals transparent-contain for %s",
     (categorySlug) => {
       const items = getCategoryRoundCarouselItems(categorySlug);
       const resetTile = items.find((i) => i.slug === "");
+      const dealsTile = items.find((i) => i.slug === "deals");
       const subtypeTiles = items.filter((i) => i.slug !== "" && i.slug !== "deals");
 
-      expect(resetTile?.lifestyle).toBe(true);
+      expect(resetTile?.imageMode).toBe("lifestyle-cover");
+      expect(dealsTile?.imageMode).toBe("transparent-contain");
       for (const tile of subtypeTiles) {
-        expect(tile.lifestyle).toBeUndefined();
+        expect(tile.imageMode).toBe("photo-cover");
       }
     },
   );

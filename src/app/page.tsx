@@ -3,7 +3,7 @@ import { ApprovedSourcesStrip } from "@/components/ApprovedSourcesStrip";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
 import { DealProductCard } from "@/components/DealProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
-import { HomePersonalizationRail } from "@/components/HomePersonalizationRail";
+import { HomePersonalizationRail, HomeTrustCard } from "@/components/HomePersonalizationRail";
 import { HowItWorks } from "@/components/HowItWorks";
 import { MiniAlertCard } from "@/components/MiniAlertCard";
 import { PageShell } from "@/components/PageShell";
@@ -124,18 +124,31 @@ export default async function HomePage() {
       <div className="home-main">
         {/* Main search hero */}
         <section className="home-band" aria-labelledby="home-search-heading">
-          <p className="text-sm font-semibold text-accent">Importnest</p>
-          <h1
-            id="home-search-heading"
-            className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl"
-          >
-            Search once. Compare every approved offer.
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
-            Search approved retailers, then compare Total Known Cost — item + shipping + fees —
-            before you buy.
-          </p>
-          <HeroSearch className="mt-5" />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:items-start">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-accent">Importnest</p>
+              <h1
+                id="home-search-heading"
+                className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900 sm:text-3xl"
+              >
+                Search once. Compare every approved offer.
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
+                Search approved retailers, then compare Total Known Cost — item + shipping + fees —
+                before you buy.
+              </p>
+              <HeroSearch className="mt-5" showQuickFilters />
+            </div>
+            <div className="xl:pt-1">
+              <HomeTrustCard />
+            </div>
+          </div>
+
+          {/* Approved retailers — surfaced right under the hero for instant
+              credibility around how Total Known Cost is sourced. */}
+          <div id="approved-sources" className="scroll-mt-24">
+            <ApprovedSourcesStrip sources={sources} />
+          </div>
         </section>
 
         {/* Shop by Category */}
@@ -320,11 +333,6 @@ export default async function HomePage() {
           <div className="home-section">
             <HowItWorks />
           </div>
-
-        {/* Approved sources */}
-        <div id="approved-sources" className="home-section scroll-mt-24">
-          <ApprovedSourcesStrip sources={sources} />
-        </div>
       </div>
     </PageShell>
   );
