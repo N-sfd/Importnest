@@ -13,12 +13,19 @@ import { getCategorySubtypeChips } from "@/data/category-demo-products";
 /**
  * Category browse intro: title, short description, and subtype icon chips.
  */
-export function CategoryBrowseHeader({ categorySlug }: { categorySlug: string }) {
+export function CategoryBrowseHeader({
+  categorySlug,
+  showSubtypeChips = true,
+}: {
+  categorySlug: string;
+  /** Hide the inline subtype chip strip when a CategoryRoundCarousel already covers subtype navigation. */
+  showSubtypeChips?: boolean;
+}) {
   const searchParams = useSearchParams();
   const activeSubtype = (searchParams.get("q") ?? "").trim().toLowerCase();
   const title = categoryDisplayTitle(categorySlug);
   const description = categoryDescriptionFor(categorySlug);
-  const chips = getCategorySubtypeChips(categorySlug);
+  const chips = showSubtypeChips ? getCategorySubtypeChips(categorySlug) : [];
   const key = normalizeCategoryKey(categorySlug);
 
   if (chips.length === 0) {

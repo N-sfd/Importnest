@@ -2,6 +2,7 @@ import { PageShell } from "@/components/PageShell";
 import { CategoryBrowseHeader } from "@/components/CategoryBrowseHeader";
 import { CategoryDemoGrid } from "@/components/CategoryDemoGrid";
 import { CategoryImageGrid } from "@/components/CategoryImageCard";
+import { CategoryRoundCarousel } from "@/components/CategoryRoundCarousel";
 import { DealProductCard } from "@/components/DealProductCard";
 import { MobileResultsChrome } from "@/components/MobileResultsChrome";
 import { NoSearchResultsPanel } from "@/components/NoSearchResultsPanel";
@@ -26,6 +27,7 @@ import {
   normalizeCategorySlug,
   SHOP_CATEGORY_SLUGS,
 } from "@/lib/category-visuals";
+import { activeRoundCarouselSlug, getCategoryRoundCarouselItems } from "@/lib/category-round-carousel";
 import { categoryImageFor } from "@/lib/images";
 import { prisma } from "@/lib/prisma";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
@@ -183,6 +185,8 @@ export default async function SearchResultsPage({
   const hasLiveProducts = results.products.length > 0;
   const categoryTitle = categorySlug ? categoryDisplayTitle(categorySlug) : null;
   const signedIn = Boolean(authUser);
+  const roundCarouselItems = categorySlug ? getCategoryRoundCarouselItems(categorySlug) : [];
+  const roundCarouselActiveSlug = activeRoundCarouselSlug(params.q, params.sort);
 
   // Prefer Best deals / Popular comparisons cards that aren't already showing
   // in Featured products (or Top products, for All) directly above, so the
@@ -322,7 +326,20 @@ export default async function SearchResultsPage({
             />
           </MobileResultsChrome>
 
-          {categorySlug ? <CategoryBrowseHeader categorySlug={categorySlug} /> : null}
+          {categorySlug ? (
+            <CategoryRoundCarousel
+              categorySlug={categorySlug}
+              items={roundCarouselItems}
+              activeSubtype={roundCarouselActiveSlug}
+            />
+          ) : null}
+
+          {categorySlug ? (
+            <CategoryBrowseHeader
+              categorySlug={categorySlug}
+              showSubtypeChips={roundCarouselItems.length === 0}
+            />
+          ) : null}
 
           {isAllBrowse ? (
             <header className="category-browse-header">
