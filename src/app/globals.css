@@ -1071,14 +1071,22 @@ a {
   flex-shrink: 0;
 }
 
+.round-carousel-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .round-category-carousel {
   display: flex;
   width: 100%;
   gap: 1.375rem;
-  padding: 1.125rem 0;
+  padding: 1rem 3rem 1.375rem;
   margin: 0;
   list-style: none;
   overflow-x: auto;
+  scroll-behavior: smooth;
   scrollbar-width: none;
 }
 
@@ -1109,9 +1117,13 @@ a {
   overflow: hidden;
   border-radius: 9999px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   box-shadow: var(--shadow-panel);
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.round-category-image img {
+  background: transparent;
 }
 
 .round-category-tile > a:hover .round-category-image {
@@ -1145,7 +1157,50 @@ a {
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
 }
 
+.carousel-arrow {
+  position: absolute;
+  top: 74px;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, opacity 140ms ease;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--link);
+}
+
+.carousel-arrow.left {
+  left: 2px;
+}
+
+.carousel-arrow.right {
+  right: 2px;
+}
+
+.carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
+  .round-category-carousel {
+    padding: 0.875rem 0.75rem 1rem;
+  }
+
   .round-category-tile {
     width: 92px;
   }
@@ -1157,6 +1212,10 @@ a {
 
   .round-category-label {
     font-size: 0.75rem;
+  }
+
+  .carousel-arrow {
+    display: none;
   }
 }
 

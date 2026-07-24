@@ -3,7 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { CategoryRoundCarousel, type CategoryRoundCarouselItem } from "@/components/CategoryRoundCarousel";
 
 const items: CategoryRoundCarouselItem[] = [
-  { slug: "", label: "Appliances", imageUrl: "/images/categories/appliances.png", href: "/search/results?category=appliances" },
+  {
+    slug: "",
+    label: "Appliances",
+    imageUrl: "/images/categories/appliances.png",
+    href: "/search/results?category=appliances",
+    lifestyle: true,
+  },
   {
     slug: "refrigerator",
     label: "Refrigerators",
@@ -70,5 +76,26 @@ describe("CategoryRoundCarousel", () => {
     );
     expect(html).toContain("Explore Appliances");
     expect(html).toContain("Total Known Cost");
+  });
+
+  it("renders left/right scroll arrows inside the wrap, left disabled at rest", () => {
+    const html = renderToStaticMarkup(
+      <CategoryRoundCarousel categorySlug="appliances" items={items} activeSubtype="" />,
+    );
+    expect(html).toContain("round-carousel-wrap");
+    expect(html).toContain("carousel-arrow left");
+    expect(html).toContain("carousel-arrow right");
+    // At rest (no measured scroll yet) the left arrow starts disabled.
+    expect(html).toMatch(/carousel-arrow left"[^>]*disabled/);
+  });
+
+  it("uses object-cover only for lifestyle tiles and object-contain for product tiles", () => {
+    const html = renderToStaticMarkup(
+      <CategoryRoundCarousel categorySlug="appliances" items={items} activeSubtype="" />,
+    );
+    // Appliances (lifestyle) tile comes first in the fixture, Refrigerators (product) second.
+    const imgTags = [...html.matchAll(/<img[^>]*>/g)].map((m) => m[0]);
+    expect(imgTags[0]).toContain("object-cover");
+    expect(imgTags[1]).toContain("object-contain");
   });
 });

@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { categoryDisplayTitle, normalizeCategoryKey } from "@/lib/category-visuals";
 
 export type CategoryRoundCarouselItem = {
@@ -9,6 +12,12 @@ export type CategoryRoundCarouselItem = {
   imageUrl: string;
   href: string;
   badge?: string;
+  /**
+   * True for wide department/lifestyle collage photos, where cropping to fill
+   * the circle is acceptable. False (default) for single-product photos,
+   * where the full item must stay visible — those use object-fit: contain.
+   */
+  lifestyle?: boolean;
 };
 
 export type CategoryRoundCarouselProps = {
@@ -21,10 +30,13 @@ export type CategoryRoundCarouselProps = {
   className?: string;
 };
 
+/** How far one arrow click scrolls — roughly 4 tiles (128px + gap) at a time. */
+const SCROLL_STEP_PX = 600;
+
 /**
  * Round image tiles for browsing a category's subtypes (e.g. Refrigerators,
- * Dishwashers) — scrolls horizontally instead of wrapping so it stays a single
- * compact row on every viewport.
+ * Dishwashers). Scrolls horizontally with arrow buttons and native
+ * touch/mouse drag, staying a single compact row on every viewport.
  */
 export function CategoryRoundCarousel({
   categorySlug,
@@ -34,6 +46,35 @@ export function CategoryRoundCarousel({
   subtitle,
   className,
 }: CategoryRoundCarouselProps) {
+  const trackRef = useRef<HTMLUListElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateArrowState = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  };
+
+  useEffect(() => {
+    updateArrowState();
+    const el = trackRef.current;
+    if (!el) return;
+    const onScroll = () => updateArrowState();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+    // Re-measure whenever the tile set changes (e.g. category navigation).
+  }, [items.length]);
+
+  function scrollBy(direction: -1 | 1) {
+    trackRef.current?.scrollBy({ left: direction * SCROLL_STEP_PX, behavior: "smooth" });
+  }
+
   if (items.length === 0) return null;
 
   const title = categoryDisplayTitle(categorySlug);
@@ -51,32 +92,56 @@ export function CategoryRoundCarousel({
         </h2>
         <p className="mt-1 text-sm text-muted">{subtitleText}</p>
       </div>
-      <ul className="round-category-carousel" aria-label={`${title} subcategories`}>
-        {items.map((item) => {
-          const isActive = item.slug.toLowerCase() === active;
-          return (
-            <li
-              key={item.slug || "all"}
-              className={isActive ? "round-category-tile active" : "round-category-tile"}
-            >
-              <Link href={item.href} aria-current={isActive ? "true" : undefined}>
-                <span className="round-category-image">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.label}
-                    width={116}
-                    height={116}
-                    unoptimized
-                    className="h-full w-full object-cover"
-                  />
-                  {item.badge ? <span className="round-category-badge">{item.badge}</span> : null}
-                </span>
-                <span className="round-category-label">{item.label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="round-carousel-wrap">
+        <button
+          type="button"
+          className="carousel-arrow left"
+          onClick={() => scrollBy(-1)}
+          disabled={!canScrollLeft}
+          aria-label={`Scroll ${title} categories left`}
+        >
+          ‹
+        </button>
+        <ul
+          ref={trackRef}
+          className="round-category-carousel"
+          aria-label={`${title} subcategories`}
+        >
+          {items.map((item) => {
+            const isActive = item.slug.toLowerCase() === active;
+            return (
+              <li
+                key={item.slug || "all"}
+                className={isActive ? "round-category-tile active" : "round-category-tile"}
+              >
+                <Link href={item.href} aria-current={isActive ? "true" : undefined}>
+                  <span className="round-category-image">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.label}
+                      width={116}
+                      height={116}
+                      unoptimized
+                      className={item.lifestyle ? "h-full w-full object-cover" : "h-full w-full object-contain"}
+                    />
+                    {item.badge ? <span className="round-category-badge">{item.badge}</span> : null}
+                  </span>
+                  <span className="round-category-label">{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <button
+          type="button"
+          className="carousel-arrow right"
+          onClick={() => scrollBy(1)}
+          disabled={!canScrollRight}
+          aria-label={`Scroll ${title} categories right`}
+        >
+          ›
+        </button>
+      </div>
     </section>
   );
 }

@@ -51,6 +51,20 @@ describe("category-round-carousel", () => {
     expect(dealsTile?.badge).toBe("Deals");
   });
 
+  it.each(WIRED_CATEGORIES)(
+    "marks only the reset tile as a lifestyle (cover) image for %s",
+    (categorySlug) => {
+      const items = getCategoryRoundCarouselItems(categorySlug);
+      const resetTile = items.find((i) => i.slug === "");
+      const subtypeTiles = items.filter((i) => i.slug !== "" && i.slug !== "deals");
+
+      expect(resetTile?.lifestyle).toBe(true);
+      for (const tile of subtypeTiles) {
+        expect(tile.lifestyle).toBeUndefined();
+      }
+    },
+  );
+
   it("labels the beauty-devices reset tile using the canonical category title", () => {
     const items = getCategoryRoundCarouselItems("beauty-devices");
     const resetTile = items.find((i) => i.slug === "");

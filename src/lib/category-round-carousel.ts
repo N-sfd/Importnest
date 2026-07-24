@@ -35,6 +35,9 @@ function buildCategoryItems(categorySlug: string, subtypes: SubtypeDef[]): Categ
     label: categoryDisplayTitle(categorySlug),
     imageUrl: fallback,
     href: `/search/results?category=${encodeURIComponent(categorySlug)}`,
+    // Department image is a wide lifestyle/collage photo — cropping to fill
+    // the circle reads better than letterboxing it with object-fit: contain.
+    lifestyle: true,
   };
 
   const subtypeTiles: CategoryRoundCarouselItem[] = subtypes.map((s) => ({
