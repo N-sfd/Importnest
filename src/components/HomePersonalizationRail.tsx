@@ -5,35 +5,50 @@ import { SavedAlertsPreview } from "@/components/SavedAlertsPreview";
 import type { RecentSearch } from "@/lib/recent-searches";
 import type { WatchlistItem } from "@/lib/saved-data";
 
-/** Useful trust card when there is no recent-activity data. */
+/** Compact trust / preview card for the homepage hero (desktop right, mobile below search). */
 export function HomeTrustCard() {
   return (
     <aside
-      className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)]"
+      className="rounded-2xl border border-border bg-panel p-4 shadow-[var(--shadow-panel)] sm:p-5"
       aria-label="Compare with confidence"
     >
-      <h2 className="text-sm font-bold tracking-tight text-navy-900">Compare with confidence</h2>
-      <ul className="mt-3 space-y-2 text-sm text-muted">
-        <li className="flex gap-2">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-accent">Why Importnest</p>
+      <h2 className="mt-1 text-base font-bold tracking-tight text-navy-900 sm:text-lg">
+        Compare with confidence
+      </h2>
+      <ul className="mt-3 space-y-2.5 text-sm text-muted">
+        <li className="flex gap-2.5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          Approved sources only
+          <span>
+            <span className="font-semibold text-navy-900">Approved sources only</span>
+            <span className="block text-xs text-muted">Verified retailers, not open-web sellers</span>
+          </span>
         </li>
-        <li className="flex gap-2">
+        <li className="flex gap-2.5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          Total known cost shown clearly
+          <span>
+            <span className="font-semibold text-navy-900">Total Known Cost shown clearly</span>
+            <span className="block text-xs text-muted">Item + shipping + fees before you buy</span>
+          </span>
         </li>
-        <li className="flex gap-2">
+        <li className="flex gap-2.5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          Sponsored results labeled
+          <span>
+            <span className="font-semibold text-navy-900">Price alerts available</span>
+            <span className="block text-xs text-muted">Track drops on Total Known Cost</span>
+          </span>
         </li>
-        <li className="flex gap-2">
+        <li className="flex gap-2.5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-          Price alerts available
+          <span>
+            <span className="font-semibold text-navy-900">Sponsored results labeled</span>
+            <span className="block text-xs text-muted">Never changes organic ranking</span>
+          </span>
         </li>
       </ul>
       <Link
         href="#approved-sources"
-        className="mt-3 inline-block text-xs font-semibold text-link hover:underline"
+        className="mt-4 inline-block text-xs font-semibold text-link hover:underline"
       >
         See approved retailers →
       </Link>

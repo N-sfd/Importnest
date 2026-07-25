@@ -52,7 +52,7 @@ describe("category-round-carousel", () => {
   });
 
   it.each(WIRED_CATEGORIES)(
-    "assigns the reset tile lifestyle-cover, subtypes photo-cover, and deals transparent-contain for %s",
+    "assigns lifestyle-cover to the reset tile and transparent-contain to subtypes + deals for %s",
     (categorySlug) => {
       const items = getCategoryRoundCarouselItems(categorySlug);
       const resetTile = items.find((i) => i.slug === "");
@@ -62,7 +62,8 @@ describe("category-round-carousel", () => {
       expect(resetTile?.imageMode).toBe("lifestyle-cover");
       expect(dealsTile?.imageMode).toBe("transparent-contain");
       for (const tile of subtypeTiles) {
-        expect(tile.imageMode).toBe("photo-cover");
+        expect(tile.imageMode).toBe("transparent-contain");
+        expect(tile.imageUrl).toMatch(/^\/images\/subtypes\//);
       }
     },
   );
@@ -73,13 +74,11 @@ describe("category-round-carousel", () => {
     expect(resetTile?.label).toBe("Beauty Devices");
   });
 
-  it("falls back to the parent category image when no subtype-specific photo exists", () => {
+  it("resolves cooking to a transparent subtype PNG rather than inventing a path", () => {
     const items = getCategoryRoundCarouselItems("appliances");
     const cooking = items.find((i) => i.slug === "cooking");
-    // "cooking" itself has no dedicated asset, but the item must still resolve
-    // to a real, non-broken local image (either a matched subtype photo or the
-    // parent category fallback) rather than an empty/invented path.
-    expect(cooking?.imageUrl).toMatch(/^\/images\//);
+    expect(cooking?.imageUrl).toBe("/images/subtypes/appliances/air-fryer.png");
+    expect(cooking?.imageMode).toBe("transparent-contain");
   });
 
   it("returns an empty list for categories not wired up", () => {

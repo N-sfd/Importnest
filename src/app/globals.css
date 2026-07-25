@@ -1115,10 +1115,10 @@ a {
   width: 116px;
   height: 116px;
   overflow: hidden;
-  border-radius: 9999px;
-  border: 1px solid var(--border);
+  border-radius: 999px;
+  border: 1px solid rgba(0, 59, 104, 0.12);
   background: transparent;
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 8px 18px rgba(0, 59, 104, 0.1);
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
@@ -1129,11 +1129,9 @@ a {
   background: transparent;
 }
 
-/* Wide department/lifestyle collage photo, or a studio product photo with a
-   baked-in background — both read cleanest filling the circle edge to edge
-   rather than leaving their own plain backdrop visible as a "sticker on a
-   disc". Reserve object-fit: contain (below) for assets with real
-   transparency, where there's no backdrop to hide. */
+/* Lifestyle / photo tiles fill the circle edge to edge. Transparent product
+   PNGs shrink to fit with padding so the product isn't cropped and no baked
+   white studio disc remains inside the frame. */
 .round-category-image[data-mode="lifestyle-cover"] img,
 .round-category-image[data-mode="photo-cover"] img {
   object-fit: cover;
