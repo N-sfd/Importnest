@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { StatusBanner, StatusPanel, PrimaryAction, SecondaryAction } from "@/components/StatusPanel";
+import { NotificationPreferencesPanel } from "@/components/NotificationPreferencesPanel";
 import { RefreshAllPricesButton } from "@/components/RefreshAllPricesButton";
 import { WatchlistProductCard } from "@/components/WatchlistProductCard";
 import { getOrCreateAppUser } from "@/lib/auth";
@@ -123,6 +124,9 @@ export default async function SavedPage() {
             title="No alerts yet"
             description="After you save a product, set a target price to get notified when the best known total cost drops."
           />
+          <div className="mt-6">
+            <NotificationPreferencesPanel />
+          </div>
         </div>
       ) : (
         <>
@@ -168,6 +172,10 @@ export default async function SavedPage() {
           ) : (
             <div id="alerts" className="scroll-mt-24" />
           )}
+
+          <div className="mt-10">
+            <NotificationPreferencesPanel />
+          </div>
         </>
       )}
     </PageShell>
