@@ -87,7 +87,7 @@ function badgeToneClass(badge: string) {
   const key = badge.toLowerCase();
   if (key.includes("deal") || key.includes("save") || key.includes("%") || key === "demo") {
     return key === "demo" || key.includes("demo")
-      ? "border border-border bg-white/95 text-navy-800"
+      ? "border border-border bg-panel/95 text-foreground"
       : "badge-savings";
   }
   if (key.includes("top")) return "badge-top";
@@ -373,7 +373,7 @@ export function ProductCard({
           <div className="product-card-actions">
             <Link
               href={href}
-              className="product-card-action-wide btn-cta flex min-h-10 items-center justify-center px-3 py-2.5 text-center text-sm font-semibold"
+              className="product-card-action-wide btn-cta flex min-h-11 items-center justify-center px-3 py-2.5 text-center text-sm font-semibold"
             >
               {primaryCtaLabel}
             </Link>

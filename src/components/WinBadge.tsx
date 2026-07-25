@@ -14,7 +14,7 @@ const KIND_CLASS: Record<WinBadgeKind, string> = {
   manufacturer: "bg-amber-100 text-amber-950 ring-1 ring-amber-300",
   approved: "bg-navy-100 text-navy-900",
   neutral: "bg-surface text-muted ring-1 ring-border",
-  top: "bg-cta text-white",
+  top: "bg-cta text-navy-900",
 };
 
 export function WinBadge({

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
+import { Toast } from "@/components/Toast";
 
 /** Floating confirmation shown after add/merge/limit — mirrors CompareToast. */
 export function CartToast() {
@@ -13,11 +14,7 @@ export function CartToast() {
   const lastItem = items[items.length - 1];
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgb(15_42_74/0.12)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:max-w-sm sm:rounded-2xl sm:border sm:p-4 sm:shadow-lg"
-    >
+    <Toast onDismiss={dismissToast}>
       {isLimit ? (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-medium text-navy-900">
@@ -56,6 +53,6 @@ export function CartToast() {
           </div>
         </div>
       )}
-    </div>
+    </Toast>
   );
 }

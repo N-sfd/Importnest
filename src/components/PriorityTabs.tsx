@@ -438,7 +438,7 @@ export function PriorityTabs({
                     aria-current={priority === option.key ? "true" : undefined}
                     className={`flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
                       priority === option.key
-                        ? "bg-cta text-white"
+                        ? "bg-cta text-navy-900"
                         : "text-navy-900 hover:bg-surface"
                     }`}
                   >
@@ -462,7 +462,7 @@ export function PriorityTabs({
               aria-selected={priority === option.key}
               className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                 priority === option.key
-                  ? "bg-cta text-white shadow-sm"
+                  ? "bg-cta text-navy-900 shadow-sm"
                   : "text-muted hover:bg-panel hover:text-foreground"
               }`}
             >

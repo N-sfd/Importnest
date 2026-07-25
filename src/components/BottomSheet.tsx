@@ -66,7 +66,7 @@ export function BottomSheet({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={descId}
-            className="relative max-h-[85vh] overflow-y-auto rounded-t-2xl border border-border bg-white p-4 shadow-xl"
+            className="relative max-h-[85vh] overflow-y-auto rounded-t-2xl border border-border bg-panel p-4 shadow-xl"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>

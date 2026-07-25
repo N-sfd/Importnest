@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useCompareBasket } from "@/components/CompareBasketProvider";
 import type { CompareBasketItem } from "@/lib/compare-basket";
 import { productThumbClass } from "@/lib/images";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 function money(value: number | null): string {
   return value != null ? `$${value.toFixed(2)}` : "—";
@@ -22,6 +23,7 @@ export function CompareTray() {
   const [products, setProducts] = useState<CompareBasketItem[]>([]);
   const [loading, setLoading] = useState(false);
   const sheetId = useId();
+  const sheetRef = useRef<HTMLElement>(null);
 
   const idsKey = items.map((i) => i.id).join(",");
   const showLimit = toastVisible && lastAction?.type === "limit";
@@ -53,14 +55,7 @@ export function CompareTray() {
     };
   }, [sheetOpen, idsKey, items.length]);
 
-  useEffect(() => {
-    if (!sheetOpen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setSheetOpen(false);
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [sheetOpen]);
+  useFocusTrap(sheetOpen, sheetRef, () => setSheetOpen(false));
 
   if (count === 0 && !showLimit) return null;
 
@@ -69,7 +64,7 @@ export function CompareTray() {
       <div
         role="status"
         aria-live="polite"
-        className="compare-tray"
+        className="compare-tray fade-up"
       >
         {showLimit ? (
           <div className="compare-tray-inner">
@@ -103,7 +98,7 @@ export function CompareTray() {
               <button
                 type="button"
                 onClick={() => setSheetOpen(true)}
-                className="rounded-full border border-border bg-white px-3 py-2 text-xs font-semibold text-navy-900 hover:border-navy-800"
+                className="rounded-full border border-border bg-panel px-3 py-2 text-xs font-semibold text-navy-900 hover:border-navy-800"
                 aria-expanded={sheetOpen}
                 aria-controls={sheetId}
               >
@@ -133,11 +128,12 @@ export function CompareTray() {
             onClick={() => setSheetOpen(false)}
           />
           <aside
+            ref={sheetRef}
             id={sheetId}
             role="dialog"
             aria-modal="true"
             aria-label="Quick compare"
-            className="compare-sheet"
+            className="compare-sheet fade-up"
           >
             <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
               <div>
@@ -167,7 +163,7 @@ export function CompareTray() {
                       key={product.id}
                       className="flex gap-3 rounded-xl border border-border bg-panel p-3"
                     >
-                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-[#F7FAFC]">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface">
                         <Image
                           src={product.imageSrc}
                           alt=""

@@ -90,7 +90,7 @@ export async function Header({ hideSearch = false }: { hideSearch?: boolean }) {
               label="Saved"
             />
             <NavLink
-              href={user ? "/saved" : "/login?next=/saved"}
+              href={user ? "/saved#alerts" : "/login?next=/saved"}
               icon={<BellIcon />}
               label="Alerts"
             />

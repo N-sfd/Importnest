@@ -70,7 +70,7 @@ export default async function SavedPage() {
         >
           <a
             href="#favourites"
-            className="rounded-full bg-cta px-3.5 py-1.5 text-xs font-semibold text-white"
+            className="rounded-full bg-cta px-3.5 py-1.5 text-xs font-semibold text-navy-900"
           >
             Favourites ({items.length})
           </a>

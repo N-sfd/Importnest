@@ -78,7 +78,7 @@ export function HeaderLocation() {
           />
           <button
             type="submit"
-            className="shrink-0 rounded-md bg-cta px-2 text-[11px] font-bold text-white"
+            className="shrink-0 rounded-md bg-cta px-2 text-[11px] font-bold text-navy-900"
           >
             Save
           </button>

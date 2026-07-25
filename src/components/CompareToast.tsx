@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCompareBasket } from "@/components/CompareBasketProvider";
+import { Toast } from "@/components/Toast";
 
 /** Floating confirmation shown after add/remove/limit — bottom bar on mobile, bottom-right card on desktop. */
 export function CompareToast() {
@@ -14,11 +15,7 @@ export function CompareToast() {
   const lastAdded = items[items.length - 1];
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgb(15_42_74/0.12)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:max-w-sm sm:rounded-2xl sm:border sm:p-4 sm:shadow-lg"
-    >
+    <Toast onDismiss={dismissToast}>
       {isLimit ? (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-medium text-navy-900">
@@ -69,6 +66,6 @@ export function CompareToast() {
           </div>
         </div>
       )}
-    </div>
+    </Toast>
   );
 }

@@ -303,7 +303,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                   aria-pressed={mode === "dollar"}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                     mode === "dollar"
-                      ? "bg-cta text-white"
+                      ? "bg-cta text-navy-900"
                       : "text-navy-900 hover:bg-surface"
                   }`}
                 >
@@ -316,7 +316,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                   disabled={item.currentPrice == null}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition disabled:opacity-50 ${
                     mode === "percent"
-                      ? "bg-cta text-white"
+                      ? "bg-cta text-navy-900"
                       : "text-navy-900 hover:bg-surface"
                   }`}
                 >
