@@ -6,18 +6,63 @@ export type AlertType = "price-drop" | "back-in-stock" | "any-change";
 export type AlertStatus = "watching" | "triggered" | "paused" | "none";
 
 /**
- * Alert.threshold is a free-text column shared across alert types (seed data
- * has display strings like "≤ $250" and "Back in stock"), so a price-drop
- * threshold is parsed defensively rather than assumed to be a clean number —
- * new alerts created through the app store a plain numeric string, but this
- * still needs to tolerate the legacy formatted values.
+ * Structured form of Alert.threshold. Dollar alerts store a plain number
+ * ("199.99" or legacy "≤ $250"). Percentage-drop alerts store
+ * "pct:<percent>@<baseline>" where baseline is the Total Known Cost at the
+ * moment the shopper set the alert — the absolute trigger target is then
+ * baseline × (1 − percent/100). Encoding both in the free-text column
+ * avoids a schema migration and stays compatible with existing alerts.
  */
-export function parseThresholdPrice(threshold: string | null): number | null {
+export type ParsedAlertThreshold =
+  | { kind: "dollar"; amount: number }
+  | { kind: "percent"; percent: number; baseline: number; target: number };
+
+const PCT_THRESHOLD_RE = /^pct:(\d+(?:\.\d+)?)@(\d+(?:\.\d+)?)$/i;
+
+export function encodeDollarThreshold(amount: number): string {
+  return String(amount);
+}
+
+export function encodePercentThreshold(percent: number, baseline: number): string {
+  return `pct:${percent}@${baseline}`;
+}
+
+export function parseAlertThreshold(threshold: string | null): ParsedAlertThreshold | null {
   if (!threshold) return null;
-  const match = threshold.match(/[\d.]+/);
+  const trimmed = threshold.trim();
+  const pctMatch = trimmed.match(PCT_THRESHOLD_RE);
+  if (pctMatch) {
+    const percent = Number(pctMatch[1]);
+    const baseline = Number(pctMatch[2]);
+    if (
+      !Number.isFinite(percent) ||
+      percent <= 0 ||
+      percent >= 100 ||
+      !Number.isFinite(baseline) ||
+      baseline <= 0
+    ) {
+      return null;
+    }
+    const target = Math.round(baseline * (1 - percent / 100) * 100) / 100;
+    return { kind: "percent", percent, baseline, target };
+  }
+
+  // Dollar (or legacy "≤ $250") — extract the first number.
+  const match = trimmed.match(/[\d.]+/);
   if (!match) return null;
   const value = Number(match[0]);
-  return Number.isFinite(value) ? value : null;
+  return Number.isFinite(value) && value > 0 ? { kind: "dollar", amount: value } : null;
+}
+
+/**
+ * Absolute trigger price for any threshold encoding. Used by the watchlist
+ * UI ("Target $X") and by the trigger rule. For percent alerts this is the
+ * computed baseline × (1 − pct/100); for dollar alerts it is the amount.
+ */
+export function parseThresholdPrice(threshold: string | null): number | null {
+  const parsed = parseAlertThreshold(threshold);
+  if (!parsed) return null;
+  return parsed.kind === "dollar" ? parsed.amount : parsed.target;
 }
 
 /** Pure so the trigger rule itself is unit-testable without a DB round trip. */
@@ -25,6 +70,14 @@ export function isPriceDropTriggered(threshold: string | null, currentPrice: num
   const target = parseThresholdPrice(threshold);
   if (target == null || currentPrice == null) return false;
   return currentPrice <= target;
+}
+
+/** Short human label for an alert threshold, e.g. "$199.99" or "15% off ($169.99)". */
+export function formatAlertThresholdLabel(threshold: string | null): string | null {
+  const parsed = parseAlertThreshold(threshold);
+  if (!parsed) return null;
+  if (parsed.kind === "dollar") return `$${parsed.amount.toFixed(2)}`;
+  return `${parsed.percent}% off (≤ $${parsed.target.toFixed(2)})`;
 }
 
 /** Confirmation copy shown before removing a saved product (and its alert) — a destructive, hard-to-undo action. */
@@ -83,8 +136,10 @@ export type WatchlistItem = {
   productName: string;
   categorySlug: string;
   currentPrice: number | null;
-  /** Parsed numeric target, when an alert exists */
+  /** Absolute trigger target (dollar amount or computed percent target) */
   targetPrice: number | null;
+  /** When the alert is a %-drop, the percent the shopper chose; null for dollar alerts. */
+  percentDrop: number | null;
   threshold: string | null;
   alertType: AlertType | null;
   status: AlertStatus;
@@ -224,6 +279,8 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
       }
     }
 
+    const parsedThreshold = parseAlertThreshold(alert?.threshold ?? null);
+
     items.push({
       savedProductId: saved?.id ?? null,
       alertId: alert?.id ?? null,
@@ -232,7 +289,13 @@ export async function getUserWatchlist(userId: string): Promise<WatchlistItem[]>
       productName: canonicalProduct.modelName,
       categorySlug: canonicalProduct.category.slug,
       currentPrice,
-      targetPrice: parseThresholdPrice(alert?.threshold ?? null),
+      targetPrice:
+        parsedThreshold == null
+          ? null
+          : parsedThreshold.kind === "dollar"
+            ? parsedThreshold.amount
+            : parsedThreshold.target,
+      percentDrop: parsedThreshold?.kind === "percent" ? parsedThreshold.percent : null,
       threshold: alert?.threshold ?? null,
       alertType: (alert?.type as AlertType | undefined) ?? null,
       status,

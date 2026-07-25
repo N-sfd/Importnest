@@ -36,8 +36,30 @@ export async function unsaveProductAction(canonicalProductId: string, redirectTo
 /** Positive, finite prices only — a malformed or negative threshold is silently rejected rather than stored. */
 export async function setPriceAlertAction(canonicalProductId: string, redirectTo: string, formData: FormData) {
   const user = await requireUser(redirectTo);
-  const threshold = Number(formData.get("threshold"));
-  if (!Number.isFinite(threshold) || threshold <= 0) {
+  const mode = String(formData.get("mode") ?? "dollar");
+
+  let threshold: string | null = null;
+  if (mode === "percent") {
+    const percent = Number(formData.get("percent"));
+    const baseline = Number(formData.get("baseline"));
+    if (
+      Number.isFinite(percent) &&
+      percent > 0 &&
+      percent < 100 &&
+      Number.isFinite(baseline) &&
+      baseline > 0
+    ) {
+      // Round baseline to cents so the encoding stays tidy.
+      threshold = `pct:${percent}@${Math.round(baseline * 100) / 100}`;
+    }
+  } else {
+    const amount = Number(formData.get("threshold"));
+    if (Number.isFinite(amount) && amount > 0) {
+      threshold = String(amount);
+    }
+  }
+
+  if (threshold == null) {
     revalidatePath(redirectTo);
     return;
   }
@@ -46,12 +68,12 @@ export async function setPriceAlertAction(canonicalProductId: string, redirectTo
     where: {
       userId_canonicalProductId_type: { userId: user.id, canonicalProductId, type: "price-drop" },
     },
-    update: { threshold: String(threshold), isActive: true },
+    update: { threshold, isActive: true },
     create: {
       userId: user.id,
       canonicalProductId,
       type: "price-drop",
-      threshold: String(threshold),
+      threshold,
       isActive: true,
     },
   });

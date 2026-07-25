@@ -7,6 +7,10 @@ import {
   toggleAlertActiveAction,
 } from "@/lib/saved-actions";
 import { formatFreshness } from "@/lib/freshness";
+import {
+  formatAlertThresholdLabel,
+  parseAlertThreshold,
+} from "@/lib/saved-data";
 
 export type PriceAlertModuleProps = {
   productId: string;
@@ -85,13 +89,20 @@ function AlertFormBody({
   lastCheckedMinutesAgo,
   alert,
 }: Omit<PriceAlertModuleProps, "compact">) {
+  const parsed = parseAlertThreshold(alert?.threshold ?? null);
+  // Number inputs only accept dollar amounts — percent alerts fall back to the
+  // suggested dollar target so the shopper can re-save as a dollar alert here.
+  const dollarDefault =
+    parsed?.kind === "dollar" ? String(parsed.amount) : suggestedAlert;
+  const alertLabel = formatAlertThresholdLabel(alert?.threshold ?? null);
+
   return (
     <div className="space-y-2">
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
         <div>
           <dt className="text-muted">Target price</dt>
           <dd className="font-semibold tabular-nums text-navy-900">
-            ${(alert?.threshold ? Number(alert.threshold) : Number(suggestedAlert)).toFixed(2)}
+            {alertLabel ?? `$${Number(suggestedAlert).toFixed(2)}`}
           </dd>
         </div>
         <div>
@@ -111,7 +122,7 @@ function AlertFormBody({
             <dt className="text-muted">Alert status</dt>
             <dd className="font-semibold text-navy-900">
               {alert.isActive ? "Active" : "Paused"}
-              {alert.threshold ? ` · Notify below $${alert.threshold}` : null}
+              {alertLabel ? ` · Notify at ${alertLabel}` : null}
             </dd>
           </div>
         ) : null}
@@ -121,6 +132,7 @@ function AlertFormBody({
         action={setPriceAlertAction.bind(null, productId, redirectTo)}
         className="flex flex-wrap items-end gap-2"
       >
+        <input type="hidden" name="mode" value="dollar" />
         <label className="text-xs">
           <span className="font-semibold text-muted">Target price $</span>
           <input
@@ -129,7 +141,7 @@ function AlertFormBody({
             min="0.01"
             step="0.01"
             required
-            defaultValue={alert?.threshold ?? suggestedAlert}
+            defaultValue={dollarDefault}
             className="mt-1 block min-h-9 w-28 rounded-md border border-border bg-white px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-accent"
           />
         </label>

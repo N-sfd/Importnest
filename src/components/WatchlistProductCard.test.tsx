@@ -13,6 +13,7 @@ function makeItem(overrides: Partial<WatchlistItem> = {}): WatchlistItem {
     categorySlug: "appliances",
     currentPrice: 849,
     targetPrice: 800,
+    percentDrop: null,
     threshold: "800",
     alertType: "price-drop",
     status: "watching",
@@ -74,7 +75,13 @@ describe("WatchlistProductCard — no alert set", () => {
   it("shows 'Not provided' for the target price and omits the Pause/Resume control", () => {
     const html = renderToStaticMarkup(
       <WatchlistProductCard
-        item={makeItem({ alertId: null, alertType: null, targetPrice: null, status: "none" })}
+        item={makeItem({
+          alertId: null,
+          alertType: null,
+          targetPrice: null,
+          threshold: null,
+          status: "none",
+        })}
       />,
     );
     expect(html).toContain("Not provided");

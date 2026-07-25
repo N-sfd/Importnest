@@ -8,6 +8,7 @@ import { Freshness } from "@/components/Freshness";
 import { productImageFor, productThumbClass } from "@/lib/images";
 import { formatPriceChange, type PriceChangeTone } from "@/lib/price-change";
 import {
+  formatAlertThresholdLabel,
   removeAlertConfirmMessage,
   removeProductConfirmMessage,
   type WatchlistItem,
@@ -95,17 +96,22 @@ const NON_PRICE_ALERT_LABEL: Record<string, string> = {
 
 export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
   const [editing, setEditing] = useState(false);
+  const [mode, setMode] = useState<"dollar" | "percent">(
+    item.percentDrop != null ? "percent" : "dollar",
+  );
   const redirectTo = "/saved";
   const change = formatPriceChange(item.priceChange);
   const alertType = item.alertType ?? "price-drop";
   const isPriceDropAlert = alertType === "price-drop";
   const imageSrc = productImageFor(item.canonicalProductId);
   const defaultThreshold =
-    item.targetPrice != null
+    item.targetPrice != null && item.percentDrop == null
       ? item.targetPrice.toFixed(2)
       : item.currentPrice != null
         ? Math.max(1, Math.floor(item.currentPrice * 0.95)).toFixed(2)
         : "";
+  const defaultPercent = item.percentDrop != null ? String(item.percentDrop) : "10";
+  const targetLabel = formatAlertThresholdLabel(item.threshold);
 
   return (
     <article className="panel offer-card p-4 sm:p-5">
@@ -160,7 +166,7 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
                   Target
                 </p>
                 <p className="mt-0.5 text-sm font-semibold tabular-nums text-navy-900">
-                  {item.targetPrice != null ? `$${item.targetPrice.toFixed(2)}` : "Not provided"}
+                  {targetLabel ?? "Not provided"}
                 </p>
               </div>
               <div>
@@ -283,30 +289,97 @@ export function WatchlistProductCard({ item }: { item: WatchlistItem }) {
             <>
               <p className="text-sm font-semibold text-navy-900">Edit price alert</p>
               <p className="mt-0.5 text-xs text-muted">
-                Notify when the best known total cost falls to or below your target.
+                Notify when the best known total cost hits your dollar target — or drops by a
+                percentage from today&apos;s price.
               </p>
+              <div
+                className="mt-3 inline-flex rounded-full border border-border bg-panel p-0.5"
+                role="group"
+                aria-label="Alert threshold type"
+              >
+                <button
+                  type="button"
+                  onClick={() => setMode("dollar")}
+                  aria-pressed={mode === "dollar"}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    mode === "dollar"
+                      ? "bg-cta text-white"
+                      : "text-navy-900 hover:bg-surface"
+                  }`}
+                >
+                  Dollar amount
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("percent")}
+                  aria-pressed={mode === "percent"}
+                  disabled={item.currentPrice == null}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition disabled:opacity-50 ${
+                    mode === "percent"
+                      ? "bg-cta text-white"
+                      : "text-navy-900 hover:bg-surface"
+                  }`}
+                >
+                  % drop
+                </button>
+              </div>
               <form
                 action={setPriceAlertAction.bind(null, item.canonicalProductId, redirectTo)}
                 className="mt-3 flex flex-wrap items-end gap-2"
               >
-                <div>
-                  <label htmlFor={`threshold-${item.canonicalProductId}`} className="sr-only">
-                    Target price
-                  </label>
-                  <div className="flex items-center rounded-md border border-border bg-white">
-                    <span className="pl-3 text-sm text-muted">$</span>
+                <input type="hidden" name="mode" value={mode} />
+                {mode === "percent" ? (
+                  <>
                     <input
-                      id={`threshold-${item.canonicalProductId}`}
-                      name="threshold"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      required
-                      defaultValue={defaultThreshold}
-                      className="w-28 bg-transparent px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                      type="hidden"
+                      name="baseline"
+                      value={item.currentPrice != null ? item.currentPrice.toFixed(2) : ""}
                     />
+                    <div>
+                      <label htmlFor={`percent-${item.canonicalProductId}`} className="sr-only">
+                        Percent drop
+                      </label>
+                      <div className="flex items-center rounded-md border border-border bg-white">
+                        <input
+                          id={`percent-${item.canonicalProductId}`}
+                          name="percent"
+                          type="number"
+                          min="1"
+                          max="99"
+                          step="1"
+                          required
+                          defaultValue={defaultPercent}
+                          className="w-20 bg-transparent px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                        />
+                        <span className="pr-3 text-sm text-muted">%</span>
+                      </div>
+                      {item.currentPrice != null ? (
+                        <p className="mt-1 text-[11px] text-muted">
+                          From today&apos;s ${item.currentPrice.toFixed(2)}
+                        </p>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label htmlFor={`threshold-${item.canonicalProductId}`} className="sr-only">
+                      Target price
+                    </label>
+                    <div className="flex items-center rounded-md border border-border bg-white">
+                      <span className="pl-3 text-sm text-muted">$</span>
+                      <input
+                        id={`threshold-${item.canonicalProductId}`}
+                        name="threshold"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        defaultValue={defaultThreshold}
+                        className="w-28 bg-transparent px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 <button type="submit" className="btn-cta px-4 py-2 text-sm">
                   Save alert
                 </button>
