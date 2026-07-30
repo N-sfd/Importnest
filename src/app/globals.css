@@ -1134,8 +1134,9 @@ a {
   height: 116px;
   overflow: hidden;
   border-radius: 999px;
-  border: 1px solid rgba(0, 59, 104, 0.12);
-  background: var(--surface);
+  border: 1px solid rgba(0, 59, 104, 0.14);
+  /* Soft brand mist — never a white disc behind product tiles */
+  background: #eef2f7;
   box-shadow: 0 8px 18px rgba(0, 59, 104, 0.1);
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
@@ -1147,9 +1148,8 @@ a {
   background: transparent;
 }
 
-/* Lifestyle / photo tiles fill the circle edge to edge. Transparent product
-   PNGs shrink to fit with padding so the product isn't cropped and no baked
-   white studio disc remains inside the frame. */
+/* Lifestyle / pre-circularized product tiles fill the circle edge to edge.
+   Transparent SVG badges (deals) shrink to fit with padding. */
 .round-category-image[data-mode="lifestyle-cover"] img,
 .round-category-image[data-mode="photo-cover"] img {
   object-fit: cover;
@@ -1160,6 +1160,7 @@ a {
   object-fit: contain;
   object-position: center;
   padding: 8px;
+  background: transparent;
 }
 
 .round-category-tile > a:hover .round-category-image {

@@ -52,7 +52,7 @@ describe("category-round-carousel", () => {
   });
 
   it.each(WIRED_CATEGORIES)(
-    "assigns lifestyle-cover to the reset tile and transparent-contain to subtypes + deals for %s",
+    "assigns lifestyle-cover to the reset tile, photo-cover to subtypes, and transparent-contain to deals for %s",
     (categorySlug) => {
       const items = getCategoryRoundCarouselItems(categorySlug);
       const resetTile = items.find((i) => i.slug === "");
@@ -62,7 +62,7 @@ describe("category-round-carousel", () => {
       expect(resetTile?.imageMode).toBe("lifestyle-cover");
       expect(dealsTile?.imageMode).toBe("transparent-contain");
       for (const tile of subtypeTiles) {
-        expect(tile.imageMode).toBe("transparent-contain");
+        expect(tile.imageMode).toBe("photo-cover");
         expect(tile.imageUrl).toMatch(/^\/images\/subtypes\//);
       }
     },
@@ -74,11 +74,11 @@ describe("category-round-carousel", () => {
     expect(resetTile?.label).toBe("Beauty Devices");
   });
 
-  it("resolves cooking to a transparent subtype PNG rather than inventing a path", () => {
+  it("resolves cooking to a circularized subtype PNG rather than inventing a path", () => {
     const items = getCategoryRoundCarouselItems("appliances");
     const cooking = items.find((i) => i.slug === "cooking");
     expect(cooking?.imageUrl).toBe("/images/subtypes/appliances/air-fryer.png");
-    expect(cooking?.imageMode).toBe("transparent-contain");
+    expect(cooking?.imageMode).toBe("photo-cover");
   });
 
   it("returns an empty list for categories not wired up", () => {
