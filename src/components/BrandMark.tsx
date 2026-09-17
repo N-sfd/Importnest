@@ -202,9 +202,12 @@ export function BrandMark({
   );
 }
 
+/** Header home link — same full lockup as the footer (sized for the navy bar). */
+export const HEADER_LOGO_HEIGHT = 44;
+
 /**
- * Header home link — icon mark only (no IMPORTNEST wordmark).
- * Pass `onDark` for navy surfaces so the light icon twin is used.
+ * Header home link — uses the footer brand lockup on navy.
+ * Pass `onDark` for navy surfaces (kept for call-site compat).
  */
 export function BrandLink({
   className = "",
@@ -216,11 +219,10 @@ export function BrandLink({
   onDark?: boolean;
   logo?: BrandLogo;
 }) {
-  const asset = ASSETS[logo];
-  const iconSrc = onDark ? asset.iconDark : asset.icon;
-  const height = onDark ? 56 : 52;
-  const aspect = 0.77;
-  const width = Math.round(height * aspect);
+  void logo;
+  void onDark;
+  const height = HEADER_LOGO_HEIGHT;
+  const width = Math.round(height * FOOTER_LOCKUP.aspect);
 
   return (
     <Link
@@ -229,7 +231,7 @@ export function BrandLink({
       aria-label="Importnest home"
     >
       <Image
-        src={iconSrc}
+        src={FOOTER_LOCKUP.src}
         alt="Importnest"
         width={width}
         height={height}
