@@ -203,7 +203,7 @@ export function BrandMark({
 }
 
 /** Header home link — same full lockup as the footer (sized for the navy bar). */
-export const HEADER_LOGO_HEIGHT = 44;
+export const HEADER_LOGO_HEIGHT = 68;
 
 /**
  * Header home link — uses the footer brand lockup on navy.

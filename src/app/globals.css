@@ -270,8 +270,8 @@ a {
   display: block;
   height: auto !important;
   width: auto !important;
-  max-height: 44px;
-  max-width: min(100%, 200px);
+  max-height: 68px;
+  max-width: min(100%, 320px);
   object-fit: contain;
   object-position: left center;
   background: transparent;
@@ -1401,8 +1401,8 @@ a.footer-logo {
 
   .header-logo-img,
   .header-logo img {
-    max-height: 40px;
-    max-width: 170px;
+    max-height: 58px;
+    max-width: 280px;
   }
 }
 
@@ -1433,8 +1433,8 @@ a.footer-logo {
 
   .header-logo-img,
   .header-logo img {
-    max-height: 36px;
-    max-width: 150px;
+    max-height: 52px;
+    max-width: 250px;
   }
 
   .header-search {
@@ -1478,8 +1478,8 @@ a.footer-logo {
 @media (max-width: 400px) {
   .header-logo-img,
   .header-logo img {
-    max-height: 32px;
-    max-width: 130px;
+    max-height: 46px;
+    max-width: 210px;
   }
 
   .header-top-inner {
