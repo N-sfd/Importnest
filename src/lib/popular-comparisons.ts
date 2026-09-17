@@ -36,6 +36,19 @@ export async function getPopularComparisons(
   savedProductIds: Set<string> = new Set(),
   categorySlug?: string,
 ): Promise<PopularComparison[]> {
+  try {
+    return await getPopularComparisonsUnsafe(limit, savedProductIds, categorySlug);
+  } catch (err) {
+    console.error("[popular-comparisons] unavailable", err);
+    return [];
+  }
+}
+
+async function getPopularComparisonsUnsafe(
+  limit = 4,
+  savedProductIds: Set<string> = new Set(),
+  categorySlug?: string,
+): Promise<PopularComparison[]> {
   // Listing.canonicalProductId is a bare scalar FK (no `canonicalProduct`
   // relation back on Listing), so category scoping must resolve product ids
   // first rather than filtering through a nested relation that doesn't exist.

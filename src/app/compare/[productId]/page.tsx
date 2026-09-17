@@ -55,6 +55,8 @@ const VALID_CONDITIONS: NonNullable<CompareFilters["condition"]>[] = [
   "used",
 ];
 
+export const dynamic = "force-dynamic";
+
 export default async function ComparePage({
   params,
   searchParams,
@@ -70,7 +72,13 @@ export default async function ComparePage({
 }) {
   const { productId } = await params;
   const { maxBudget, condition, priority, comparable, fastDelivery } = await searchParams;
-  const product = await getCompareProduct(productId);
+  let product;
+  try {
+    product = await getCompareProduct(productId);
+  } catch (err) {
+    console.error("[compare] product lookup unavailable", err);
+    notFound();
+  }
   if (!product) notFound();
 
   const redirectTo = `/compare/${productId}${
@@ -87,15 +95,24 @@ export default async function ComparePage({
       : ""
   }`;
   const authUser = await getAuthUser();
-  const saveState = authUser ? await getSaveAndAlertState(authUser.id, productId) : null;
+  let saveState = null;
+  try {
+    saveState = authUser ? await getSaveAndAlertState(authUser.id, productId) : null;
+  } catch (err) {
+    console.error("[compare] save state unavailable", err);
+  }
   let savedIds = new Set<string>();
   if (authUser) {
-    const saved = await prisma.savedProduct.findMany({
-      where: { userId: authUser.id },
-      select: { canonicalProductId: true },
-      take: 50,
-    });
-    savedIds = new Set(saved.map((s) => s.canonicalProductId));
+    try {
+      const saved = await prisma.savedProduct.findMany({
+        where: { userId: authUser.id },
+        select: { canonicalProductId: true },
+        take: 50,
+      });
+      savedIds = new Set(saved.map((s) => s.canonicalProductId));
+    } catch (err) {
+      console.error("[compare] saved products unavailable", err);
+    }
   }
   const relatedProducts = await getRelatedProducts(productId, product.categoryId, 4, savedIds);
 

@@ -448,14 +448,14 @@ export function PriorityTabs({
               ))}
             </ul>
           </BottomSheet>
-        </div>
+      </div>
         <div
           role="tablist"
           aria-label="Sort priority"
           className="mt-2 hidden rounded-full border border-border bg-surface p-1 sm:inline-flex sm:flex-wrap"
         >
           {priorityOptions.map((option) => (
-            <Link
+                    <Link
               key={option.key}
               href={option.href}
               role="tab"
@@ -467,9 +467,9 @@ export function PriorityTabs({
               }`}
             >
               {option.label}
-            </Link>
+                    </Link>
           ))}
-        </div>
+                  </div>
       </div>
 
       {/* Offer cards */}

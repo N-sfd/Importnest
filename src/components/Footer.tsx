@@ -1,13 +1,24 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/BrandMark";
+import { BrandMark, FOOTER_LOGO_HEIGHT } from "@/components/BrandMark";
 
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-white/10 bg-navy-900 text-white">
       <div className="footer-inner">
         <div className="footer-brand">
-          <Link href="/" className="footer-logo inline-flex" aria-label="Importnest home">
-            <BrandMark logo="logo9" onDark layout="horizontal" size="footer" />
+          <Link
+            href="/"
+            className="footer-logo brand-logo transition hover:opacity-90"
+            aria-label="Importnest home"
+          >
+            <BrandMark
+              logo="logo9"
+              layout="footer"
+              onDark
+              size="footer"
+              height={FOOTER_LOGO_HEIGHT}
+              className="footer-logo-img"
+            />
           </Link>
           <p className="mt-3 text-sm leading-relaxed text-white/70">
             AI-powered shopping comparison—transparent total cost, delivery, and protection across

@@ -302,6 +302,32 @@ function scoreBestValue(p: SearchResultProduct): number {
 export async function getSearchResults(
   filters: SearchResultsFilters,
 ): Promise<SearchResultsPayload> {
+  try {
+    return await getSearchResultsUnsafe(filters);
+  } catch (err) {
+    console.error("[search-results] catalog unavailable", err);
+    return {
+      products: [],
+      total: 0,
+      facets: {
+        categories: [],
+        brands: [],
+        sources: [],
+        conditions: [],
+        colors: [],
+        dynamicAttributes: [],
+        priceBounds: null,
+        freeShippingCount: 0,
+        ratingCounts: { min4: 0, min3: 0 },
+      },
+      applied: filters,
+    };
+  }
+}
+
+async function getSearchResultsUnsafe(
+  filters: SearchResultsFilters,
+): Promise<SearchResultsPayload> {
   const words = filters.query ? significantWords(filters.query) : [];
 
   const products = await prisma.canonicalProduct.findMany({

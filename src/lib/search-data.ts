@@ -11,14 +11,20 @@ function classifyInput(query: string): SearchInputType {
 }
 
 export async function getClassifierContext() {
-  const [brands, products] = await Promise.all([
-    prisma.brand.findMany({ select: { name: true } }),
-    prisma.canonicalProduct.findMany({ select: { modelName: true } }),
-  ]);
-  return {
-    brandNames: brands.map((b) => b.name),
-    catalogModelNames: products.map((p) => p.modelName),
-  };
+  try {
+    const [brands, products] = await Promise.all([
+      prisma.brand.findMany({ select: { name: true } }),
+      prisma.canonicalProduct.findMany({ select: { modelName: true } }),
+    ]);
+    return {
+      brandNames: brands.map((b) => b.name),
+      catalogModelNames: products.map((p) => p.modelName),
+    };
+  } catch (err) {
+    // Catalog-independent classification (category terms, GTIN shape) still works.
+    console.error("[search-data] classifier context unavailable", err);
+    return { brandNames: [] as string[], catalogModelNames: [] as string[] };
+  }
 }
 
 /**
@@ -33,38 +39,43 @@ export async function getClassifierContext() {
  * brand id) before this catalog grows much larger.
  */
 export async function resolveExactProduct(query: string): Promise<string | null> {
-  const trimmed = query.trim();
-  if (!trimmed) return null;
+  try {
+    const trimmed = query.trim();
+    if (!trimmed) return null;
 
-  if (/^\d{8}$|^\d{9}[\dXx]$|^\d{12}$|^\d{13}$|^\d{14}$/.test(trimmed)) {
-    const identifier = await prisma.productIdentifier.findUnique({ where: { value: trimmed } });
-    return identifier?.canonicalProductId ?? null;
-  }
-
-  const exactName = await prisma.canonicalProduct.findFirst({
-    where: { modelName: { equals: trimmed, mode: "insensitive" } },
-  });
-  if (exactName) return exactName.id;
-
-  const exactModelNumber = await prisma.canonicalProduct.findFirst({
-    where: { modelNumber: { equals: trimmed, mode: "insensitive" } },
-  });
-  if (exactModelNumber) return exactModelNumber.id;
-
-  const normalizedQuery = trimmed.toLowerCase();
-  const candidates = await prisma.canonicalProduct.findMany({ include: { brand: true } });
-  for (const product of candidates) {
-    const brandMentioned = normalizedQuery.includes(product.brand.name.toLowerCase());
-    const nameMentioned = normalizedQuery.includes(product.modelName.toLowerCase());
-    const modelNumberMentioned = product.modelNumber
-      ? normalizedQuery.includes(product.modelNumber.toLowerCase())
-      : false;
-    if (brandMentioned && (nameMentioned || modelNumberMentioned)) {
-      return product.id;
+    if (/^\d{8}$|^\d{9}[\dXx]$|^\d{12}$|^\d{13}$|^\d{14}$/.test(trimmed)) {
+      const identifier = await prisma.productIdentifier.findUnique({ where: { value: trimmed } });
+      return identifier?.canonicalProductId ?? null;
     }
-  }
 
-  return null;
+    const exactName = await prisma.canonicalProduct.findFirst({
+      where: { modelName: { equals: trimmed, mode: "insensitive" } },
+    });
+    if (exactName) return exactName.id;
+
+    const exactModelNumber = await prisma.canonicalProduct.findFirst({
+      where: { modelNumber: { equals: trimmed, mode: "insensitive" } },
+    });
+    if (exactModelNumber) return exactModelNumber.id;
+
+    const normalizedQuery = trimmed.toLowerCase();
+    const candidates = await prisma.canonicalProduct.findMany({ include: { brand: true } });
+    for (const product of candidates) {
+      const brandMentioned = normalizedQuery.includes(product.brand.name.toLowerCase());
+      const nameMentioned = normalizedQuery.includes(product.modelName.toLowerCase());
+      const modelNumberMentioned = product.modelNumber
+        ? normalizedQuery.includes(product.modelNumber.toLowerCase())
+        : false;
+      if (brandMentioned && (nameMentioned || modelNumberMentioned)) {
+        return product.id;
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.error("[search-data] resolveExactProduct unavailable", err);
+    return null;
+  }
 }
 
 /**

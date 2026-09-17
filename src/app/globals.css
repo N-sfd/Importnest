@@ -207,7 +207,7 @@ a {
     box-shadow: var(--shadow-panel-hover);
   }
 
-      .fade-up {
+  .fade-up {
     animation: fade-up 420ms ease both;
   }
 
@@ -268,12 +268,14 @@ a {
 .header-logo-img,
 .header-logo img {
   display: block;
-  height: 58px;
-  width: auto;
-  max-width: 520px;
+  height: auto !important;
+  width: auto !important;
+  max-height: 56px;
+  max-width: min(100%, 64px);
   object-fit: contain;
   object-position: left center;
   background: transparent;
+  image-rendering: auto;
 }
 
 /* Footer layout — same 1440px container as the header so the brand lockups
@@ -290,12 +292,13 @@ a {
   row-gap: 40px;
 }
 
-/* Footer brand — same compact lockup as header; pull left to match copy */
+/* Footer brand — keep full logo visible (no shrink/clip). */
 .footer-brand {
   justify-self: start;
   margin-left: 0;
   padding-left: 0;
-  min-width: 0;
+  min-width: min(100%, 280px);
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -316,20 +319,20 @@ a {
 }
 
 .footer-logo.header-logo,
-.footer-logo.brand-logo {
-  --footer-logo-height: 64px;
+.footer-logo.brand-logo,
+a.footer-logo {
+  --footer-logo-height: 96px;
   display: block;
   width: fit-content;
   max-width: min(100%, 480px);
-  /* Header lockup has ~66px plate inset on a 908×142 asset → align glyph with
-     body copy. Clamped to never pull further left than the container's own
-     padding (16px) — the raw calc alone (~-30px at 64px height) exceeded
-     that padding and pulled the logo past the page's left edge. */
-  margin-left: max(calc(-1 * var(--footer-logo-height) * 66 / 142), -1rem);
+  margin-left: 0;
   padding: 0;
+  overflow: visible;
+  line-height: 0;
   background: transparent;
-  border: 0;
-  box-shadow: none;
+  border: 0 !important;
+  outline: 0;
+  box-shadow: none !important;
 }
 
 @media (max-width: 900px) {
@@ -351,18 +354,23 @@ a {
 }
 
 .footer-logo .header-logo-img,
-.footer-logo img {
+.footer-logo img,
+.footer-logo-img img {
   display: block;
-  height: var(--footer-logo-height) !important;
+  height: auto !important;
   width: auto !important;
+  max-height: var(--footer-logo-height) !important;
   max-width: 100%;
   margin: 0;
+  padding: 0;
   object-fit: contain;
   object-position: left center;
+  overflow: visible;
   background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0;
+  box-shadow: none !important;
 }
 
 .location-block {
@@ -1134,9 +1142,9 @@ a {
   height: 116px;
   overflow: hidden;
   border-radius: 999px;
-  border: 1px solid rgba(0, 59, 104, 0.14);
-  /* Soft brand mist — never a white disc behind product tiles */
-  background: #eef2f7;
+  border: 1px solid rgba(0, 59, 104, 0.12);
+  /* Match baked tile fill (#EDE8E2) so letterboxing never flashes white */
+  background: #ede8e2;
   box-shadow: 0 8px 18px rgba(0, 59, 104, 0.1);
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
@@ -1148,8 +1156,9 @@ a {
   background: transparent;
 }
 
-/* Lifestyle / pre-circularized product tiles fill the circle edge to edge.
-   Transparent SVG badges (deals) shrink to fit with padding. */
+/* Lifestyle / photo tiles fill the circle edge to edge. Transparent product
+   PNGs shrink to fit with padding so the product isn't cropped and no baked
+   white studio disc remains inside the frame. */
 .round-category-image[data-mode="lifestyle-cover"] img,
 .round-category-image[data-mode="photo-cover"] img {
   object-fit: cover;
@@ -1160,7 +1169,6 @@ a {
   object-fit: contain;
   object-position: center;
   padding: 8px;
-  background: transparent;
 }
 
 .round-category-tile > a:hover .round-category-image {
@@ -1393,8 +1401,8 @@ a {
 
   .header-logo-img,
   .header-logo img {
-    height: 48px;
-    max-width: 440px;
+    max-height: 48px;
+    max-width: 56px;
   }
 }
 
@@ -1425,8 +1433,8 @@ a {
 
   .header-logo-img,
   .header-logo img {
-    height: 42px;
-    max-width: 360px;
+    max-height: 46px;
+    max-width: 54px;
   }
 
   .header-search {
@@ -1470,8 +1478,8 @@ a {
 @media (max-width: 400px) {
   .header-logo-img,
   .header-logo img {
-    height: 34px;
-    max-width: 220px;
+    max-height: 42px;
+    max-width: 48px;
   }
 
   .header-top-inner {

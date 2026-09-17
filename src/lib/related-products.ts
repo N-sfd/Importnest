@@ -16,6 +16,20 @@ export async function getRelatedProducts(
   limit = 4,
   savedProductIds: Set<string> = new Set(),
 ): Promise<PopularComparison[]> {
+  try {
+    return await getRelatedProductsUnsafe(productId, categoryId, limit, savedProductIds);
+  } catch (err) {
+    console.error("[related-products] unavailable", err);
+    return [];
+  }
+}
+
+async function getRelatedProductsUnsafe(
+  productId: string,
+  categoryId: string,
+  limit = 4,
+  savedProductIds: Set<string> = new Set(),
+): Promise<PopularComparison[]> {
   const candidates = await prisma.canonicalProduct.findMany({
     where: { categoryId, id: { not: productId } },
     select: { id: true },

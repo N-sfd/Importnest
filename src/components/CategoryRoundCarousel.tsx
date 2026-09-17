@@ -17,9 +17,8 @@ export type CategoryRoundCarouselItem = {
   /**
    * How the image fills its circle:
    * - "lifestyle-cover": wide department/collage photo — crop to fill.
-   * - "photo-cover": single-product studio photo with a baked-in backdrop —
-   *   crop to fill so that backdrop doesn't read as a separate disc behind a
-   *   smaller floating photo (the default; most real product assets are this).
+   * - "photo-cover": single-product tile with baked-in skin/gray fill —
+   *   crop to fill so the circle reads as one continuous disc (the default).
    * - "transparent-contain": image has real alpha transparency (no backdrop
    *   to hide) — shrink to fit so nothing is cropped.
    */

@@ -84,6 +84,8 @@ function mapCondition(
   return undefined;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function SearchResultsPage({
   searchParams,
 }: {
@@ -94,11 +96,15 @@ export default async function SearchResultsPage({
 
   const savedIds = new Set<string>();
   if (authUser) {
-    const saved = await prisma.savedProduct.findMany({
-      where: { userId: authUser.id },
-      select: { canonicalProductId: true },
-    });
-    for (const row of saved) savedIds.add(row.canonicalProductId);
+    try {
+      const saved = await prisma.savedProduct.findMany({
+        where: { userId: authUser.id },
+        select: { canonicalProductId: true },
+      });
+      for (const row of saved) savedIds.add(row.canonicalProductId);
+    } catch (err) {
+      console.error("[search/results] saved products unavailable", err);
+    }
   }
 
   const sort = parseSort(params.sort);

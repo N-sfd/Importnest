@@ -3,15 +3,17 @@ import { SearchConfirmation } from "@/components/SearchConfirmation";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { getOrCreateAppUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { rethrowIfNextControlFlow } from "@/lib/safe-db";
 import { finalizeSearch } from "@/lib/search-data";
 import { buildIntent, paramsToRecord, type SearchFlowParams } from "@/lib/search-intent";
+
+export const dynamic = "force-dynamic";
 
 export default async function ConfirmPage({
   searchParams,
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
-  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
@@ -20,9 +22,14 @@ export default async function ConfirmPage({
   }
 
   const intent = buildIntent(query, params);
-  const categoryRecord = params.category
-    ? await prisma.category.findUnique({ where: { slug: params.category } })
-    : null;
+  let categoryRecord: { id: string; name: string } | null = null;
+  try {
+    categoryRecord = params.category
+      ? await prisma.category.findUnique({ where: { slug: params.category } })
+      : null;
+  } catch (err) {
+    console.error("[confirm] category lookup unavailable", err);
+  }
 
   if (!params.confirmed) {
     return (
@@ -34,15 +41,21 @@ export default async function ConfirmPage({
     );
   }
 
-  const user = await getOrCreateAppUser();
-  const result = await finalizeSearch(query, intent, {
-    directMatch: null, // clarification only reaches here for queries that never had a direct match
-    sessionId: params.sid,
-    categoryId: categoryRecord?.id,
-    userId: user?.id ?? null,
-  });
+  let result: Awaited<ReturnType<typeof finalizeSearch>>;
+  try {
+    const user = await getOrCreateAppUser();
+    result = await finalizeSearch(query, intent, {
+      directMatch: null, // clarification only reaches here for queries that never had a direct match
+      sessionId: params.sid,
+      categoryId: categoryRecord?.id,
+      userId: user?.id ?? null,
+    });
+  } catch (err) {
+    rethrowIfNextControlFlow(err);
+    console.error("[confirm] finalizeSearch failed; falling back to results", err);
+    redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+  }
 
-  console.info(`[perf] search.confirmToCompare ${(performance.now() - start).toFixed(1)}ms`);
   if (result.kind === "redirect") {
     const qs = result.searchParams.toString();
     redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);

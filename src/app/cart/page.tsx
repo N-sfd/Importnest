@@ -4,16 +4,22 @@ import { getAuthUser } from "@/lib/auth";
 import { getPopularComparisons } from "@/lib/popular-comparisons";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function CartPage() {
   const authUser = await getAuthUser();
   let savedProductIds: string[] = [];
   if (authUser) {
-    const saved = await prisma.savedProduct.findMany({
-      where: { userId: authUser.id },
-      select: { canonicalProductId: true },
-      take: 200,
-    });
-    savedProductIds = saved.map((s) => s.canonicalProductId);
+    try {
+      const saved = await prisma.savedProduct.findMany({
+        where: { userId: authUser.id },
+        select: { canonicalProductId: true },
+        take: 200,
+      });
+      savedProductIds = saved.map((s) => s.canonicalProductId);
+    } catch (err) {
+      console.error("[cart] saved products unavailable", err);
+    }
   }
 
   // Fetched unconditionally since the cart itself lives in client-side

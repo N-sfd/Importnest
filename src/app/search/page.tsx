@@ -4,15 +4,17 @@ import { PageShell } from "@/components/PageShell";
 import { SearchNoMatch } from "@/components/SearchNoMatch";
 import { getOrCreateAppUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { rethrowIfNextControlFlow } from "@/lib/safe-db";
 import { classifyAndResolve, finalizeSearch } from "@/lib/search-data";
 import { buildIntent, paramsToRecord, type SearchFlowParams } from "@/lib/search-intent";
+
+export const dynamic = "force-dynamic";
 
 export default async function SearchEntryPage({
   searchParams,
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
-  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
@@ -43,44 +45,53 @@ export default async function SearchEntryPage({
   // name/model, brand+model, or a validated UPC/EAN/GTIN/ISBN/ASIN) skips
   // clarification. A generic category word like "dishwasher" must not — even
   // if it happens to be a substring of some catalog product's name.
-  const { classification, directMatch } = await classifyAndResolve(query);
-  const skipClarification = classification.classification === "exact_product";
+  let classification;
+  let directMatch: string | null = null;
+  try {
+    ({ classification, directMatch } = await classifyAndResolve(query));
+  } catch (err) {
+    rethrowIfNextControlFlow(err);
+    console.error("[search] classifyAndResolve failed; falling back to results", err);
+    redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+  }
 
-  if (skipClarification) {
+  if (classification.classification !== "exact_product") {
+    redirect(`/search/clarify?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+  }
+
+  const intent = buildIntent(query, params);
+  let result: Awaited<ReturnType<typeof finalizeSearch>>;
+  try {
     const categoryRecord = params.category
       ? await prisma.category.findUnique({ where: { slug: params.category } })
       : null;
     const user = await getOrCreateAppUser();
-
-    const intent = buildIntent(query, params);
-    const result = await finalizeSearch(query, intent, {
+    result = await finalizeSearch(query, intent, {
       directMatch,
       categoryId: categoryRecord?.id,
       userId: user?.id ?? null,
     });
-
-    console.info(`[perf] search.redirect(fast-path) ${(performance.now() - start).toFixed(1)}ms`);
-    if (result.kind === "redirect") {
-      const qs = result.searchParams.toString();
-      redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
-    }
-
-    if (result.kind === "results") {
-      redirect(`/search/results?${result.searchParams.toString()}`);
-    }
-
-    return (
-      <SearchNoMatch
-        query={query}
-        intent={intent}
-        comparableCandidates={result.comparableCandidates}
-        currentParams={params}
-      />
-    );
+  } catch (err) {
+    rethrowIfNextControlFlow(err);
+    console.error("[search] exact-product path failed; falling back to results", err);
+    redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
   }
 
-  // Ambiguous query — hand off to the clarification flow.
-  const qs = new URLSearchParams(paramsToRecord(params));
-  console.info(`[perf] search.redirect(to-clarify) ${(performance.now() - start).toFixed(1)}ms`);
-  redirect(`/search/clarify?${qs.toString()}`);
+  if (result.kind === "redirect") {
+    const qs = result.searchParams.toString();
+    redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
+  }
+
+  if (result.kind === "results") {
+    redirect(`/search/results?${result.searchParams.toString()}`);
+  }
+
+  return (
+    <SearchNoMatch
+      query={query}
+      intent={intent}
+      comparableCandidates={result.comparableCandidates}
+      currentParams={params}
+    />
+  );
 }

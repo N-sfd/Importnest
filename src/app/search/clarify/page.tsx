@@ -15,6 +15,7 @@ import {
 } from "@/lib/category-visuals";
 import { timeSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
+import { rethrowIfNextControlFlow } from "@/lib/safe-db";
 import { suggestedCategoriesForQuery } from "@/lib/search-category-keywords";
 import { classifyAndResolve, finalizeSearch, startSearchSession } from "@/lib/search-data";
 import {
@@ -42,9 +43,20 @@ const DEALS_CATEGORIES = ["electronics", "appliances", "kitchen", "footwear", "a
 
 function DealsTagIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.83 0l-6.37-6.37a2 2 0 0 1 0-2.83l8-8A2 2 0 0 1 13 3h6a2 2 0 0 1 2 2v6a2 2 0 0 1-.4 1.6z" />
-      <circle cx="15.5" cy="8.5" r="1.5" />
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.83 0l-6.37-6.37a2 2 0 0 1 0-2.83l8-8A2 2 0 0 1 13 3h6a2 2 0 0 1 2 2v6a2 2 0 0 1-.4 1.6z"
+        fill="currentColor"
+        opacity="0.14"
+      />
+      <path
+        d="M20.6 12.6 12.6 20.6a2 2 0 0 1-2.83 0l-6.37-6.37a2 2 0 0 1 0-2.83l8-8A2 2 0 0 1 13 3h6a2 2 0 0 1 2 2v6a2 2 0 0 1-.4 1.6z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="15.5" cy="8.5" r="1.35" fill="currentColor" />
     </svg>
   );
 }
@@ -58,12 +70,13 @@ const AI_INTENT_TO_PARAM: Record<string, (value: unknown) => [string, string] | 
   sortPriority: (v) => (typeof v === "string" ? ["priority", v] : null),
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ClarifyPage({
   searchParams,
 }: {
   searchParams: Promise<SearchFlowParams>;
 }) {
-  const start = performance.now();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
@@ -80,19 +93,35 @@ export default async function ClarifyPage({
   // a stale bookmark, browser back) should still skip straight to a result
   // rather than asking unnecessary questions. A generic category term must
   // never take this path, even on a direct hit to this route.
-  const { classification, directMatch } = await classifyAndResolve(query);
+  let classification;
+  let directMatch: string | null = null;
+  try {
+    ({ classification, directMatch } = await classifyAndResolve(query));
+  } catch (err) {
+    rethrowIfNextControlFlow(err);
+    console.error("[clarify] classifyAndResolve failed; falling back to results", err);
+    redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+  }
+
   const user = await getOrCreateAppUser();
   if (classification.classification === "exact_product") {
-    const categoryRecord = params.category
-      ? await prisma.category.findUnique({ where: { slug: params.category } })
-      : null;
     const intent = buildIntent(query, params);
-    const result = await finalizeSearch(query, intent, {
-      directMatch,
-      categoryId: categoryRecord?.id,
-      userId: user?.id ?? null,
-    });
-    console.info(`[perf] search.clarify(defensive-fast-path) ${(performance.now() - start).toFixed(1)}ms`);
+    let result: Awaited<ReturnType<typeof finalizeSearch>>;
+    try {
+      const categoryRecord = params.category
+        ? await prisma.category.findUnique({ where: { slug: params.category } })
+        : null;
+      result = await finalizeSearch(query, intent, {
+        directMatch,
+        categoryId: categoryRecord?.id,
+        userId: user?.id ?? null,
+      });
+    } catch (err) {
+      rethrowIfNextControlFlow(err);
+      console.error("[clarify] exact-product path failed; falling back to results", err);
+      redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+    }
+
     if (result.kind === "redirect") {
       const qs = result.searchParams.toString();
       redirect(`/compare/${result.productId}${qs ? `?${qs}` : ""}`);
@@ -140,35 +169,64 @@ export default async function ClarifyPage({
       }
 
       if (Object.keys(aiParams).length > 0) {
-        const categoryRecord = params.category
-          ? await prisma.category.findUnique({ where: { slug: params.category } })
-          : null;
-        const sessionId = (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
-        const qs = new URLSearchParams({ ...paramsToRecord(params), ...aiParams, sid: sessionId });
+        let sessionId = params.sid;
+        try {
+          const categoryRecord = params.category
+            ? await prisma.category.findUnique({ where: { slug: params.category } })
+            : null;
+          sessionId = (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
+        } catch (err) {
+          rethrowIfNextControlFlow(err);
+          console.error("[clarify] startSearchSession unavailable", err);
+        }
+        const qs = new URLSearchParams({
+          ...paramsToRecord(params),
+          ...aiParams,
+          ...(sessionId ? { sid: sessionId } : {}),
+        });
         redirect(`/search/clarify?${qs.toString()}`);
       }
     }
   }
 
-  const availableBrands = (await prisma.brand.findMany({ select: { name: true } })).map((b) => b.name);
+  let availableBrands: string[] = [];
+  try {
+    availableBrands = (await prisma.brand.findMany({ select: { name: true } })).map((b) => b.name);
+  } catch (err) {
+    console.error("[clarify] brands unavailable", err);
+  }
   const questions = getClarifyingQuestions(answered, { availableBrands }).map((q) =>
     questionWording[q.id] ? { ...q, prompt: questionWording[q.id]! } : q,
   );
   const readyForConfirmation = questions.length === 0 || params.continue === "1";
 
-  const categoryRecord = params.category
-    ? await prisma.category.findUnique({ where: { slug: params.category } })
-    : null;
-  const sessionId = params.sid ?? (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
+  let categoryRecord: { id: string; name: string } | null = null;
+  try {
+    categoryRecord = params.category
+      ? await prisma.category.findUnique({ where: { slug: params.category } })
+      : null;
+  } catch (err) {
+    console.error("[clarify] category lookup unavailable", err);
+  }
+
+  let sessionId = params.sid;
+  if (!sessionId) {
+    try {
+      sessionId = (await startSearchSession(query, categoryRecord?.id, user?.id ?? null)).id;
+    } catch (err) {
+      rethrowIfNextControlFlow(err);
+      console.error("[clarify] startSearchSession unavailable", err);
+      // Without a session, skip clarify and show results (possibly empty/demo).
+      redirect(`/search/results?${new URLSearchParams(paramsToRecord(params)).toString()}`);
+    }
+  }
   const currentParams = { sid: sessionId, ...paramsToRecord(params) };
 
   if (readyForConfirmation) {
     const qs = new URLSearchParams(currentParams);
-    console.info(`[perf] search.clarify(to-confirm) ${(performance.now() - start).toFixed(1)}ms`);
     redirect(`/search/confirm?${qs.toString()}`);
   }
 
-  console.info(`[perf] search.clarify(page-load) ${(performance.now() - start).toFixed(1)}ms`);
   return (
     <PageShell width="narrow">
       {aiUnavailable ? (
@@ -233,14 +291,14 @@ export default async function ClarifyPage({
         <div className="mb-5 space-y-3">
           {isDealsQuery ? (
             <aside
-              className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 shadow-[var(--shadow-panel)] sm:gap-4 sm:px-4"
+              className="flex items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--accent)_28%,var(--border))] bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))] px-3.5 py-3 shadow-[var(--shadow-panel)] sm:gap-4 sm:px-4"
               aria-label="Deals"
             >
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-border bg-panel text-accent sm:h-16 sm:w-16">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--accent)_35%,var(--border))] bg-panel text-accent sm:h-16 sm:w-16">
                 <DealsTagIcon />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-muted">Deals</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">Deals</p>
                 <p className="truncate text-sm font-bold text-navy-900 sm:text-base">
                   Find deal-worthy categories to compare
                 </p>

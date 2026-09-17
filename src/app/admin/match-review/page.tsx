@@ -7,6 +7,9 @@ import {
 } from "@/lib/match-review-actions";
 import { prisma } from "@/lib/prisma";
 
+/** Pending-match queue is request-time only — skip static prerender when DB is unreachable. */
+export const dynamic = "force-dynamic";
+
 const resultStyle: Record<string, string> = {
   match: "text-green-700",
   review: "text-amber-700",

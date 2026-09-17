@@ -40,6 +40,19 @@ export async function getBestDeals(
   savedProductIds: Set<string> = new Set(),
   categorySlug?: string,
 ): Promise<BestDealItem[]> {
+  try {
+    return await getBestDealsUnsafe(limit, savedProductIds, categorySlug);
+  } catch (err) {
+    console.error("[best-deals] unavailable", err);
+    return [];
+  }
+}
+
+async function getBestDealsUnsafe(
+  limit = 6,
+  savedProductIds: Set<string> = new Set(),
+  categorySlug?: string,
+): Promise<BestDealItem[]> {
   // Listing.canonicalProductId is a bare scalar FK (no `canonicalProduct`
   // relation back on Listing), so category scoping must resolve product ids
   // first rather than filtering through a nested relation that doesn't exist.

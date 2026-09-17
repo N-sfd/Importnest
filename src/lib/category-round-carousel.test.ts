@@ -74,7 +74,7 @@ describe("category-round-carousel", () => {
     expect(resetTile?.label).toBe("Beauty Devices");
   });
 
-  it("resolves cooking to a circularized subtype PNG rather than inventing a path", () => {
+  it("resolves cooking to a skin-fill subtype PNG rather than inventing a path", () => {
     const items = getCategoryRoundCarouselItems("appliances");
     const cooking = items.find((i) => i.slug === "cooking");
     expect(cooking?.imageUrl).toBe("/images/subtypes/appliances/air-fryer.png");

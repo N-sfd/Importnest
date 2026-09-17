@@ -20,6 +20,9 @@ import { prisma } from "@/lib/prisma";
 import { getRecentSearches } from "@/lib/recent-searches";
 import { getUserWatchlist } from "@/lib/saved-data";
 
+/** Always render at request time — catalog queries depend on live Postgres. */
+export const dynamic = "force-dynamic";
+
 /** Idealo-inspired shop-by-category grid — distinct visuals per department. */
 const categories = [
   {
@@ -68,33 +71,57 @@ const categories = [
   { name: "Home", key: "home", slug: "home", href: "/search?category=home" },
 ] as const;
 
+async function loadHomeCatalog(userId: string | null) {
+  let savedIds = new Set<string>();
+  if (userId) {
+    try {
+      const saved = await prisma.savedProduct.findMany({
+        where: { userId },
+        select: { canonicalProductId: true },
+        take: 50,
+      });
+      savedIds = new Set(saved.map((s) => s.canonicalProductId));
+    } catch (err) {
+      console.error("[home] saved products unavailable", err);
+    }
+  }
+
+  try {
+    const [popularPool, bestPool, sources, recentSearches, watchlist, categoryCounts] =
+      await Promise.all([
+        getPopularComparisons(40, savedIds),
+        getBestDeals(40, savedIds),
+        prisma.source.findMany({
+          where: { isActive: true },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        }),
+        userId ? getRecentSearches(userId, 3) : Promise.resolve([]),
+        userId ? getUserWatchlist(userId) : Promise.resolve([]),
+        prisma.category.findMany({
+          where: { slug: { in: categories.map((c) => c.slug) } },
+          select: { slug: true, _count: { select: { products: true } } },
+        }),
+      ]);
+    return { popularPool, bestPool, sources, recentSearches, watchlist, categoryCounts };
+  } catch (err) {
+    // DB outage must not blank the homepage — rails fall back to labeled demos.
+    console.error("[home] catalog unavailable", err);
+    return {
+      popularPool: [],
+      bestPool: [],
+      sources: [],
+      recentSearches: [],
+      watchlist: [],
+      categoryCounts: [] as { slug: string; _count: { products: number } }[],
+    };
+  }
+}
+
 export default async function HomePage() {
   const user = await getAuthUser();
-  let savedIds = new Set<string>();
-  if (user) {
-    const saved = await prisma.savedProduct.findMany({
-      where: { userId: user.id },
-      select: { canonicalProductId: true },
-      take: 50,
-    });
-    savedIds = new Set(saved.map((s) => s.canonicalProductId));
-  }
-  const [popularPool, bestPool, sources, recentSearches, watchlist, categoryCounts] =
-    await Promise.all([
-      getPopularComparisons(40, savedIds),
-      getBestDeals(40, savedIds),
-      prisma.source.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true },
-        orderBy: { name: "asc" },
-      }),
-      user ? getRecentSearches(user.id, 3) : Promise.resolve([]),
-      user ? getUserWatchlist(user.id) : Promise.resolve([]),
-      prisma.category.findMany({
-        where: { slug: { in: categories.map((c) => c.slug) } },
-        select: { slug: true, _count: { select: { products: true } } },
-      }),
-    ]);
+  const { popularPool, bestPool, sources, recentSearches, watchlist, categoryCounts } =
+    await loadHomeCatalog(user?.id ?? null);
   const productCountBySlug = new Map(categoryCounts.map((c) => [c.slug, c._count.products]));
   const categoryCards = categories.map((c) => ({
     name: c.name,
